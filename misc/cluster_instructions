@@ -1,0 +1,35 @@
+
+### +++++++++++++++++++ CREATE VIRTUAL ENVIRONMENT PYTHON 3.9.5 +++++++++++++++++++
+# exports
+export PATH=/home/soft/python-3.9.5/bin:$PATH
+export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
+
+# install virtualenv if needed
+# pip3 install virtualenv
+
+cd research
+virtualenv automatenv
+
+
+source automatenv/bin/activate # activate virtual environment
+# . automatenv/bin/activate # alternative to activate virtual environment
+
+# once active, install all required libraries
+pip3 install -r ../AutomatAnts/misc/requeriments.txt
+
+
+### +++++++++++++++++++ CLUSTER BASH SCRIPT TO EXECUTE AGENT BASE MODEL +++++++++++++++++++
+
+#!/bin/bash
+
+export PATH=/home/soft/python-3.9.5/bin:$PATH
+export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
+
+. ~/research/automatenv/bin/activate
+python3 ~/research/AutomatAnts/code/run_model.py
+deactivate
+
+### +++++++++++++++++++ RUN AGENT BASE MODEL (VIA QSUB, CLUSTER) +++++++++++++++++++
+
+qsub ~/research/AutomatAnts/run_model.sh
+# qsub -pe make 1 -l h_vmem=8G ~/research/AutomatAnts/run_model.sh
