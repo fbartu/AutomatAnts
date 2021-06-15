@@ -261,7 +261,7 @@ data_runs_states.close()
 np.savetxt(path + "results/"+params.file_name+"_evolution_runs.dat",DataOut_runs_states)
 
 DataOut_runs_time = np.column_stack((t_1_mean,t_1_std,t_2_mean,t_2_std,t_3_mean,t_3_std))
-data_runs_time = open(path + "results/"+params.file_name"_time_runs.dat",'x')
+data_runs_time = open(path + "results/"+params.file_name+"_time_runs.dat",'x')
 data_runs_time.close()
 np.savetxt(path + "results/"+params.file_name+"_time_runs.dat",DataOut_runs_time)
 
