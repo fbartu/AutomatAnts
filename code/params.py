@@ -24,7 +24,7 @@ else:
 
 #Model
 n_agents = 500 #250 #500 
-n_steps  = 50000 #800000 #200000 #800000
+n_steps  = 500 #800000 #200000 #800000
 
 #Lattice size
 width    = 22   
