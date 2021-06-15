@@ -1,3 +1,5 @@
+import sys
+sys.path.append('~/research/AutomatAnts/code/')
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -5,6 +7,8 @@ import time
 
 from model import *
 import params
+
+path = params.path
 
 #-----------------------------------------------------------
 #
@@ -252,20 +256,28 @@ for i in range(len(density_list)):
 
 
 DataOut_runs_states = np.column_stack((mean_t,mean_d,std_d,mean_k,std_k,mean_i,std_i))
-np.savetxt("Results/"+params.file_name+"_evolution_runs.dat",DataOut_runs_states)
+data_runs_states = open(path + "results/"+params.file_name+"_evolution_runs.dat",'x')
+data_runs_states.close()
+np.savetxt(path + "results/"+params.file_name+"_evolution_runs.dat",DataOut_runs_states)
 
 DataOut_runs_time = np.column_stack((t_1_mean,t_1_std,t_2_mean,t_2_std,t_3_mean,t_3_std))
-np.savetxt("Results/"+params.file_name+"_time_runs.dat",DataOut_runs_time)
+data_runs_time = open(path + "results/"+params.file_name"_time_runs.dat",'x')
+data_runs_time.close()
+np.savetxt(path + "results/"+params.file_name+"_time_runs.dat",DataOut_runs_time)
 
 DataOut_runs_food = np.column_stack((mean_t,food_nest,food_nest_std,food_site_1,food_site_1_std,food_site_2,food_site_2_std))
-np.savetxt("Results/"+params.file_name+"_time_food_runs.dat",DataOut_runs_food)
+data_runs_food = open(path + "results/"+params.file_name+"_time_food_runs.dat",'x')
+data_runs_food.close()
+np.savetxt(path + "results/"+params.file_name+"_time_food_runs.dat",DataOut_runs_food)
 
 DataOut_runs_tag = np.column_stack((mean_t,tag_naif,tag_naif_std,tag_informed,tag_informed_std))
-np.savetxt("Results/"+params.file_name+"_time_tag_runs.dat",DataOut_runs_tag)
+data_runs_tag = open(path + "results/"+params.file_name+"_time_tag_runs.dat",'x')
+data_runs_tag.close()
+np.savetxt(path + "results/"+params.file_name+"_time_tag_runs.dat",DataOut_runs_tag)
 
 
 #Save run parameters to use on the plots
-file = open("Results/"+params.file_name+"_info.dat",'a+')
+file = open(path + "results/"+params.file_name+"_info.dat",'a+')
 file.write("Number of nodes = ")
 file.write(str(model.G.number_of_nodes()))
 file.write("\n")
