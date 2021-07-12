@@ -31,7 +31,7 @@ beta_2  = params.beta_2
 gamma_1 = params.gamma_1
 gamma_2 = params.gamma_2
 omega   = params.omega
-eta     = params.eta
+etta     = params.etta
 
 #Key Position
 nest_node = params.nest_node
@@ -77,7 +77,7 @@ tag_informed = []
 #Initialize the model
 model = AntModel(n_agents,width,height,nest_node,food_node,
 				alpha,beta_1,beta_2,gamma_1,gamma_2,
-				omega,eta)
+				omega,etta)
 
 print("Runing Program:")
 print("Agents: ", n_agents)

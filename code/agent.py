@@ -23,7 +23,8 @@ import params
 
 class State(IntEnum):
 	"""Possible states of the ant
-	N = W + E + R + EM+ RM """
+	N = W + E + R + EM+ RM 
+	"""
 
 	WAITING = 1
 	EXPLORING = 2
@@ -98,6 +99,38 @@ class ShortPaths:
 #
 #-----------------------------------------------------------
 
+def move(pos, path = ShortPaths().path, type = 'random'):
+	if type == 'random':
+		possible_steps = AntAgent.model.grid.get_neighbors(
+			pos,
+			include_center = False)
+		pos = random.choice(possible_steps)
+	elif type == 'informed':
+		'a'
+
+	return pos
+		# self.model.grid.move_agent(self, pos)
+
+def Action(pos, state, tag, is_recruited = False):
+	# Possible actions if ant is on the nest
+	if (state == State.WAITING):
+		
+		if (is_recruited):
+			state = State.RECRUITING
+			tag = Tag.INFORMED
+		else:
+			pos = move(pos, type = 'random')
+			state = State.EXPLORING
+			tag = Tag.NAIF
+
+		r_i = params.omega
+	else:
+		if (state == State.EXPLORING):
+			if (pos in params.food_location):
+
+
+	return pos, state, tag, r_i
+
 class AntAgent(Agent):
 	""" An ant agent."""
 	
@@ -105,21 +138,21 @@ class AntAgent(Agent):
 		super().__init__(unique_id, model)
 		
 		#Variables to save and initialization
-		self.pos
+		self.pos = params.nest_node
 		self.state = State.WAITING
 		self.r_i = self.model.alpha
 
 		### Tag ###
 		self.tag = Tag.NULL
 
-		#Different possbile paths
+		#Different possible paths
 		test =  model.short_paths.path
 		self.paths = []
 		self.reversed_paths = []
 		for i in range(len(test)):
 			self.paths.append(model.short_paths.path[i])
 			self.reversed_paths.append(list(reversed(model.short_paths.path[i])))
-	
+
 	def nest(self):
 
 		"""Possibles estats al niu"""
@@ -150,7 +183,7 @@ class AntAgent(Agent):
 				self.model.food_counter.add_food()
 
 			if (self.state == State.EXPLORING):
-				self.r_i = self.model.omega + self.model.eta
+				self.r_i = self.model.omega + self.model.etta
 				
 
 	def food(self):
@@ -184,7 +217,7 @@ class AntAgent(Agent):
 					if (self.model.food_counter.f_site_1[item] == 0):
 						if (self.state == State.RECRUITING):
 							self.state = State.EXPLORING
-							self.r_i = self.model.omega + self.model.eta
+							self.r_i = self.model.omega + self.model.etta
 
 		#Food nodes 2
 		if ((self.pos in self.model.food_node[1])):
@@ -210,7 +243,7 @@ class AntAgent(Agent):
 					if (self.model.food_counter.f_site_2[item] == 0):
 						if (self.state == State.RECRUITING):
 							self.state = State.EXPLORING
-							self.r_i = self.model.omega + self.model.eta
+							self.r_i = self.model.omega + self.model.etta
 
 					
 	### Recruitment Funtion ###
@@ -266,15 +299,7 @@ class AntAgent(Agent):
 	#
 	#--------------------------
 
-	def random_move(self):
 
-		"""Random movement function"""
-
-		possible_steps = self.model.grid.get_neighbors(
-			self.pos,
-			include_center = False)
-		new_position = self.random.choice(possible_steps)
-		self.model.grid.move_agent(self, new_position)
 		
 
 	def return_to_nest(self):
@@ -298,7 +323,7 @@ class AntAgent(Agent):
 	def move(self):
 
 		if(self.state == State.EXPLORING):
-			self.r_i = self.model.omega + self.model.eta
+			self.r_i = self.model.omega + self.model.etta
 			self.random_move()
 
 			#Save Position where food is found and path to return (1)
@@ -360,7 +385,7 @@ class AntAgent(Agent):
 
 	def dead(self):
 		"""Dead agent that returns instantaniously to the nest
-		And with state waiting; Parameter = eta """
+		And with state waiting; Parameter = etta """
 
 		self.model.grid.move_agent(self, self.model.initial_node)
 		self.state = State.WAITING

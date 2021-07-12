@@ -154,19 +154,19 @@ plt.show()
 
 #-----------------------------------------------------------
 #
-# Eta vs n_mean (At the stationary state)
+# etta vs n_mean (At the stationary state)
 #
 #-----------------------------------------------------------
 
 """
-eta,n_mean = np.loadtxt("Results/"+file_name+'_eta.dat',unpack=True)
+etta,n_mean = np.loadtxt("Results/"+file_name+'_eta.dat',unpack=True)
 
 fig,ax = plt.subplots()
-plt.title("Parameter eta")
-plt.xlabel("Eta")
+plt.title("Parameter etta")
+plt.xlabel("etta")
 plt.ylabel("n_explorers_mean")
 plt.grid()
-ax.scatter(eta,n_mean, s=20, marker='.', label="n_agents")
+ax.scatter(etta,n_mean, s=20, marker='.', label="n_agents")
 leg = ax.legend()
 plt.show()
 """
