@@ -27,7 +27,7 @@ class AntModel(Model):
  
 	def __init__(self, N, width, height, nest_node, food_node,
 				alpha, beta_1, beta_2, gamma_1, gamma_2,
-				omega, etta):
+				omega, eta):
 		
 		self.num_agents 	= N
 		self.alpha   		= alpha 
@@ -36,7 +36,7 @@ class AntModel(Model):
 		self.gamma_1		= gamma_1
 		self.gamma_2 		= gamma_2
 		self.omega   		= omega
-		self.etta     		= etta
+		self.eta     		= eta
 
 		self.initial_node = nest_node
 

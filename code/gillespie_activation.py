@@ -158,7 +158,7 @@ class ActivationStep(RandomActivation):
 
 			#"Decision making" process
 			if (agent_sampled.state == State.EXPLORING):
-				if (rand2 < agent.model.omega/(agent.model.omega+agent.model.etta)):
+				if (rand2 < agent.model.omega/(agent.model.omega+agent.model.eta)):
 					agent_sampled.step()
 				else:
 					agent_sampled.dead()

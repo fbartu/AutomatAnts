@@ -42,7 +42,7 @@ beta_2  = 1.0
 gamma_1 = 1.0
 gamma_2 = 1.0
 omega   = 2.5  
-etta     = 0.035
+eta     = 0.035
 
 #Number of different runs to average results
 run_steps = 20
@@ -103,8 +103,8 @@ file.write("\n")
 file.write("omega = ")
 file.write(str(omega))
 file.write("\n")
-file.write("etta = ")
-file.write(str(etta))
+file.write("eta = ")
+file.write(str(eta))
 file.write("\n")
 file.write("\n")
 file.write("Food pieces = ")

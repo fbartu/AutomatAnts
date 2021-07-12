@@ -31,7 +31,7 @@ beta_2  = params.beta_2
 gamma_1 = params.gamma_1
 gamma_2 = params.gamma_2
 omega   = params.omega
-etta     = params.etta
+eta     = params.eta
 
 #Key Position
 nest_node = params.nest_node
@@ -53,16 +53,16 @@ n_mean_list = []
 n_std_list  = []
 
 run_steps = 50
-etta = 0.0
+eta = 0.0
 
 for j in range(run_steps):
 
-	eta_list.append(etta)
+	eta_list.append(eta)
 	
 	#Initialize the model
 	model = AntModel(n_agents,width,height,nest_node,food_node,
 					alpha,beta_1,beta_2,gamma_1,gamma_2,
-					omega,etta)
+					omega,eta)
 
 
 	#Save states/evolution data 
@@ -79,12 +79,12 @@ for j in range(run_steps):
 
 	#Prints while runing the program
 	if (j % 1 == 0):
-		print("Step: ", int(j/1), "etta: ", etta, "mean: ",np.mean(E_count_array), np.std((E_count_array)))
+		print("Step: ", int(j/1), "eta: ", eta, "mean: ",np.mean(E_count_array), np.std((E_count_array)))
 	if (j == run_steps-1):
 		print("Successful run - End")
 		print("Execution time = -- %s seconds --" % (time.time() - start_time))
 
-	etta += 0.01
+	eta += 0.01
 
 #-----------------------------------------------------------
 #
