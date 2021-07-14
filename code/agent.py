@@ -1,16 +1,11 @@
-
 import random
 import numpy as np
 import networkx as nx
 
-from mesa import Agent, Model
-from mesa.time import RandomActivation
-from mesa.space import NetworkGrid
-from mesa.datacollection import DataCollector
-
 from enum import IntEnum
 from copy import deepcopy
 
+# from lattice import Lattice
 import gillespie_activation
 from model import *
 import params
@@ -31,6 +26,7 @@ class State(IntEnum):
 	RECRUITING = 3
 	EXPLORING_M = 4
 	RECRUITING_M = 5
+	DEAD = 6
 
 
 #-----------------------------------------------------------
@@ -42,56 +38,11 @@ class State(IntEnum):
 class Tag(IntEnum):
 
 	"""Study the explotation of the food / information flux
-	N = Null + Naif + Informed"""
+	N = Naif + informed """
 
-	NULL = 1
-	NAIF = 2
-	INFORMED = 3
+	NAIF = 1
+	INFORMED = 2
 
-#-----------------------------------------------------------
-#
-#  Food Counter Class
-#
-#-----------------------------------------------------------
-
-class FoodCounter:
-
-	def __init__(self):
-		self.f_nest   = 0
-		self.f_site_1 = deepcopy(params.food_site_1_list)
-		self.f_site_2 = deepcopy(params.food_site_2_list)
-
-	def add_food(self):
-		self.f_nest += 1
-
-	def substract_site_1(self,item):
-		self.f_site_1[item] -= 1 
-	
-	def substract_site_2(self,item):
-		self.f_site_2[item] -= 1
-
-
-#-----------------------------------------------------------
-#
-#  Different shortest path of the grid
-#  
-#-----------------------------------------------------------
-
-class ShortPaths:
-
-	"""Generate a data set with all the possible guided paths
-	Initializate at the start of the program, 
-	Save all the short paths in a vector"""
-
-	path = []
-
-	def __init__(self, model):
-
-		for i in range(len(model.food_node)):
-			ShortPaths.source = model.food_node[i][0]
-			ShortPaths.target = model.initial_node
-			self.Graph = model.G
-			ShortPaths.path.append(nx.shortest_path(self.Graph, ShortPaths.source, ShortPaths.target))
 				
 #-----------------------------------------------------------
 #
@@ -99,149 +50,158 @@ class ShortPaths:
 #
 #-----------------------------------------------------------
 
-def move(pos, path = ShortPaths().path, type = 'random'):
-	if type == 'random':
-		possible_steps = AntAgent.model.grid.get_neighbors(
-			pos,
-			include_center = False)
-		pos = random.choice(possible_steps)
-	elif type == 'informed':
-		'a'
+# lattice = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
 
-	return pos
-		# self.model.grid.move_agent(self, pos)
-
-def Action(pos, state, tag, is_recruited):
-
-	# Possible actions if ant is on the nest
-	if (state == State.WAITING):
-		if (is_recruited):
-			state = State.RECRUITING
-			tag = Tag.INFORMED
-		else:
-			pos = move(pos, type = 'random')
-			state = State.EXPLORING
-			tag = Tag.NAIF
-
-		r_i = params.omega
-
-	# If not on the nest...
-	else:
-		if (state == State.EXPLORING):
-			if (pos in params.food_location):
-				state = State.EXPLORING_M
-				r_i = params.beta_1
-				food[pos] =- 1
-			else:
-				pos = move(pos, type = 'random')
-
-		elif (state == State.EXPLORING_M or state == State.RECRUITING_M):
-			# if in nest node -> recruitment happens
-			if(pos == params.nest_node):
-				state = State.RECRUITING
-				lattice.food_in_nest =+ 1
-				if(state == State.EXPLORING_M):
-					r_i = params.gamma_1
-				else:
-					r_i = params.gamma_2
-
-			# else keep moving to nest
-			else:
-				pos = move(pos, path = AGENTPATH,type = 'informed')
-		elif (state == State.RECRUITING):
-			if (pos in params.food_location):
-				state = State.RECRUITING_M
-				r_i = params.beta_2
-				food[pos] =- 1
-
-
-
-	return pos, state, tag, r_i
-
-class AntAgent(Agent):
+class Ant():
 	""" An ant agent."""
 	
-	def __init__(self, unique_id, model):
-		super().__init__(unique_id, model)
+	def __init__(self, unique_id, recruitment_strategy):
+
+		self.id = unique_id
 		
-		#Variables to save and initialization
+		# Variables to save and initialization
 		self.pos = params.nest_node
 		self.state = State.WAITING
-		self.r_i = self.model.alpha
+		self.r_i = params.alpha
+		self.path2nest = []
+		self.path2food = []
 
-		### Tag ###
-		self.tag = Tag.NULL
+		# Recruitment related
+		self.recruitment_strategy = recruitment_strategy
+		self.recruit = self.choose_recruitment()
 
-		#Different possible paths
-		test =  model.short_paths.path
-		self.paths = []
-		self.reversed_paths = []
-		for i in range(len(test)):
-			self.paths.append(model.short_paths.path[i])
-			self.reversed_paths.append(list(reversed(model.short_paths.path[i])))
+		# No information about food
+		self.tag = Tag.NAIF
 
+	def choose_recruitment(cls):
 
+		if cls.recruitment_strategy == 'IR':
+			return cls.IR
 
-	def food(self):
+		elif cls.recruitment_strategy == 'HR':
+			return cls.HR
 
-		"""Food encounter"""
-		"""Recluta - Pos = posició_menjar
-			Parameter : if state = explorer Beta_1
-			if state = reclutat Beta_2"""
+		elif cls.recruitment_strategy == 'GR':
+			return cls.GR
+
+		else:
+			return cls.NR
+	
+	def IR(self, environment, ant_pool):
+		s = random.choice(environment.waiting_ants)
+		environment.waiting_ants.remove(s)
+		agent = ant_pool[s]
+		agent.r_i = params.omega
+		agent.tag = Tag.INFORMED
+		agent.state = State.RECRUITING
+	
+	def HR(self, environment, ant_pool):
+		r = random.randrange(0, 6)
+		if len(r) > 0:
+			for s in len(range(r)):
+				environment.waiting_ants.remove(s)
+				agent = ant_pool[s]
+				agent.r_i = params.omega
+				agent.tag = Tag.INFORMED
+				agent.state = State.RECRUITING
 		
-		#Food nodes 1 
-		if ((self.pos in self.model.food_node[0])):
+		# One possibility is: if you don't recruit, stay in nest
+		'''
+		else:
+			self.state = State.WAITING
+			self.r_i = params.alpha
+		'''
 
-			for item in range(len(self.model.food_node[0])):
-				if (self.model.food_node[0][item] == self.pos):
-					
-					if (self.model.food_counter.f_site_1[item] != 0):
-						if (self.state == State.EXPLORING):
-							self.state = State.EXPLORING_M
-							self.r_i = self.model.beta_1
-							self.model.food_counter.substract_site_1(item) #Counter
+	def GR(self, environment, ant_pool):
+		r = random.randrange(3, 6)
+		for s in len(range(r)):
+			environment.waiting_ants.remove(s)
+			agent = ant_pool[s]
+			agent.r_i = params.omega
+			agent.tag = Tag.INFORMED
+			agent.state = State.RECRUITING
 
-						if (self.state == State.RECRUITING):
-							self.state = State.RECRUITING_M
-							self.r_i = self.model.beta_2
-							self.model.food_counter.substract_site_1(item) #Counter
+	def NR(self, environment):
+		pass
 
-						### Tag ###
-						if (self.tag == Tag.NULL):
-							self.tag = Tag.NAIF
-							
-					if (self.model.food_counter.f_site_1[item] == 0):
-						if (self.state == State.RECRUITING):
-							self.state = State.EXPLORING
-							self.r_i = self.model.omega + self.model.eta
+	def move(self, environment, type = 'random'):
+		if type == 'random':
+			possible_steps = environment.grid.get_neighbors(
+				self.pos,
+				include_center = False)
+			self.pos = random.choice(possible_steps)
+		elif type == '2nest':
+			self.pos = self.path2nest.pop(0)
+		elif type == '2food':
+			self.pos = self.path2food.pop(0)
+		'''
+		Future possible movement types could include levy walks or directional persistance
+		'''
 
-		#Food nodes 2
-		if ((self.pos in self.model.food_node[1])):
 
-			for item in range(len(self.model.food_node[1])):
-				if (self.model.food_node[1][item] == self.pos):
+	def Action(self, environment):
 
-					if (self.model.food_counter.f_site_2[item] != 0):
-						if (self.state == State.EXPLORING):
-							self.state = State.EXPLORING_M
-							self.r_i = self.model.beta_1
-							self.model.food_counter.substract_site_2(item) #Counter
-							
-						if (self.state == State.RECRUITING):
-							self.state = State.RECRUITING_M
-							self.r_i = self.model.beta_2
-							self.model.food_counter.substract_site_2(item) #Counter
+		# If ant is waiting on the nest, explore.
+		if (self.state == State.WAITING):
 
-						### Tag ###
-						if (self.tag == Tag.NULL):
-							self.tag = Tag.NAIF
-							
-					if (self.model.food_counter.f_site_2[item] == 0):
-						if (self.state == State.RECRUITING):
-							self.state = State.EXPLORING
-							self.r_i = self.model.omega + self.model.eta
+			self.state = State.EXPLORING
+			self.tag = Tag.NAIF
+			self.r_i = params.omega
+		
+		elif self.state == State.DEAD:
+			
+			if self.pos == environment.initial_node:
+				self.r_i = params.alpha
+				self.state = State.WAITING
+				environment.waiting_ants.append(self.id)
+			else:
+				self.pos = self.move(self.pos, type = '2nest')
 
-					
+		# If not waiting...
+		else:
+			if (self.state == State.EXPLORING):
+				if (self.pos in params.food_location and environment.food[self.pos] > 0):
+					self.state = State.EXPLORING_M
+					self.r_i = params.beta_1
+					environment.food[self.pos] -= 1
+				else:
+					'''
+					ETA DECISION: GO TO NEST ??
+					rng = random.random()
+					if rng < params.eta / (params.omega + params.eta)
+						self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
+						self.pos = self.move(self.pos, type = '2nest')
+						self.state = State.DEAD
+					'''
+					self.pos = self.move(self.pos, type = 'random')
+
+			elif (self.state == State.EXPLORING_M or self.state == State.RECRUITING_M):
+				# if in nest node -> recruitment happens
+				if(self.pos == params.nest_node):
+					self.state = State.RECRUITING
+					environment.food_in_nest =+ 1
+					if(self.state == State.EXPLORING_M):
+						self.r_i = params.gamma_1
+					else:
+						self.r_i = params.gamma_2
+
+				# else keep moving to nest
+				else:
+					self.pos = self.move(self.pos, type = '2nest')
+			elif (self.state == State.RECRUITING):
+				if (self.pos in params.food_location):
+					if environment.food[self.pos] > 0:
+						self.state = State.RECRUITING_M
+						self.r_i = params.beta_2
+						environment.food[self.pos] -= 1
+					else:
+						self.state = State.EXPLORING
+						self.r_i = params.omega
+				
+				elif self.pos == params.nest_node:
+					self.recruit()
+
+
 	### Recruitment Funtion ###
 
 	def recruitment(self):

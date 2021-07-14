@@ -43,6 +43,7 @@ gamma_1 = 1.0
 gamma_2 = 1.0
 omega   = 2.5  
 eta     = 0.035
+mu 		= 0.05 # noise in recruitment (as probability [0, 1])
 
 #Number of different runs to average results
 run_steps = 20
@@ -54,7 +55,7 @@ Group recruitment ('GR')      = [3, 5]
 Individual recruitment ('IR') = 1
 No recruitment ('NR)        = 0
 '''
-recruitment = 'HR' # Hybrid recruitment
+recruitment = 'GR'
 
 
 #-----------------------------------------------------------
