@@ -1,9 +1,3 @@
-#-----------------------------------------------------------
-#
-# Model Parameters 
-#
-#-----------------------------------------------------------
-
 import os
 
 path = os.getcwd()+'/research/AutomatAnts/'
@@ -50,19 +44,17 @@ run_steps = 20
 
 '''
 Possible recruitment strategies:
+No recruitment ('NR)          = 0
+Individual recruitment ('IR') = 1
 Hybrid recruitment ('HR')     = [0, 5]
 Group recruitment ('GR')      = [3, 5]
-Individual recruitment ('IR') = 1
-No recruitment ('NR)        = 0
 '''
 recruitment = 'GR'
 
 
-#-----------------------------------------------------------
-#
-# Save data in a file
-#
-#-----------------------------------------------------------
+'''
+PARAMETERS INFO FILE
+'''
 
 file = open(path + "run_info/"+file_name+"_info.dat","x")
 
@@ -107,10 +99,15 @@ file.write("\n")
 file.write("eta = ")
 file.write(str(eta))
 file.write("\n")
+file.write("mu = ")
+file.write(str(mu))
 file.write("\n")
+file.write("\n")
+
 file.write("Food pieces = ")
 file.write(str(foodXvertex*len(food)))
 file.write("\n")
+
 file.write("Recruitment type:")
 file.write(str(recruitment))
 

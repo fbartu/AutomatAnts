@@ -1,4 +1,4 @@
-#from mesa.space import NetworkGrid
+from mesa.space import NetworkGrid
 import networkx as nx
 
 class Lattice():
@@ -12,11 +12,12 @@ class Lattice():
 		self.food = food
 		self.food_in_nest = 0
 		self.food_cluster = {}
-		self.waiting_ants = n_agents
+		self.waiting_ants = dict(zip(list(range(n_agents)), list(range(n_agents))))
+		self.out_nest = {}
 
 		#Create the hexagonal lattice
 		self.G = nx.hexagonal_lattice_graph(width,height,periodic=False)
-		#self.grid = NetworkGrid(self.G)
+		self.grid = NetworkGrid(self.G)
 
 		# Compute the shortest paths of the lattice (food to nest, and backwards)
 		# The key of the dictionary holds the food position, so it is easy to keep track of the path
@@ -38,7 +39,8 @@ class Lattice():
 		if iterative:
 			self.split_food_patches()
 			for i in range(len(self.patch_positions)):
-				self.food_cluster{'Patch ' + str(i): self.patch_positions[i]}
+				self.food_cluster['Patch ' + str(i)] = self.patch_positions[i]
 		else:
-			food_cluster = {'Patch ' + str(id): pos}
-			self.food_cluster['Patch ' + str(id)] = food_cluster
+			self.food_cluster['Patch ' + str(id)] = list(pos)
+
+	def 
