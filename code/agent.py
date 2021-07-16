@@ -1,7 +1,7 @@
 import random
 import networkx as nx
 from mesa.space import NetworkGrid
-from enum import IntEnum
+from copy import deepcopy
 
 # from lattice import Lattice
 import params
@@ -11,22 +11,19 @@ import params
 STATES AND TAGS
 '''
 
-class State(IntEnum):
+class State():
+	
+	WAITING = 'W' # waiting in nest
+	EXPLORING = 'E' # exploring
+	RECRUITING = 'R' # recruiting or getting recruited
+	EXPLORING_FOOD = 'EF' # transporting food as explorer
+	RECRUITING_FOOD = 'RF' # transporting food as recruiter
+	DEAD = 'D' # back to nest
 
-	WAITING = 1 # waiting in nest
-	EXPLORING = 2 # exploring
-	RECRUITING = 3 # recruiting or getting recruited
-	EXPLORING_FOOD = 4 # transporting food as explorer
-	RECRUITING_FOOD = 5 # transporting food as recruiter
-	DEAD = 6 # back to nest
+class Tag():
 
-class Tag(IntEnum):
-
-	NAIVE = 1 # no information about key locations
-	INFORMED = 2 # gets information when recruited by another ant
-
-				
-# lattice = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
+	NAIVE = 'N' # no information about key locations
+	INFORMED = 'I' # gets information when recruited by another ant
 
 '''
 ANT AGENT 
@@ -88,22 +85,22 @@ class Ant():
 		agent.r_i = params.omega
 		agent.tag = Tag.INFORMED
 		agent.state = State.RECRUITING
-		agent.path2food = environment.paths2food[self.locations[-1]] # path to where food was found
+		agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 		return 1 # return number of informed ants
 	
 	# Hybrid recruitment
 	def HR(self, environment, ant_pool):
 		r = random.randrange(0, 6)
 		if len(r) > 0:
-			samples = random.sample(environment.waiting_ants, r)
-			for sample in len(range(samples)):
+			samples = random.sample(list(environment.waiting_ants), r)
+			for sample in samples:
 				del environment.waiting_ants[sample]
 				environment.out_nest[sample] = sample
 				agent = ant_pool[sample]
 				agent.r_i = params.omega
 				agent.tag = Tag.INFORMED
 				agent.state = State.RECRUITING
-				agent.path2food = environment.paths2food[self.locations[-1]] # path to where food was found
+				agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 			return r # return number of informed ants
 		else:
 			return len(r)
@@ -118,19 +115,19 @@ class Ant():
 	# Group recruitment
 	def GR(self, environment, ant_pool):
 		r = random.randrange(3, 6)
-		samples = random.sample(environment.waiting_ants, r)
-		for sample in len(range(samples)):
+		samples = random.sample(list(environment.waiting_ants), r)
+		for sample in samples:
 			del environment.waiting_ants[sample]
 			environment.out_nest[sample] = sample
 			agent = ant_pool[sample]
 			agent.r_i = params.omega
 			agent.tag = Tag.INFORMED
 			agent.state = State.RECRUITING
-			agent.path2food = environment.paths2food[self.locations[-1]] # path to where food was found
+			agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 		return r # return number of informed ants
 
 	# No recruitment
-	def NR(self, environment):
+	def NR(self):
 		return 0
 
 
@@ -175,78 +172,85 @@ class Ant():
 				self.state = State.WAITING
 				environment.waiting_ants[self.id] = self.id
 				del environment.out_nest[self.id]
+				self.path2nest = []
+				
 			else:
-				self.move(self.pos, type = '2nest')
-
+				self.move(environment, type = '2nest')
 			return 0
-		
-		else:
 
-			if (self.state == State.EXPLORING):
-				# If food is found
-				if (self.pos in params.food_location and environment.food[self.pos] > 0):
-					self.state = State.EXPLORING_FOOD
-					self.r_i = params.beta_1
+		elif self.state == State.EXPLORING:
+
+		
+			# If food is found
+			if (self.pos in environment.food and environment.food[self.pos] > 0):
+				self.state = State.EXPLORING_FOOD
+				self.r_i = params.beta_1
+				environment.food[self.pos] -= 1
+				self.locations.append(self.pos) # remember where food was found
+				self.path2nest = deepcopy(environment.paths2nest[self.pos])
+				self.path2food = deepcopy(environment.paths2food[self.pos])
+			else:
+				# Go to nest with a probability eta / (eta + omega) ~ 0.05%
+				rng = random.random()
+				if rng < params.eta / (params.omega + params.eta):
+					self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
+					self.move(environment, type = '2nest')
+					self.state = State.DEAD
+
+				else:
+					self.move(environment, type = 'random')
+			
+			return 0
+
+		elif (self.state == State.EXPLORING_FOOD):
+			# if in nest node -> recruitment happens
+			if(self.pos == environment.initial_node):
+				self.state = State.RECRUITING
+				environment.food_in_nest =+ 1
+				self.r_i = params.gamma_1
+				
+			# else keep moving to nest
+			else:
+				self.move(environment, type = '2nest')
+			
+			return 0
+
+		elif (self.state == State.RECRUITING_FOOD):
+			# if in nest node -> recruitment happens
+			if(self.pos == environment.initial_node):
+				self.state = State.RECRUITING
+				environment.food_in_nest =+ 1
+				self.r_i = params.gamma_2
+			# else keep moving to nest
+			else:
+				self.move(environment, type = '2nest')
+			
+			return 0
+
+		elif (self.state == State.RECRUITING):
+			# pick up food
+			if (self.pos in environment.food):
+				if environment.food[self.pos] > 0:
+					self.state = State.RECRUITING_FOOD
+					self.r_i = params.beta_2
 					environment.food[self.pos] -= 1
 					self.locations.append(self.pos) # remember where food was found
+					self.path2nest = deepcopy(environment.paths2nest[self.pos])
+					self.path2food = deepcopy(environment.paths2food[self.pos])
+
 				else:
-					# Go to nest with a probability eta / (eta + omega) ~ 0.05%
-					rng = random.random()
-					if rng < params.eta / (params.omega + params.eta):
-						self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
-						self.move(self.pos, type = '2nest')
-						self.state = State.DEAD
-
-					else:
-						self.move(self.pos, type = 'random')
-				
+					self.state = State.EXPLORING
+					self.r_i = params.omega + params.eta
 				return 0
+			# recruit other ants
+			elif self.pos == environment.initial_node:
+				if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
+					self.r_i = params.omega
+					self.recruit(environment, ant_pool)
 
-			elif (self.state == State.EXPLORING_FOOD):
-				# if in nest node -> recruitment happens
-				if(self.pos == params.nest_node):
-					self.state = State.RECRUITING
-					environment.food_in_nest =+ 1
-					self.r_i = params.gamma_1
-				# else keep moving to nest
 				else:
-					self.move(self.pos, type = '2nest')
-				
-				return 0
-
-			elif (self.state == State.RECRUITING_FOOD):
-				# if in nest node -> recruitment happens
-				if(self.pos == params.nest_node):
-					self.state = State.RECRUITING
-					environment.food_in_nest =+ 1
-					self.r_i = params.gamma_2
-				# else keep moving to nest
-				else:
-					self.move(self.pos, type = '2nest')
-				
-				return 0
-
-			elif (self.state == State.RECRUITING):
-				# pick up food
-				if (self.pos in params.food_location):
-					if environment.food[self.pos] > 0:
-						self.state = State.RECRUITING_FOOD
-						self.r_i = params.beta_2
-						environment.food[self.pos] -= 1
-						self.locations.append(self.pos) # remember where food was found
-					else:
-						self.state = State.EXPLORING
-						self.r_i = params.omega + params.eta
+					self.move(environment, type = '2food')
 					return 0
-				# recruit other ants
-				elif self.pos == params.nest_node:
-					if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
-						self.r_i = params.omega
-						self.recruit(environment, ant_pool)
-
-					else:
-						self.move(self.pos, type = '2food')
-						return 0
-				else:
-					self.move(self.pos, type = '2food')
-					return 0
+			else:
+				self.move(environment, type = '2food')
+				return 0

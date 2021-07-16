@@ -20,12 +20,12 @@ class Lattice():
 		self.grid = NetworkGrid(self.G)
 
 		# Compute the shortest paths of the lattice (food to nest, and backwards)
-		# The key of the dictionary holds the food position, so it is easy to keep track of the path
-		self.paths2food = [nx.shortest_path(self.G, pos, self.initial_node) for pos in self.food.keys()]
-		self.paths2food = dict(zip(list(self.food.keys(), self.paths2food)))
+		self.paths2nest = [nx.shortest_path(self.G, pos, self.initial_node) for pos in self.food.keys()]
+		self.paths2food = [list(reversed(path)) for path in self.paths2nest]
 
-		self.paths2nest = [list(reversed(path)) for path in self.paths2food]
-		self.paths2nest = dict(zip(list(self.food.keys(), self.paths2nest)))
+		# The key of the dictionary holds the food position, so it is easy to keep track of the path
+		self.paths2nest = dict(zip(self.food.keys(), self.paths2nest))
+		self.paths2food = dict(zip(self.food.keys(), self.paths2food))
 
 
 	# splits food list into packs of 6 positions (that usually conform a patch of food)
@@ -43,4 +43,3 @@ class Lattice():
 		else:
 			self.food_cluster['Patch ' + str(id)] = list(pos)
 
-	def 

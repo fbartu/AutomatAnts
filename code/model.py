@@ -1,67 +1,35 @@
-
-from mesa import Agent, Model
-from mesa.time import RandomActivation
-from mesa.space import NetworkGrid
-from mesa.datacollection import DataCollector
-
-import networkx as nx
-import gillespie_activation
+from gillespie import GillespieAlgorithm
 from agent import *
-'''
-import math
-def rotate(x, y, theta = math.pi/2):
-	X = round(x*math.cos(theta)-y*math.sin(theta), 2)
-	Y = round(x*math.sin(theta)+y*math.cos(theta), 2)
-	return (X, Y)
-'''
+import json
 
-#-----------------------------------------------------------
-#
-# 							Model
-#
-#----------------------------------------------------------
+class Model(GillespieAlgorithm):
 
-class AntModel(Model):
+    def __init__(self, n_agents, recruitment_strategy, environment, steps, path, filename):
 
-	"""A model with some number of ant agents."""
- 
-	def __init__(self, N, width, height, nest_node, food_node,
-				alpha, beta_1, beta_2, gamma_1, gamma_2,
-				omega, eta):
-		
-		self.num_agents 	= N
-		self.alpha   		= alpha 
-		self.beta_1  		= beta_1
-		self.beta_2  		= beta_2
-		self.gamma_1		= gamma_1
-		self.gamma_2 		= gamma_2
-		self.omega   		= omega
-		self.eta     		= eta
+        ants = list(Ant(a, recruitment_strategy) for a in list(range(n_agents)))
 
-		self.initial_node = nest_node
+        super().__init__(ants, environment)
 
-		#Create the hexagonal lattice
-		self.G = nx.hexagonal_lattice_graph(width,height,periodic=False)
-		self.grid = NetworkGrid(self.G)
+        self.steps = steps
+        self.path = path
+        self.filename = filename
+    
+    def run(self):
 
-		#Compute the shortest path of the lattice
-		self.short_paths = (ShortPaths(self))
+        for i in list(range(self.steps)):
+            if float(i / 2000) == int(i /2000):
+                print(i)
+            self.step()
 
-		#Initialize food quantity
-		self.food_counter = (FoodCounter())
-		
-		#Activation step initialization
-		self.schedule = gillespie_activation.ActivationStep(self)
+        # self.save_data()
 
-		#Create Agents
-		for i in range(self.num_agents):
-			a = AntAgent(i, self)
-			self.schedule.add(a)
-			self.grid.place_agent(a, self.initial_node)
-			
-		
-	def step(self):
+    def save_data(self):
 
-		"""Model Step """
-		self.schedule.step()
-		
+        data = {'Time (s)': self.T,
+        'Connectivity': self.K,
+        'N': self.N,
+        'Interactions': self.I}
+        
+        with open(self.path + 'results/' + self.filename + '.json', 'w') as f:
+            json.dump(data, f)
+

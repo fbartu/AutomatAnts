@@ -3,41 +3,21 @@ import sys
 sys.path.append('~/research/AutomatAnts/code/')
 
 import numpy as np
-import matplotlib.pyplot as plt
 import time
 
-from model import *
+from model import Model
+from lattice import Lattice
+
 import params
 
 path = params.path
+filename = params.file_name
 
-#-----------------------------------------------------------
-#
-# Model Parameters
-#
-#-----------------------------------------------------------
+environment = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
+model = Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)
+model.run_model()
 
-n_agents = params.n_agents
-n_steps  = params.n_steps
-
-#Lattice size
-width    = params.width 
-height   = params.height 
-
-#Parameters
-alpha   = params.alpha
-beta_1  = params.beta_1
-beta_2  = params.beta_2
-gamma_1 = params.gamma_1
-gamma_2 = params.gamma_2
-omega   = params.omega
-eta     = params.eta
-
-#Key Position
-nest_node = params.nest_node
-food_cluster_1 = params.food_cluster_1 
-food_cluster_2 = params.food_cluster_2
-food_node = [food_cluster_1,food_cluster_2]
+'''
 
 #-----------------------------------------------------------
 #
@@ -185,3 +165,5 @@ nx.draw(G, pos=pos, with_labels=True,
 plt.axis('off')
 plt.show()
 """
+
+'''

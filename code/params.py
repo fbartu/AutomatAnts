@@ -1,7 +1,9 @@
 import os
 
 path = os.getcwd()+'/research/AutomatAnts/'
-pathL = os.listdir(path + '/results/')
+# path = '/home/polfer/research/AutomatAnts/'
+pathL = os.listdir(path + 'results/')
+pathL.remove('run_info')
 
 # File name
 if len(pathL) == 0:
@@ -13,8 +15,8 @@ else:
 	file_name = 'Run_' + str(max(file_name)+1)
 
 #Model
-n_agents = 250 
-n_steps  = 800000
+n_agents = 100 # 250
+n_steps  = 600000 # 800000
 
 nest_node = (0,22)
 foodXvertex = 1
@@ -54,9 +56,9 @@ recruitment = 'GR'
 
 '''
 PARAMETERS INFO FILE
-'''
 
-file = open(path + "run_info/"+file_name+"_info.dat","x")
+
+file = open(path + "results/run_info/"+file_name+"_info.dat","x")
 
 file.write("n_agents = ")
 file.write(str(n_agents))
@@ -108,9 +110,10 @@ file.write("Food pieces = ")
 file.write(str(foodXvertex*len(food)))
 file.write("\n")
 
-file.write("Recruitment type:")
+file.write("Recruitment type = ")
 file.write(str(recruitment))
 
 file.close()
 
 
+'''
