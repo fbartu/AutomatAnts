@@ -25,10 +25,10 @@ class Model(GillespieAlgorithm):
         # self.save_data()
 
     def time2seconds(self):
-        self.T = self.T / 2.0 # convert from frames to seconds (FPS = 2)
+        self.T = [t / 2.0 for t in self.T] # convert from frames to seconds (FPS = 2)
 
     def time2minutes(self):
-        self.T = self.T / (2.0  * 60)
+        self.T = [t / (2.0 * 60) for t in self.T]
 
     def save_data(self):
 
