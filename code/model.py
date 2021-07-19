@@ -21,14 +21,24 @@ class Model(GillespieAlgorithm):
                 print(i)
             self.step()
 
+        self.time2seconds()
         # self.save_data()
+
+    def time2seconds(self):
+        self.T = self.T / 2.0 # convert from frames to seconds (FPS = 2)
+
+    def time2minutes(self):
+        self.T = self.T / (2.0  * 60)
 
     def save_data(self):
 
         data = {'Time (s)': self.T,
         'Connectivity': self.K,
         'N': self.N,
-        'Interactions': self.I}
+        'Interactions': self.I,
+        'Food in nest': self.F,
+        'Informed': self.population[Tag.INFORMED],
+        'Patches of food': self.metrics.retrieve_efficiency(self.environment.food_cluster)}
         
         with open(self.path + 'results/' + self.filename + '.json', 'w') as f:
             json.dump(data, f)

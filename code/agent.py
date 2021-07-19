@@ -40,6 +40,7 @@ class Ant():
 		self.pos = params.nest_node
 		self.state = State.WAITING
 		self.r_i = params.alpha
+		self.movement = 'random'
 
 		# Key locations initialization
 		self.path2nest = []
@@ -85,13 +86,14 @@ class Ant():
 		agent.r_i = params.omega
 		agent.tag = Tag.INFORMED
 		agent.state = State.RECRUITING
+		agent.movement = '2food'
 		agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 		return 1 # return number of informed ants
 	
 	# Hybrid recruitment
 	def HR(self, environment, ant_pool):
 		r = random.randrange(0, 6)
-		if len(r) > 0:
+		if r > 0:
 			samples = random.sample(list(environment.waiting_ants), r)
 			for sample in samples:
 				del environment.waiting_ants[sample]
@@ -100,10 +102,11 @@ class Ant():
 				agent.r_i = params.omega
 				agent.tag = Tag.INFORMED
 				agent.state = State.RECRUITING
+				agent.movement = '2food'
 				agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
-			return r # return number of informed ants
-		else:
-			return len(r)
+
+		return r # return number of informed ants
+
 
 		# One possibility is: if you don't recruit, stay in nest
 		'''
@@ -123,6 +126,7 @@ class Ant():
 			agent.r_i = params.omega
 			agent.tag = Tag.INFORMED
 			agent.state = State.RECRUITING
+			agent.movement = '2food'
 			agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 		return r # return number of informed ants
 
@@ -131,26 +135,42 @@ class Ant():
 		return 0
 
 
+
 	# Move method
-	def move(self, environment, type = 'random'):
-		if type == 'random':
+	'''
+	FUTURE MOVEMENT POSSIBILITIES TO IMPLEMENT:
+	* Area restricted search : local
+	* Levy walks : levy
+	* Directional persistance : forward
+	'''
+	def move(self, environment):
+		if self.movement == 'random':
+
 			possible_steps = environment.grid.get_neighbors(
 				self.pos,
 				include_center = False)
 			self.pos = random.choice(possible_steps)
-		elif type == '2nest':
+
+		elif self.movement == '2nest':
 			self.pos = self.path2nest.pop(0)
-		elif type == '2food':
+
+		elif self.movement == '2food':
 			self.pos = self.path2food.pop(0)
 		
+		elif self.movement == 'local':
+			pass
+
+		elif self.movement == 'levy':
+			pass
+
+		elif self.movement == 'forward':
+			pass
+		
 		return 0
-		'''
-		Future possible movement types could include levy walks or directional persistance
-		'''
 
 
 	# Possible actions the ant may take, based on the position and the state
-	# returns 0 when no new informed ants are generated
+	# returns true if food is found and picked up
 	# this value is fed into the gillespie algorithm
 	def action(self, environment, ant_pool):
 
@@ -159,10 +179,11 @@ class Ant():
 
 			self.state = State.EXPLORING
 			self.r_i = params.omega + params.eta
+			# self.movement = 'random'
 			environment.out_nest[self.id] = self.id
 			del environment.waiting_ants[self.id]
 
-			return 0
+			return False
 
 		# If ant's state is "Dead" go back to nest.
 		elif self.state == State.DEAD:
@@ -170,13 +191,14 @@ class Ant():
 			if self.pos == environment.initial_node:
 				self.r_i = params.alpha
 				self.state = State.WAITING
+				self.movement = 'random'
 				environment.waiting_ants[self.id] = self.id
 				del environment.out_nest[self.id]
 				self.path2nest = []
 				
 			else:
-				self.move(environment, type = '2nest')
-			return 0
+				self.move(environment)
+			return False
 
 		elif self.state == State.EXPLORING:
 
@@ -184,23 +206,29 @@ class Ant():
 			# If food is found
 			if (self.pos in environment.food and environment.food[self.pos] > 0):
 				self.state = State.EXPLORING_FOOD
+				self.movement = '2nest'
 				self.r_i = params.beta_1
 				environment.food[self.pos] -= 1
+				environment.tfood[self.pos] 
 				self.locations.append(self.pos) # remember where food was found
 				self.path2nest = deepcopy(environment.paths2nest[self.pos])
 				self.path2food = deepcopy(environment.paths2food[self.pos])
+
+				return True
 			else:
 				# Go to nest with a probability eta / (eta + omega) ~ 0.05%
 				rng = random.random()
 				if rng < params.eta / (params.omega + params.eta):
 					self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
-					self.move(environment, type = '2nest')
+					self.movement = '2nest'
+					self.move(environment)
 					self.state = State.DEAD
+					
 
 				else:
-					self.move(environment, type = 'random')
+					self.move(environment)
 			
-			return 0
+			return False
 
 		elif (self.state == State.EXPLORING_FOOD):
 			# if in nest node -> recruitment happens
@@ -208,12 +236,13 @@ class Ant():
 				self.state = State.RECRUITING
 				environment.food_in_nest =+ 1
 				self.r_i = params.gamma_1
+				self.movement = '2food'
 				
 			# else keep moving to nest
 			else:
-				self.move(environment, type = '2nest')
+				self.move(environment)
 			
-			return 0
+			return False
 
 		elif (self.state == State.RECRUITING_FOOD):
 			# if in nest node -> recruitment happens
@@ -221,11 +250,12 @@ class Ant():
 				self.state = State.RECRUITING
 				environment.food_in_nest =+ 1
 				self.r_i = params.gamma_2
+				self.movement = '2food'
 			# else keep moving to nest
 			else:
-				self.move(environment, type = '2nest')
+				self.move(environment)
 			
-			return 0
+			return False
 
 		elif (self.state == State.RECRUITING):
 			# pick up food
@@ -233,24 +263,31 @@ class Ant():
 				if environment.food[self.pos] > 0:
 					self.state = State.RECRUITING_FOOD
 					self.r_i = params.beta_2
+					self.movement = '2nest'
 					environment.food[self.pos] -= 1
 					self.locations.append(self.pos) # remember where food was found
 					self.path2nest = deepcopy(environment.paths2nest[self.pos])
 					self.path2food = deepcopy(environment.paths2food[self.pos])
 
+					return True
+
 				else:
 					self.state = State.EXPLORING
 					self.r_i = params.omega + params.eta
-				return 0
+					self.movement = 'random'
+
+				return False
 			# recruit other ants
 			elif self.pos == environment.initial_node:
 				if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
 					self.r_i = params.omega
 					self.recruit(environment, ant_pool)
+					self.movement = '2food'
 
 				else:
-					self.move(environment, type = '2food')
-					return 0
+					self.move(environment)
+
+				return False
 			else:
-				self.move(environment, type = '2food')
-				return 0
+				self.move(environment)
+				return False

@@ -14,6 +14,7 @@ class Lattice():
 		self.food_cluster = {}
 		self.waiting_ants = dict(zip(list(range(n_agents)), list(range(n_agents))))
 		self.out_nest = {}
+		self.tfood = {}
 
 		#Create the hexagonal lattice
 		self.G = nx.hexagonal_lattice_graph(width,height,periodic=False)
@@ -32,7 +33,7 @@ class Lattice():
 	# assumes ordered positions 
 	def split_food_patches(self, each = 6):
 		lst = list(self.food.keys())
-		self.patch_positions = [lst[i:i + each] for i in lst]
+		self.patch_positions = [lst[i:i + each] for i in range(0, len(lst), each)]
 
 	# method for grouping the food (in a list of positions) in clusters (patches)
 	def cluster_food(self, pos, id = 0, iterative = True):

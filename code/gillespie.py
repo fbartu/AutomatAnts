@@ -6,107 +6,27 @@ import params
 import statistics
 
 
-class GillespieAlgorithm():
+class ParameterMetrics():
 
-	def __init__(self, agents, environment):
+	def __init__(self, environment, pos):
 
-		# Variables to measure
-		self.T = [0]
-		self.K = [0]
-		self.N = [0]
-		self.I = [0]
-
-		self.agents = agents
 		self.environment = environment
-
-		# debugging
-		self.sample = []
-
-		# states of the population
-		self.population = {State.WAITING: len(self.agents), 
-		State.EXPLORING: 0,
-		State.EXPLORING_FOOD: 0,
-		State.RECRUITING: 0,
-		State.RECRUITING_FOOD: 0,
-		State.DEAD: 0, # track number of recovered individuals
-		Tag.INFORMED: 0 # track number of informed individuals
-		}
-
-		'''
-		# tasks performed by the population
-		self.tasks = {State.WAITING: self.population[State.WAITING], 
-		State.EXPLORING: self.population[State.EXPLORING] + self.population[State.EXPLORING_FOOD],
-		State.RECRUITING: self.population[State.RECRUITING] + self.population[State.RECRUITING_FOOD]
-		}
-
-		'''
-		
-		self.r = [params.alpha] * len(self.agents)
-		self.r_norm = np.array(self.r) / sum(self.r)
-		self.R_t = sum(self.r)
-		
-
-		self.rng_t = random.random() # random number to sample the time
-		self.rng_action = random.random() # random number to determine if action occurs
-
-		self.time = abs(np.log(self.rng_t)/self.R_t)
+		self.pos = pos
 
 
-	def actualize_population(self):
+	def get_interactions(self):
+		unique_values = list(set(self.pos))
+		counts = []
+		for i in unique_values:
+			x = self.pos.count(i)
+			counts.append(x)
 
-		states = [self.agents[i].state for i in list(self.environment.out_nest.keys())]
-		for i in list(set(states)):
-			self.population[i] = states.count(i)
-
+		#return sum(np.array(counts) - 1)
+		return sum(np.array(counts) > 1)
 	
-	def step(self):
-		
-		#sample = rv_discrete(values=(list(self.agents.keys()), self.r_norm)).rvs(size=1)
-		sample = rv_discrete(values=(list(range(len(self.agents))), self.r_norm)).rvs(size=1)
-
-
-		if self.rng_action < float(self.r_norm[sample]):
-			self.sample.append(sample)
-
-			# get the index of the ant performing an action
-			idx = int(sample)
-
-			# do action
-			informed = self.agents[idx].action(self.environment, self.agents)
-
-			# actualize number of informed ants
-			#self.population[Tag.INFORMED] += informed
-
-			# actualize population tasks
-			self.actualize_population()
-			self.population[State.WAITING] = len(self.environment.waiting_ants)
-			#self.actualize_tasks()
-
-			# actualize rates
-			self.r[idx] = self.agents[idx].r_i
-			self.r_norm = np.array(self.r) / sum(self.r)
-			self.R_t = sum(self.r)
-
-			#pos_list = [self.agents[a].pos for a in list(self.environment.out_nest.keys())]
-
-			self.retrieve_data(0, 0)
-			#self.retrieve_data(self.get_interactions(pos_list), self.get_connectivity(pos_list))
-		# get rng for next iteration
-		self.rng_t = random.random()
-		self.rng_action = random.random()
-
-		# get time for next iteration
-		self.time += abs(np.log(self.rng_t)/self.R_t)
-
-	def get_interactions(self, pos):
-		unique_values = list(set(pos))
-		counts = [unique_values.count(x) for x in unique_values]
-		return sum(np.array(counts) - 1)
-		# return sum(np.array(counts) > 1)
-	
-	def get_connectivity(self, pos):
-		if len(pos):
-			pos = list(set(pos)) # eliminate duplicates
+	def get_connectivity(self):
+		if len(self.pos):
+			pos = list(set(self.pos)) # eliminate duplicates
 			k_length = []
 			branch = []
 			while len(pos) > 0:
@@ -120,9 +40,6 @@ class GillespieAlgorithm():
 					
 					while len(branch):
 						current_path.append(branch.pop(0))
-						'''
-						sometimes pos.remove() raises an error !!
-						'''
 						pos.remove(current_path[-1])
 						neighbors = np.array(self.environment.grid.get_neighbors(current_path[-1]))
 						idx = np.where([(n[0], n[1]) in pos for n in neighbors])
@@ -131,18 +48,135 @@ class GillespieAlgorithm():
 					k_length.append(len(current_path))
 					current_path = []
 
-			#return statistics.mean(k_length)
-			return k_length
+			return statistics.mean(k_length)
+			#return k_length
 		else:
-			return [0]
+			return 0
 
+	
+	def retrieve_efficiency(self, tfood):
+		if not len(self.environment.food_cluster):
+			self.environment.cluster_food()
+
+		food_found = np.array(list(map(lambda x: x == True, tfood['Flag'])))
+		
+		for p in list(self.environment.food_cluster.keys()):
+			patch = []
+
+			for i in self.environment.food_cluster[p]:
+				food_visited = np.array(list(map(lambda x: x == i, tfood['Pos'])))
+				
+				idx = int(np.where(np.logical_and(food_found == True, food_visited == True))[0])
+				patch.append(tfood['Time'][idx])
+
+			self.environment.food_cluster[p] = {'xy': self.environment.food_cluster[p], 't': patch}
+
+
+class GillespieAlgorithm():
+
+	def __init__(self, agents, environment):
+
+		# Variables to measure
+		self.T = [0]
+		self.K = [0]
+		self.N = [0]
+		self.I = [0]
+		self.F = [0]
+
+		self.agents = agents
+		self.environment = environment
+		#self.environment.cluster_food()
+		self.metrics = ParameterMetrics(self.environment, None)
+
+		# debugging
+		self.sample = []
+
+		# states of the population
+		self.population = {State.WAITING: [len(self.agents)], 
+		State.EXPLORING: [0],
+		State.EXPLORING_FOOD: [0],
+		State.RECRUITING: [0],
+		State.RECRUITING_FOOD: [0],
+		State.DEAD: [0], # track number of recovered individuals
+		Tag.INFORMED: [0] # track number of informed individuals
+		}
+		
+		self.r = [params.alpha] * len(self.agents)
+		self.r_norm = np.array(self.r) / sum(self.r)
+		self.R_t = sum(self.r)
+		
+
+		self.rng_t = random.random() # random number to sample the time
+		self.rng_action = random.random() # random number to determine if action occurs
+
+		self.time = abs(np.log(self.rng_t)/self.R_t)
+
+		# time flags on food pick up
+		self.tfood = {'Pos': self.environment.initial_node,
+		'Flag': False, 'Time': self.time}
+
+
+	def actualize_population(self):
+
+		states = [self.agents[i].state for i in list(self.environment.out_nest.keys())]
+		for i in list(set(states)):
+			self.population_status[i].append(states.count(i))
+
+	
+	def step(self):
+		
+		#sample = rv_discrete(values=(list(self.agents.keys()), self.r_norm)).rvs(size=1)
+		sample = rv_discrete(values=(list(range(len(self.agents))), self.r_norm)).rvs(size=1)
+
+
+		if self.rng_action < float(self.r_norm[sample]):
+			#self.sample.append(sample) # for debugging
+
+			# get the index of the ant performing an action
+			idx = int(sample)
+
+			# do action & report if food is found (@bool flag)
+			flag = self.agents[idx].action(self.environment, self.agents)
+
+			# actualize population states
+			self.actualize_population()
+			self.population[State.WAITING] = len(self.environment.waiting_ants)
+
+			tmp_pos = []
+			tmp_info = []
+			for a in list(self.environment.out_nest.keys()):
+				tmp_pos.append(self.agents[a].pos)
+				tmp_info.append(self.agents[a].tag) 
+
+			self.metrics.pos = tmp_pos
+			# actualize number of informed ants
+			self.population[Tag.INFORMED].append(tmp_info.count(Tag.INFORMED))
+
+			# actualize food collection times
+			self.tfood['Pos'].append(self.agents[idx].pos)
+			self.tfood['Flag'].append(flag)
+			self.tfood['Time'].append(self.time)
+
+			# get dynamics of the population
+			self.retrieve_data(self.metrics.get_interactions(), self.metrics.get_connectivity())
+
+			# actualize rates
+			self.r[idx] = self.agents[idx].r_i
+			self.r_norm = np.array(self.r) / sum(self.r)
+			self.R_t = sum(self.r)
+
+		# get rng for next iteration
+		self.rng_t = random.random()
+		self.rng_action = random.random()
+
+		# get time for next iteration
+		self.time += abs(np.log(self.rng_t)/self.R_t)
 
 	def retrieve_data(self, ints, connectivity):
 		self.N.append(len(self.environment.out_nest))
 		self.T.append(self.time)
 		self.I.append(ints)
 		self.K.append(connectivity)
-		# informed ants !
-		# times of food collection !
+		self.F.append(self.environment.food_in_nest)
 		# food nest / patches evolution !
 		# exploring / recruiting ants !	

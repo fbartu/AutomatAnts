@@ -15,8 +15,8 @@ else:
 	file_name = 'Run_' + str(max(file_name)+1)
 
 #Model
-n_agents = 100 # 250
-n_steps  = 600000 # 800000
+n_agents = 100
+n_steps  = 400000 # 800000
 
 nest_node = (0,22)
 foodXvertex = 1
@@ -51,7 +51,7 @@ Individual recruitment ('IR') = 1
 Hybrid recruitment ('HR')     = [0, 5]
 Group recruitment ('GR')      = [3, 5]
 '''
-recruitment = 'GR'
+recruitment = 'HR'
 
 
 '''
