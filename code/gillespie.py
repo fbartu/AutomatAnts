@@ -69,7 +69,11 @@ class ParameterMetrics():
 				idx = int(np.where(np.logical_and(food_found == True, food_visited == True))[0])
 				patch.append(tfood['Time'][idx])
 
-			self.environment.food_cluster[p] = {'xy': self.environment.food_cluster[p], 't': patch}
+			self.environment.food_cluster[p] = {'x': [x[0] for x in self.environment.food_cluster[p]],
+			'y': [y[1] for y in self.environment.food_cluster[p]],
+			 't': patch}
+
+		return self.environment.food_cluster
 
 
 class GillespieAlgorithm():
@@ -112,15 +116,22 @@ class GillespieAlgorithm():
 		self.time = abs(np.log(self.rng_t)/self.R_t)
 
 		# time flags on food pick up
-		self.tfood = {'Pos': self.environment.initial_node,
-		'Flag': False, 'Time': self.time}
+		self.tfood = {'Pos': [self.environment.initial_node],
+		'Flag': [False], 'Time': [self.time]}
 
 
 	def actualize_population(self):
 
+		list_of_states = dir(State())[:6]
 		states = [self.agents[i].state for i in list(self.environment.out_nest.keys())]
+		indices = np.where([(i not in states) for i in list_of_states])[0]
+		non_used_states = list(map(list_of_states.__getitem__, indices))
+
 		for i in list(set(states)):
-			self.population_status[i].append(states.count(i))
+			self.population[i].append(states.count(i))
+
+		for i in non_used_states:
+			self.population[getattr(State(), i)].append(0)
 
 	
 	def step(self):
@@ -139,8 +150,8 @@ class GillespieAlgorithm():
 			flag = self.agents[idx].action(self.environment, self.agents)
 
 			# actualize population states
-			self.actualize_population()
-			self.population[State.WAITING] = len(self.environment.waiting_ants)
+			#self.actualize_population()
+			#self.population[State.WAITING] = len(self.environment.waiting_ants)
 
 			tmp_pos = []
 			tmp_info = []

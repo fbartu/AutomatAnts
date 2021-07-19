@@ -19,7 +19,7 @@ n_agents = 100
 n_steps  = 400000 # 800000
 
 nest_node = (0,22)
-foodXvertex = 1
+foodXvertex = 0
 food = dict.fromkeys(
 	[(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),

@@ -38,7 +38,9 @@ class Model(GillespieAlgorithm):
         'Interactions': self.I,
         'Food in nest': self.F,
         'Informed': self.population[Tag.INFORMED],
-        'Patches of food': self.metrics.retrieve_efficiency(self.environment.food_cluster)}
+        'Patches of food': self.metrics.retrieve_efficiency(self.tfood),
+        'Number of explorers': self.population[State.EXPLORING],
+        'Number of recruiters': self.population[State.RECRUITING]}
         
         with open(self.path + 'results/' + self.filename + '.json', 'w') as f:
             json.dump(data, f)
