@@ -14,7 +14,7 @@ class ParameterMetrics():
 		self.pos = pos
 
 
-	def get_interactions(self):
+	def interactions(self):
 		unique_values = list(set(self.pos))
 		counts = []
 		for i in unique_values:
@@ -24,7 +24,7 @@ class ParameterMetrics():
 		#return sum(np.array(counts) - 1)
 		return sum(np.array(counts) > 1)
 	
-	def get_connectivity(self):
+	def connectivity(self):
 		if len(self.pos):
 			pos = list(set(self.pos)) # eliminate duplicates
 			k_length = []
@@ -54,7 +54,7 @@ class ParameterMetrics():
 			return 0
 
 	
-	def retrieve_efficiency(self, tfood):
+	def efficiency(self, tfood):
 		if not len(self.environment.food_cluster):
 			self.environment.cluster_food()
 
@@ -169,7 +169,7 @@ class GillespieAlgorithm():
 			self.tfood['Time'].append(self.time)
 
 			# get dynamics of the population
-			self.retrieve_data(self.metrics.get_interactions(), self.metrics.get_connectivity())
+			self.retrieve_data(self.metrics.interactions(), self.metrics.connectivity())
 
 			# actualize rates
 			self.r[idx] = self.agents[idx].r_i

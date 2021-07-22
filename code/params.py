@@ -42,7 +42,8 @@ eta     = 0.035
 mu 		= 0.05 # noise in recruitment (as probability [0, 1])
 
 #Number of different runs to average results
-run_steps = 20
+n_runs = 20
+run_parallel = False
 
 '''
 Possible recruitment strategies:

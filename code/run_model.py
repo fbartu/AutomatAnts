@@ -1,9 +1,8 @@
-
 import sys
 sys.path.append('~/research/AutomatAnts/code/')
 
-import numpy as np
-import time
+#import numpy as np
+#import time
 
 from model import Model
 from lattice import Lattice
@@ -13,9 +12,37 @@ import params
 path = params.path
 filename = params.file_name
 
-environment = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
-model = Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)
-model.run_model()
+def create_instance():
+	environment = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
+	return Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)
+	
+if params.n_runs > 1:
+	if params.run_parallel:
+		def run_parallel(n_runs):
+			results = {}			
+			for i in range(n_runs):
+				model = create_instance()	
+				model.run_model()
+				results[i] = model.results
+
+			return results
+
+		import multiprocessing as mp
+		pool = mp.Pool(mp.cpu_count())
+		results = pool.apply_async(run_parallel, [params.n_runs])
+		results = results.get()
+		pool.close()
+		
+	else:
+		for run in range(params.n_runs):
+			model = create_instance()
+			model.run_model()
+
+else:
+	model = create_instance()
+	model.run_model()
+
+
 
 '''
 
@@ -48,69 +75,6 @@ tag_null     = []
 tag_naif     = []
 tag_informed = []
 
-#-----------------------------------------------------------
-#
-# Run the model
-#
-#-----------------------------------------------------------
-
-#Initialize the model
-model = AntModel(n_agents,width,height,nest_node,food_node,
-				alpha,beta_1,beta_2,gamma_1,gamma_2,
-				omega,eta)
-
-print("Runing Program:")
-print("Agents: ", n_agents)
-print("Steps: " , n_steps)
-print("Number of nodes: ", model.G.number_of_nodes())
-print("Distance to food: ", len(model.short_paths.path[0]),",",len(model.short_paths.path[1]))
-print("-----------")
-
-start_time = time.time()
-flag1 = True
-flag2 = True
-
-for i in range(n_steps):
-
-	model.step()
-
-	#Save food quantity
-	time1.append(model.schedule.time)
-	f_nest.append(model.food_counter.f_nest)
-	f_site_1.append(sum(model.food_counter.f_site_1))
-	f_site_2.append(sum(model.food_counter.f_site_2))
-
-	#Save diferent states
-	W_count.append(model.schedule.W_count)
-	E_count.append(model.schedule.E_count)
-	R_count.append(model.schedule.R_count)
-	EM_count.append(model.schedule.EM_count)
-	RM_count.append(model.schedule.RM_count)
-
-	#Save tags evolution
-	tag_null.append(model.schedule.tag_null)
-	tag_naif.append(model.schedule.tag_naif)
-	tag_informed.append(model.schedule.tag_informed)
-
-	#Snapshot of the connectivity and interactions
-	if (i % 1000 == 0):
-		time2.append(model.schedule.time)
-		k_count.append(model.schedule.k)	
-		i_count.append(model.schedule.interactions)
-
-	#Prints / runing program
-	if (sum(model.food_counter.f_site_1) == (params.food_site_1 - 1) and flag1):
-		flag1 = False
-		print("(Site 1 Encounter)")
-	if (sum(model.food_counter.f_site_2) == (params.food_site_2 - 1) and flag2):
-		flag2 = False
-		print("(Site 2 Encounter)")
-		
-	if (i % 10000 == 0):
-		print("Step:" , int(i/10000))
-	if (i == n_steps-1):
-		print("Successful run - End")
-		print("Execution time = -- %s seconds --" % (time.time() - start_time))
 
 #-----------------------------------------------------------
 #
