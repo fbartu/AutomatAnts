@@ -1,6 +1,7 @@
 from gillespie import GillespieAlgorithm
 from agent import *
 import json
+import numpy as np
 
 class Model(GillespieAlgorithm):
 
@@ -29,6 +30,15 @@ class Model(GillespieAlgorithm):
 
     def time2minutes(self):
         self.T = [t / (2.0 * 60) for t in self.T]
+
+    def retrieve_positions(self):
+        result = {'agent': [],'pos': [],'t': []}
+        for i in range(len(self.agents)):
+            result['agent'].extend([i] * len(self.agents[i].path))
+            result['pos'].extend(self.agents[i].path)
+            result['t'].extend(list(map(self.T.__getitem__, np.where(self.sample == np.array([i]))[0])))
+        
+        return result
 
     def save_data(self):
 

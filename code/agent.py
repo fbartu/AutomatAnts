@@ -43,6 +43,7 @@ class Ant():
 		self.movement = 'random'
 
 		# Key locations initialization
+		self.path = []
 		self.path2nest = []
 		self.path2food = []
 		self.locations = []
@@ -134,6 +135,8 @@ class Ant():
 	def NR(self):
 		return 0
 
+	def actualize_path(self):
+		self.path.append(self.pos)
 
 
 	# Move method

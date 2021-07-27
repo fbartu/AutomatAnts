@@ -141,13 +141,14 @@ class GillespieAlgorithm():
 
 
 		if self.rng_action < float(self.r_norm[sample]):
-			#self.sample.append(sample) # for debugging
+			self.sample.append(sample) # for debugging and tracking agents' actions
 
 			# get the index of the ant performing an action
 			idx = int(sample)
 
 			# do action & report if food is found (@bool flag)
 			flag = self.agents[idx].action(self.environment, self.agents)
+			self.agents[idx].actualize_path()
 
 			# actualize population states
 			#self.actualize_population()
