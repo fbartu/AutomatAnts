@@ -6,6 +6,7 @@ sys.path.append('~/research/AutomatAnts/code/')
 
 from model import Model
 from lattice import Lattice
+from copy import deepcopy
 
 import params
 
@@ -23,7 +24,7 @@ if params.n_runs > 1:
 			for i in range(n_runs):
 				model = create_instance()	
 				model.run_model()
-				results[i] = model.results
+				results[i] = deepcopy(model.results)
 
 			return results
 
