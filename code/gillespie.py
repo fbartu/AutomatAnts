@@ -22,7 +22,7 @@ class ParameterMetrics():
 			counts.append(x)
 
 		#return sum(np.array(counts) - 1)
-		return sum(np.array(counts) > 1)
+		return int(sum(np.array(counts) > 1))
 	
 	def connectivity(self):
 		if len(self.pos):
@@ -56,7 +56,7 @@ class ParameterMetrics():
 	
 	def efficiency(self, tfood):
 		if not len(self.environment.food_cluster):
-			self.environment.cluster_food()
+			self.environment.cluster_food(pos = 0) # pos has no default // need to workaround
 
 		food_found = np.array(list(map(lambda x: x == True, tfood['Flag'])))
 		
@@ -65,9 +65,11 @@ class ParameterMetrics():
 
 			for i in self.environment.food_cluster[p]:
 				food_visited = np.array(list(map(lambda x: x == i, tfood['Pos'])))
-				
-				idx = int(np.where(np.logical_and(food_found == True, food_visited == True))[0])
-				patch.append(tfood['Time'][idx])
+				try:
+					idx = int(np.where(np.logical_and(food_found == True, food_visited == True))[0])
+					patch.append(tfood['Time'][idx])
+				except:
+					patch.append('Not Found')
 
 			self.environment.food_cluster[p] = {'x': [x[0] for x in self.environment.food_cluster[p]],
 			'y': [y[1] for y in self.environment.food_cluster[p]],

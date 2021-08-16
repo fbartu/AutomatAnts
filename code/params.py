@@ -16,7 +16,7 @@ else:
 
 #Model
 n_agents = 100
-n_steps  = 400000 # 800000
+n_steps  = 10000 # 800000
 
 nest_node = (0,22)
 foodXvertex = 0
@@ -42,8 +42,8 @@ eta     = 0.035
 mu 		= 0.05 # noise in recruitment (as probability [0, 1])
 
 #Number of different runs to average results
-n_runs = 20
-run_parallel = False
+n_runs = 8
+run_parallel = True
 
 '''
 Possible recruitment strategies:

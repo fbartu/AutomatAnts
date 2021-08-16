@@ -1,4 +1,5 @@
 import sys
+import os
 sys.path.append('~/research/AutomatAnts/code/')
 
 #import numpy as np
@@ -19,29 +20,31 @@ def create_instance():
 	
 if params.n_runs > 1:
 	if params.run_parallel:
-		def run_parallel(n_runs):
-			results = {}			
-			for i in range(n_runs):
-				model = create_instance()	
-				model.run_model()
-				results[i] = deepcopy(model.results)
-
-			return results
+		os.mkdir(path + 'results/' + filename)
+		def run_parallel():
+			model = create_instance()
+			model.run()
+			return deepcopy(model)
 
 		import multiprocessing as mp
 		pool = mp.Pool(mp.cpu_count())
-		results = pool.apply_async(run_parallel, [params.n_runs])
-		results = results.get()
+		models = [pool.apply_async(run_parallel, ()) for i in range(params.n_runs)]
+		models = [i.get() for i in models]
+		results = [i.results for i in models]
 		pool.close()
+
+		for i in range(len(models)):
+			models[i].data2json(folder = filename + '/', filename = filename + '_' + str(i))
+
 		
 	else:
 		for run in range(params.n_runs):
 			model = create_instance()
-			model.run_model()
+			model.run()
 
 else:
 	model = create_instance()
-	model.run_model()
+	model.run()
 
 
 

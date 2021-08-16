@@ -23,7 +23,8 @@ class Model(GillespieAlgorithm):
             self.step()
 
         self.time2seconds()
-        # self.save_data()
+        self.save_data()
+
 
     def time2seconds(self):
         self.T = [t / 2.0 for t in self.T] # convert from frames to seconds (FPS = 2)
@@ -42,18 +43,43 @@ class Model(GillespieAlgorithm):
 
     def save_data(self):
 
-        data = {'Time (s)': self.T,
+        # data = {'Time (s)': self.T,
+        # 'Connectivity': self.K,
+        # 'N': self.N,
+        # 'Interactions': self.I,
+        # 'Food in nest': self.F,
+        # 'Informed': self.population[Tag.INFORMED],
+        # 'Patches of food': self.metrics.efficiency(self.tfood),
+        # 'Number of explorers': self.population[State.EXPLORING],
+        # 'Number of recruiters': self.population[State.RECRUITING],
+        # 'Positions': self.retrieve_positions()}
+
+        self.results = [{'Time (s)': self.T,
         'Connectivity': self.K,
         'N': self.N,
         'Interactions': self.I,
         'Food in nest': self.F,
-        'Informed': self.population[Tag.INFORMED],
-        'Patches of food': self.metrics.efficiency(self.tfood),
-        'Number of explorers': self.population[State.EXPLORING],
-        'Number of recruiters': self.population[State.RECRUITING]}
+        'Informed': self.population[Tag.INFORMED]},
+        self.metrics.efficiency(self.tfood),
+        self.retrieve_positions()]
 
-        self.results = data
+        # self.results = {'data': [data['Time (s)'], data['Connectivity'], data['N'],
+        # data['Interactions'], data['Food in nest'], data['Informed'],
+        # data['Number of explorers'], data['Number of recruiters']],
+        # 'food': data['Patches of food'], 'pos': data['Positions']}
         
-        with open(self.path + 'results/' + self.filename + '.json', 'w') as f:
-            json.dump(data, f)
+    def data2json(self, folder = '', filename = 'Run_1'):    
+        
+        if not hasattr(self, 'results'):
+            self.save_data()
+
+        with open(self.path + 'results/' + folder + filename + '_data.json', 'w') as f:
+            json.dump(self.results[0], f)
+
+        with open(self.path + 'results/' + folder + filename + '_food.json', 'w') as f:
+            json.dump(self.results[1], f)
+
+        with open(self.path + 'results/' + folder + filename + '_pos.json', 'w') as f:
+            json.dump(self.results[2], f)
+
 
