@@ -16,16 +16,24 @@ else:
 
 #Model
 n_agents = 100
-n_steps  = 10000 # 800000
+n_steps  = 40000 # 800000
 
 nest_node = (0,22)
-foodXvertex = 0
+foodXvertex = 1
 food = dict.fromkeys(
 	[(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),
 	(6, 11), (6, 12), (7, 12), # patch 2
 	(7, 11), (7, 10), (6, 10)],
 	foodXvertex)
+
+# ADD distance in pairs, to change location of foodpatches...
+# Two options would be necessary: mirrored and non-mirrored
+'''
+if 'd' in locals():
+	if type(d) == tuple and sum(d) % 2 == 0:
+		food = [(i[0] + d[0], i[1] + d[1]) for i in list(food.keys())]
+'''
 
 #Lattice size
 width    = 22   
@@ -39,11 +47,11 @@ gamma_1 = 1.0
 gamma_2 = 1.0
 omega   = 2.5  
 eta     = 0.035
-mu 		= 0.05 # noise in recruitment (as probability [0, 1])
+mu 		= 0.0 # noise in recruitment (as probability [0, 1])
 
 #Number of different runs to average results
-n_runs = 8
-run_parallel = True
+n_runs = 1
+run_parallel = False
 
 '''
 Possible recruitment strategies:

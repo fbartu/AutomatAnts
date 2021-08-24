@@ -50,25 +50,39 @@ class Ant():
 
 		# Recruitment related
 		self.recruitment_strategy = recruitment_strategy
-		self.recruit = self.choose_recruitment()
+		self.recruit, self.forage = self.choose_recruitment()
 
 		# No information about food
 		self.tag = Tag.NAIVE
 
+		# Missing in action (lost during recruitment)
+		self.MIA = False
+
 	# Pick the suitable recruitment method
 	def choose_recruitment(cls):
 
-		if cls.recruitment_strategy == 'IR':
-			return cls.IR
+		# recruitment strategies
+		if 'IR' in cls.recruitment_strategy:
+			m = cls.IR
 
-		elif cls.recruitment_strategy == 'HR':
-			return cls.HR
+		if 'HR' in cls.recruitment_strategy:
+			m = cls.HR
 
-		elif cls.recruitment_strategy == 'GR':
-			return cls.GR
+		if 'GR' in cls.recruitment_strategy:
+			m = cls.GR
+
+		if 'm' not in locals():
+			m = cls.NR
+		
+		# serial / parallel recruitment
+		if 's' in cls.recruitment_strategy:
+			return m, cls.ant2nest()
 
 		else:
-			return cls.NR
+			return m, cls.ant2explore()
+
+
+	
 	
 	'''
 	RECRUITMENT METHODS ARE DESCRIBED IN params.py:
@@ -76,6 +90,13 @@ class Ant():
 	IR = 1
 	HR = [0, 5]
 	GR = [3, 5]
+	'''
+
+	# One possibility is: if you don't recruit, stay in nest
+	'''
+	else:
+		self.state = State.WAITING
+		self.r_i = params.alpha
 	'''
 
 	# Individual recruitment
@@ -108,14 +129,6 @@ class Ant():
 
 		return r # return number of informed ants
 
-
-		# One possibility is: if you don't recruit, stay in nest
-		'''
-		else:
-			self.state = State.WAITING
-			self.r_i = params.alpha
-		'''
-
 	# Group recruitment
 	def GR(self, environment, ant_pool):
 		r = random.randrange(3, 6)
@@ -134,6 +147,17 @@ class Ant():
 	# No recruitment
 	def NR(self):
 		return 0
+
+	def ant2nest(self, environment):
+
+		self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
+		self.movement = '2nest'
+		self.state = State.DEAD
+
+	def ant2explore(self):
+		self.state = State.EXPLORING
+		self.r_i = params.omega + params.eta
+		self.movement = 'random'
 
 	def actualize_path(self):
 		self.path.append(self.pos)
@@ -179,10 +203,7 @@ class Ant():
 
 		# If ant is waiting on the nest, explore.
 		if (self.state == State.WAITING):
-
-			self.state = State.EXPLORING
-			self.r_i = params.omega + params.eta
-			# self.movement = 'random'
+			self.ant2explore()
 			environment.out_nest[self.id] = self.id
 			del environment.waiting_ants[self.id]
 
@@ -212,7 +233,7 @@ class Ant():
 				self.movement = '2nest'
 				self.r_i = params.beta_1
 				environment.food[self.pos] -= 1
-				environment.tfood[self.pos] 
+				#environment.tfood[self.pos] 
 				self.locations.append(self.pos) # remember where food was found
 				self.path2nest = deepcopy(environment.paths2nest[self.pos])
 				self.path2food = deepcopy(environment.paths2food[self.pos])
@@ -222,16 +243,11 @@ class Ant():
 				# Go to nest with a probability eta / (eta + omega) ~ 0.05%
 				rng = random.random()
 				if rng < params.eta / (params.omega + params.eta):
-					self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
-					self.movement = '2nest'
-					self.move(environment)
-					self.state = State.DEAD
-					
+					self.ant2nest()
 
-				else:
-					self.move(environment)
+				self.move(environment)
 			
-			return False
+				return False
 
 		elif (self.state == State.EXPLORING_FOOD):
 			# if in nest node -> recruitment happens
@@ -261,36 +277,45 @@ class Ant():
 			return False
 
 		elif (self.state == State.RECRUITING):
-			# pick up food
-			if (self.pos in environment.food):
-				if environment.food[self.pos] > 0:
-					self.state = State.RECRUITING_FOOD
-					self.r_i = params.beta_2
-					self.movement = '2nest'
-					environment.food[self.pos] -= 1
-					self.locations.append(self.pos) # remember where food was found
-					self.path2nest = deepcopy(environment.paths2nest[self.pos])
-					self.path2food = deepcopy(environment.paths2food[self.pos])
+			# self.r_i should be equal to params.omega
+			if random.random() < (params.mu / (params.mu + self.r_i)):
+				self.state = State.EXPLORING
+				self.movement = 'random'
+				self.r_i = params.omega
+				self.MIA = True # missing in action
 
-					return True
+			else:
+				# pick up food
+				if (self.pos in environment.food):
+					if environment.food[self.pos] > 0:
+						self.state = State.RECRUITING_FOOD
+						self.r_i = params.beta_2
+						self.movement = '2nest'
+						environment.food[self.pos] -= 1
+						self.locations.append(self.pos) # remember where food was found
+						self.path2nest = deepcopy(environment.paths2nest[self.pos])
+						self.path2food = deepcopy(environment.paths2food[self.pos])
 
-				else:
-					self.state = State.EXPLORING
-					self.r_i = params.omega + params.eta
-					self.movement = 'random'
+						return True
 
-				return False
-			# recruit other ants
-			elif self.pos == environment.initial_node:
-				if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
-					self.r_i = params.omega
-					self.recruit(environment, ant_pool)
-					self.movement = '2food'
+					else:
+						# depending of foraging strategy:
+						# if serial, the ant will return to nest
+						# if parallel, the ant will explore
+						self.forage()
 
+					return False
+				# recruit other ants
+				elif self.pos == environment.initial_node:
+					if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
+						self.r_i = params.omega
+						self.recruit(environment, ant_pool)
+						self.movement = '2food'
+
+					else:
+						self.move(environment)
+
+					return False
 				else:
 					self.move(environment)
-
-				return False
-			else:
-				self.move(environment)
-				return False
+					return False

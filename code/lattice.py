@@ -1,3 +1,4 @@
+from copy import deepcopy
 from mesa.space import NetworkGrid
 import networkx as nx
 
@@ -44,3 +45,17 @@ class Lattice():
 		else:
 			self.food_cluster['Patch ' + str(id)] = list(pos)
 
+	def scatter_food(self):
+		import random
+		pos = nx.get_node_attributes(self.G, 'pos')
+		if self.initial_node in pos.keys():
+			del pos[self.initial_node]
+
+		L = []
+		for i in range(sum(self.food.values())):
+			L.append(random.choice(list(pos.keys())))
+			del pos[L[-1]]
+
+		self.food = dict.fromkeys(L, 1)
+
+	
