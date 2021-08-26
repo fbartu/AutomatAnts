@@ -1,7 +1,7 @@
 import os
 
 path = os.getcwd()+'/research/AutomatAnts/'
-# path = '/home/polfer/research/AutomatAnts/'
+path = '/home/polfer/research/AutomatAnts/'
 pathL = os.listdir(path + 'results/')
 pathL.remove('run_info')
 

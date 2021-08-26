@@ -15,6 +15,11 @@ from copy import deepcopy
 
 import params
 
+'''
+NEED FOR AN ARGUMENT PARSER FUNCTION !!!
+'''
+
+
 path = params.path
 filename = params.file_name
 

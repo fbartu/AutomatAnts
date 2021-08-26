@@ -1,6 +1,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
+import pandas as pd
+import params
 
 #-----------------------------------------------------------
 #
@@ -8,9 +11,38 @@ import matplotlib.pyplot as plt
 #
 #-----------------------------------------------------------
 
-file_name = "Run_33"
+'''
+ARGUMENT PARSER (...)
+for filename / path control
 
-t, fn, f1, f2 = np.loadtxt("Results/"+file_name+'_food.dat',unpack=True)
+'''
+if 'path' not in locals():
+    path = params.path
+error_msg_1 = 'File not found ! Check if path is correct.'
+
+if 'filename' not in locals():
+    print('Please enter filename or path')
+    inp = input()
+    if '/' in inp:
+        try:
+            file = pd.read_csv(inp)
+        except:
+            print(error_msg_1)
+            print(inp)
+            sys.exit(1)
+    else:
+        try:
+            file = pd.read_csv(path + inp)
+        except:
+            print(error_msg_1)
+            print(path + inp)
+            sys.exit(1)
+        
+
+
+
+
+'''t, fn, f1, f2 = np.loadtxt("Results/"+file_name+'_food.dat',unpack=True)
 t, w, e, r, em, rm = np.loadtxt("Results/"+file_name+'_state.dat',unpack=True)
 t2, k, interactions = np.loadtxt("Results/"+file_name+'_k.dat',unpack=True)
 
@@ -24,7 +56,7 @@ with open("Results/"+file_name+'_info.dat') as f:
 num_agents = int(lines[0].split("=")[1].strip('\n'))
 num_nodes  = int(lines[27].split("=")[1].strip('\n'))
 dist_1     = int(lines[28].split("=")[1].strip('\n'))
-dist_2     = int(lines[29].split("=")[1].strip('\n'))
+dist_2     = int(lines[29].split("=")[1].strip('\n'))'''
 
 #-----------------------------------------------------------
 #
