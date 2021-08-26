@@ -17,8 +17,8 @@ def argparse(argv):
 
     
     try:
-        opts, args = getopt.getopt(argv, 'p:f:r:n:m',
-         ["params=", "food=", "recruitment=", "nruns", "mvfood"])
+        opts, args = getopt.getopt(argv, 'p:f:r:n:m:h',
+         ["params=", "food=", "recruitment=", "nruns=", "mvfood=","help="])
     except getopt.GetoptError:
         print(wrng_msg_2)
         sys.exit(2)
@@ -98,6 +98,11 @@ def argparse(argv):
             except:
                 print('Parameter must be two integers, whose sum must be even !')
                 print(wrng_msg_1)
+
+
+        if opt in ('-h', '--help'):
+            '''PRINT HELP...'''
+            pass
 
 
     
