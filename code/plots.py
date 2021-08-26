@@ -41,7 +41,6 @@ if 'filename' not in locals():
 
 
 
-
 '''t, fn, f1, f2 = np.loadtxt("Results/"+file_name+'_food.dat',unpack=True)
 t, w, e, r, em, rm = np.loadtxt("Results/"+file_name+'_state.dat',unpack=True)
 t2, k, interactions = np.loadtxt("Results/"+file_name+'_k.dat',unpack=True)
