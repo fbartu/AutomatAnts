@@ -18,8 +18,9 @@ def argparse(argv):
     
     try:
         opts, args = getopt.getopt(argv, 'p:f:r:n:m:h',
-         ["params=", "food=", "recruitment=", "nruns=", "mvfood=","help="])
+         ["params=", "food=", "recruitment=", "nruns=", "mvfood=","help=", "foodamount="])
     except getopt.GetoptError:
+        print('Something went wrong ! Try typing -h or --help to see possible parameters.')
         print(wrng_msg_2)
         sys.exit(2)
 
@@ -49,13 +50,18 @@ def argparse(argv):
         
         if opt in ('-f', '--food'):
             # find by tuples
-            pos = re.findall(r'\((.*?,.*?)\)', arg)
+            pos = re.findall(r'\[(.*?,.*?)\]', arg)
             pos = [(int(i[0]), int(i[2])) for i in pos]
             globals()['params'].food = dict.fromkeys(pos, globals()['params'].foodXvertex)
 
         if opt in ('-r', '--recruitment'):
-            if arg in ('NR', 'IR', 'HR', 'GR'):
-                globals()['params'].recruitment = arg
+
+            arg = arg.split(',')
+            if len(arg) == 1:
+                globals()['params'].recruitment = (''.join(arg), '')
+            
+            elif len(arg) == 2:
+                globals()['params'].recruitment = (''.join(arg[0]), ''.join(arg[1]))
 
             else:
                 print(error_msg_rec)
@@ -101,8 +107,106 @@ def argparse(argv):
 
 
         if opt in ('-h', '--help'):
-            '''PRINT HELP...'''
-            pass
+
+            print('HELP HAS BEEN SUMMONED !!')
+
+            if arg == 'summary':
+                print('The possible options are')
+                print('\n')
+                print('-p or --param to change individual or multiple cellular automata parameters')
+                print('-f or --food to specify food node positions (as list of coordinates)')
+                print('-r or --recruitment to specify recruitment strategy')
+                print('-n or --nruns to set the number of runs (replicas) and whether they should be run in parallel')
+                print('-m or --mvfood to move food position, relative to the default position')
+
+            if arg.split('_')[0] == 'e':
+                arg = arg.split('_')
+                for a in arg[1:]:
+                    if a in ('p', 'param'):
+                        print('-p or --param for parameter change:')
+                        print('\t list of parameters that must be typed like parameter1=value,parameter2=value,parameter3=value')
+                        print('\t EXAMPLE: eta=0.05,gamma_1=1.2 ; <- this will set parameters eta to 0.05 and gamma_1 to 1.2')
+                        print('\t EXAMPLE: mu=1,gamma_1=0.5,gamma_2=1.5,alpha=0 ; <- this will set parameters mu to 1.0, gamma_1 to 0.5, gamma_2 to 1.5 and alpha to 0.0')
+                        print('\t if any paramater is misspecified or ignored, parameter value will be left by default.')
+                        print('\t notice each pair parameter value is separated by = symbol, whilst pairs are separated by commas. Avoid using spaces !')
+                    
+                    elif a in ('f', 'food'):
+                        pass
+
+                    elif a in ('r', 'recruitment'):
+                        pass
+
+                    elif a in ('n', 'nruns'):
+                        pass
+
+                    elif a in ('m', 'mvfood'):
+                        pass
+
+                    else:
+                        print('Specified parameter "' + str(a) + '" not found !')
+
+
+            else:
+
+                print('For a shorter version, it is possible to call -h summary')
+                print('\n')
+                print('For examples, you can type -h e_@parameter (i.e -h e_param; -h e_recruitment')
+                print('Both short and long options can be used (alternatives would be -h e_p; -h e_r)')
+                print('Multiple examples can be displayed at once (i.e -h e_p_r')
+                
+                '''
+                -h e_param = example param
+                -h summary = display only a one line description of available parameters
+                '''
+
+                print('The list of possible parameters to change are:')
+                print('\n')
+                print('-p or --param for parameter change:')
+                print('\t list of parameters that must be typed like parameter1=value,parameter2=value,parameter3=value')
+                print('\t if any paramater is misspecified or ignored, parameter value will be left by default.')
+                print('\t notice each pair parameter value is separated by = symbol, whilst pairs are separated by commas. Avoid using spaces !')
+                print('\n')
+                print('---------------------------------------')
+                print('\n')
+                print('-f or --food for specifying food positions:')
+                print('\t list of food nodes must be typed like [x1,y1],[x2,y2],[x3,y3]')
+                print('\t example')
+                print('\n')
+                print('---------------------------------------')
+                print('\n')
+                print('-r or --recruitment to specify recruitment type')
+                print('\t list of two elements; the recruitment strategy and whether recruitment is parallel or not')
+                print('\t the options are: ')
+                print('\t parameter 1:')
+                print('\t \t NR: No recruitment')
+                print('\t \t IR: Individual recruitment (a single ant is recruited)')
+                print('\t \t GR: Group recruitment (3 to 5 ants are recruited)')
+                print('\t \t HR: Hybrid recruitment (0 to 5 ants are recruited)')
+                print('\t parameter 2:')
+                print('\t \t s: Serial recruitment (explotation of food patches does not occur simultaneously)')
+                print('\t \t else: Any other value will lead to default behaviour')
+                print('\n')
+                print('---------------------------------------')
+                print('\n')
+                print('-n or --nruns to specify number of runs (replicas) and whether or not to run in parallel')
+                print('\t list of the kind integer,boolean ; such as 100,True (100 runs in parallel)')
+                print('\n')
+                print('---------------------------------------')
+                print('\n')
+                print('-m or --mvfood to move the foodpatches across the grid')
+                print('\t a pair of integer values: x,y; whose sum must be even, to displace patches in number of hexagons')
+                print('\n')
+                print('---------------------------------------')
+                print('\n')
+                print('--foodamount to set the number of foodpieces per node')
+                print('\t an integer is expected') 
+
+            print('\n')
+            print('---------------------------------------')
+            print('\n')    
+            print('\n')
+            print('HELP ENDS HERE ... Exiting program.')
+            sys.exit(0)
 
 
     

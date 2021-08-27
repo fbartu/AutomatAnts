@@ -71,7 +71,7 @@ class Ant():
 		if 'GR' in cls.recruitment_strategy:
 			m = cls.GR
 
-		if 'm' not in locals():
+		if 'm' not in locals() or 'NR' in cls.recruitment_strategy:
 			m = cls.NR
 		
 		# serial / parallel recruitment
