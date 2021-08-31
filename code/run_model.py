@@ -14,11 +14,7 @@ from lattice import Lattice
 from copy import deepcopy
 
 import params
-
-'''
-NEED FOR AN ARGUMENT PARSER FUNCTION !!!
-'''
-
+from argparser import argparse
 
 path = params.path
 filename = params.file_name
@@ -27,7 +23,22 @@ def create_instance():
 	environment = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
 	return Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)
 	
+# argument parser to change parameters from the command line (or a bash script)
+argparse(sys.argv[1:])
+
+# check that folder to save results exists
+if 'folder' not in globals():
+	folder = path + 'results/'
+
+if not os.path.isdir(folder):
+	print('Folder does not exist. Creating directory: ' + str(folder))
+	os.mkdir(folder)
+
+if folder.split('/')[-1] != '':
+	folder = folder + '/'
+
 if params.n_runs > 1:
+	os.mkdir(folder + filename)
 
 	def merge_runs(runs):
 		results = pd.DataFrame.from_dict(runs[0][0].results)
@@ -59,7 +70,6 @@ if params.n_runs > 1:
 		return data, sd
 
 	if params.run_parallel:
-		os.mkdir(path + 'results/' + filename)
 		def run_parallel():
 			model = create_instance()
 			model.run()
@@ -86,8 +96,8 @@ if params.n_runs > 1:
 	# AVERAGE DATAFRAME FOR THE RESULTS
 	mrg = merge_runs(models) # single data frame for all results
 	avg, sd = average_runs(mrg)
-	avg.to_csv(path + filename + '_average.csv')
-	sd.to_csv(path + filename + '_sd.csv')
+	avg.to_csv(folder + filename + '_average.csv')
+	sd.to_csv(folder + filename + '_sd.csv')
 
 else:
 	model = create_instance()

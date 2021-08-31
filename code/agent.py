@@ -1,6 +1,5 @@
 import random
 import networkx as nx
-from mesa.space import NetworkGrid
 from copy import deepcopy
 
 # from lattice import Lattice
@@ -38,7 +37,7 @@ class Ant():
 		
 		# Position, state and rates initialization
 		self.pos = params.nest_node
-		self.state = State.WAITING
+		self.state = 'W'
 		self.r_i = params.alpha
 		self.movement = 'random'
 
@@ -76,10 +75,10 @@ class Ant():
 		
 		# serial / parallel recruitment
 		if 's' in cls.recruitment_strategy:
-			return m, cls.ant2nest()
+			return m, cls.ant2nest
 
 		else:
-			return m, cls.ant2explore()
+			return m, cls.ant2explore
 
 
 	
@@ -151,8 +150,9 @@ class Ant():
 	def ant2nest(self, environment):
 
 		self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
-		self.movement = '2nest'
 		self.state = State.DEAD
+		self.r_i = params.omega
+		self.movement = '2nest'
 
 	def ant2explore(self):
 		self.state = State.EXPLORING
@@ -200,12 +200,11 @@ class Ant():
 	# returns true if food is found and picked up
 	# this value is fed into the gillespie algorithm
 	def action(self, environment, ant_pool):
-
 		# If ant is waiting on the nest, explore.
 		if (self.state == State.WAITING):
-			self.ant2explore()
 			environment.out_nest[self.id] = self.id
 			del environment.waiting_ants[self.id]
+			self.ant2explore()
 
 			return False
 
@@ -213,8 +212,8 @@ class Ant():
 		elif self.state == State.DEAD:
 			
 			if self.pos == environment.initial_node:
-				self.r_i = params.alpha
 				self.state = State.WAITING
+				self.r_i = params.alpha
 				self.movement = 'random'
 				environment.waiting_ants[self.id] = self.id
 				del environment.out_nest[self.id]
@@ -243,9 +242,9 @@ class Ant():
 				# Go to nest with a probability eta / (eta + omega) ~ 0.05%
 				rng = random.random()
 				if rng < params.eta / (params.omega + params.eta):
-					self.ant2nest()
-
-				self.move(environment)
+					self.ant2nest(environment)
+				else:
+					self.move(environment)
 			
 				return False
 
@@ -271,8 +270,7 @@ class Ant():
 				self.r_i = params.gamma_2
 				self.movement = '2food'
 			# else keep moving to nest
-			else:
-				self.move(environment)
+			self.move(environment)
 			
 			return False
 

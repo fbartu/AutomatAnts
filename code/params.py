@@ -1,9 +1,10 @@
 import os
-
 path = os.getcwd()+'/research/AutomatAnts/'
+path = 'G:/research/AutomatAnts/' # for debugging
 # path = '/home/polfer/research/AutomatAnts/' # for debugging
+folder = None
 pathL = os.listdir(path + 'results/')
-pathL.remove('run_info')
+#pathL.remove('run_info')
 
 # File name
 if len(pathL) == 0:

@@ -147,7 +147,7 @@ class GillespieAlgorithm():
 
 			# get the index of the ant performing an action
 			idx = int(sample)
-
+			
 			# do action & report if food is found (@bool flag)
 			flag = self.agents[idx].action(self.environment, self.agents)
 			self.agents[idx].actualize_path()

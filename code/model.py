@@ -8,7 +8,6 @@ class Model(GillespieAlgorithm):
     def __init__(self, n_agents, recruitment_strategy, environment, steps, path, filename):
 
         ants = list(Ant(a, recruitment_strategy) for a in list(range(n_agents)))
-
         super().__init__(ants, environment)
 
         self.steps = steps
@@ -21,7 +20,7 @@ class Model(GillespieAlgorithm):
             if float(i / 2000) == int(i /2000):
                 print(i)
             self.step()
-
+           
         self.time2seconds()
         self.save_data()
 
