@@ -1,7 +1,25 @@
 import os
-path = os.getcwd()+'/research/AutomatAnts/'
-path = 'G:/research/AutomatAnts/' # for debugging
-# path = '/home/polfer/research/AutomatAnts/' # for debugging
+import sys
+path = os.getcwd().split('/')
+if '/research/AutomatAnts/' in os.getcwd():
+	while path[-2:] != ['research', 'AutomatAnts']:
+		try:
+			path.pop(-1)
+		except:
+			print('Path is not a directory !! Exiting program...')
+			sys.exit(2)
+
+	path = '/'.join(path)
+	if path[-1] != '/':
+		path = path + '/'
+else:
+	path = os.getcwd()+'/research/AutomatAnts/'
+	if not os.path.isdir(path):
+		print('Path is not a directory !! Exiting program...')
+		sys.exit(2)
+		
+#path = 'G:/research/AutomatAnts/' # for debugging
+#path = '/home/polfer/research/AutomatAnts/' # for debugging
 folder = None
 pathL = os.listdir(path + 'results/')
 #pathL.remove('run_info')
@@ -17,7 +35,7 @@ else:
 
 #Model
 n_agents = 100
-n_steps  = 40000 # 800000
+n_steps  = 100000 # 800000
 
 nest_node = (0,22)
 foodXvertex = 1
@@ -48,7 +66,7 @@ gamma_1 = 1.0
 gamma_2 = 1.0
 omega   = 2.5  
 eta     = 0.035
-mu 		= 0.0 # noise in recruitment (as probability [0, 1])
+mu 		= 0.0 # noise in recruitment
 
 #Number of different runs to average results
 n_runs = 1
