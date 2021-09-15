@@ -55,7 +55,7 @@ class Ant():
 		self.tag = Tag.NAIVE
 
 		# Missing in action (lost during recruitment)
-		self.MIA = False
+		self.MIA = 0
 
 	# Pick the suitable recruitment method
 	def choose_recruitment(cls):
@@ -280,7 +280,7 @@ class Ant():
 				self.state = State.EXPLORING
 				self.movement = 'random'
 				self.r_i = params.omega
-				self.MIA = True # missing in action
+				self.MIA = 1 # missing in action
 
 			else:
 				# pick up food
