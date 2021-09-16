@@ -25,17 +25,19 @@ pathL = os.listdir(path + 'results/')
 #pathL.remove('run_info')
 
 # File name
-if len(pathL) == 0:
+""" if len(pathL) == 0:
 	file_name = 'Run_1'
 else:
 	file_name = []
 	for i in pathL:
 		file_name.append(int(i.split('_')[1]))
-	file_name = 'Run_' + str(max(file_name)+1)
+	file_name = 'Run_' + str(max(file_name)+1) """
+
+file_name = 'Test'
 
 #Model
-n_agents = 100
-n_steps  = 100000 # 800000
+n_agents = 250
+n_steps  = 500000 # 800000
 
 nest_node = (0,22)
 foodXvertex = 1

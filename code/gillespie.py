@@ -40,13 +40,17 @@ class ParameterMetrics():
 					
 					while len(branch):
 						current_path.append(branch.pop(0))
-						pos.remove(current_path[-1])
+						try:
+							pos.remove(current_path[-1])
+						except:
+							next
 						neighbors = np.array(self.environment.grid.get_neighbors(current_path[-1]))
 						idx = np.where([(n[0], n[1]) in pos for n in neighbors])
 						branch.extend(list(map(tuple, neighbors[idx])))
 					
 					k_length.append(len(current_path))
 					current_path = []
+					branch = []
 
 			return statistics.mean(k_length)
 			#return k_length

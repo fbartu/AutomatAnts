@@ -16,15 +16,15 @@ from copy import deepcopy
 import params
 from argparser import argparse
 
+# argument parser to change parameters from the command line (or a bash script)
+argparse(sys.argv[1:])
+
 path = params.path
 filename = params.file_name
 
 def create_instance():
 	environment = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
 	return Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)
-	
-# argument parser to change parameters from the command line (or a bash script)
-argparse(sys.argv[1:])
 
 # check that folder to save results exists
 if 'folder' not in globals():
@@ -41,9 +41,9 @@ if params.n_runs > 1:
 	os.mkdir(folder + filename)
 
 	def merge_runs(runs):
-		results = pd.DataFrame.from_dict(runs[0][0].results)
+		results = pd.DataFrame.from_dict(runs[0].results[0])
 		for i in range(1, len(runs)):
-			results.append(pd.DataFrame.from_dict(runs[i][0].results))
+			results.append(pd.DataFrame.from_dict(runs[i].results[0]))
 
 		return results.sort_values('Time (s)')
 
