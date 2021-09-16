@@ -151,7 +151,7 @@ class Ant():
 
 		self.path2nest = nx.shortest_path(environment.G, self.pos, environment.initial_node)
 		self.state = State.DEAD
-		self.r_i = params.omega
+		self.r_i = params.omega + params.eta # eta slightly increases the "celerity" of ants to return to nest
 		self.movement = '2nest'
 
 	def ant2explore(self):
