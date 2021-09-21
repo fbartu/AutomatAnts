@@ -21,7 +21,7 @@ class Model(GillespieAlgorithm):
                 print(i)
             self.step()
            
-        self.time2seconds()
+        # self.time2seconds()
         self.save_data()
 
 

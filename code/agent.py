@@ -154,7 +154,7 @@ class Ant():
 		self.r_i = params.omega + params.eta # eta slightly increases the "celerity" of ants to return to nest
 		self.movement = '2nest'
 
-	def ant2explore(self):
+	def ant2explore(self, environment):
 		self.state = State.EXPLORING
 		self.r_i = params.omega + params.eta
 		self.movement = 'random'
@@ -252,7 +252,7 @@ class Ant():
 			# if in nest node -> recruitment happens
 			if(self.pos == environment.initial_node):
 				self.state = State.RECRUITING
-				environment.food_in_nest =+ 1
+				environment.food_in_nest += 1
 				self.r_i = params.gamma_1
 				self.movement = '2food'
 				
@@ -266,7 +266,7 @@ class Ant():
 			# if in nest node -> recruitment happens
 			if(self.pos == environment.initial_node):
 				self.state = State.RECRUITING
-				environment.food_in_nest =+ 1
+				environment.food_in_nest += 1
 				self.r_i = params.gamma_2
 				self.movement = '2food'
 			# else keep moving to nest
@@ -300,7 +300,7 @@ class Ant():
 						# depending of foraging strategy:
 						# if serial, the ant will return to nest
 						# if parallel, the ant will explore
-						self.forage()
+						self.forage(environment)
 
 					return False
 				# recruit other ants
