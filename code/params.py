@@ -68,7 +68,8 @@ gamma_1 = 1.0
 gamma_2 = 1.0
 omega   = 2.5  
 eta     = 0.035
-mu 		= 0.0 # noise in recruitment
+mu 		= 0.0 # noise in recruitment (at path to food)
+phi		= 0.0 # noise in recruitment (at food patch)
 
 #Number of different runs to average results
 n_runs = 100
@@ -133,6 +134,9 @@ file.write(str(eta))
 file.write("\n")
 file.write("mu = ")
 file.write(str(mu))
+file.write("\n")
+file.write("phi = ")
+file.write(str(phi))
 file.write("\n")
 file.write("\n")
 

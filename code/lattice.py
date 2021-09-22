@@ -1,4 +1,3 @@
-from copy import deepcopy
 from mesa.space import NetworkGrid
 import networkx as nx
 

@@ -1,3 +1,4 @@
+from os import environ
 import random
 import networkx as nx
 from copy import deepcopy
@@ -78,7 +79,7 @@ class Ant():
 			return m, cls.ant2nest
 
 		else:
-			return m, cls.ant2explore
+			return m, cls.ant2nearfood
 
 
 	
@@ -155,9 +156,17 @@ class Ant():
 		self.movement = '2nest'
 
 	def ant2explore(self, environment):
+
 		self.state = State.EXPLORING
 		self.r_i = params.omega + params.eta
 		self.movement = 'random'
+
+	def ant2nearfood(self, environment):
+		if random.random() > params.phi / (self.r_i + params.phi):
+			self.movement = 'local'
+			self.move(environment)
+		
+		self.ant2explore(environment)
 
 	def actualize_path(self):
 		self.path.append(self.pos)
@@ -166,9 +175,9 @@ class Ant():
 	# Move method
 	'''
 	FUTURE MOVEMENT POSSIBILITIES TO IMPLEMENT:
-	* Area restricted search : local
+	* Area restricted search : ars
 	* Levy walks : levy
-	* Directional persistance : forward
+	* Directional persistance : dpersistance
 	'''
 	def move(self, environment):
 		if self.movement == 'random':
@@ -185,12 +194,30 @@ class Ant():
 			self.pos = self.path2food.pop(0)
 		
 		elif self.movement == 'local':
+			possible_steps = environment.grid.get_neighbors(
+				self.pos,
+				include_center = False)
+			
+			is_food = list(filter(lambda x: x in environment.food.keys(), possible_steps))
+			with_food = []
+			for i in is_food:
+				if environment.food[i] > 0:
+					with_food.append(i)
+				else:
+					next
+
+			if len(with_food):
+				self.pos = random.choice(with_food)
+			else:
+				random.choice(possible_steps)
+
+		elif self.movement == 'ars':
 			pass
 
 		elif self.movement == 'levy':
 			pass
 
-		elif self.movement == 'forward':
+		elif self.movement == 'dpersistance':
 			pass
 		
 		return 0
