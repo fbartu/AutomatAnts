@@ -231,7 +231,7 @@ class Ant():
 		if (self.state == State.WAITING):
 			environment.out_nest[self.id] = self.id
 			del environment.waiting_ants[self.id]
-			self.ant2explore()
+			self.ant2explore(environment)
 
 			return False
 
