@@ -38,6 +38,7 @@ file_name = 'Test'
 #Model
 n_agents = 250
 n_steps  = 800000
+retrieve_positions = False
 
 nest_node = (0,22)
 foodXvertex = 1

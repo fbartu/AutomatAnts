@@ -16,20 +16,17 @@ class Model(GillespieAlgorithm):
     
     def run(self):
 
+        print('+++ RUNNING MODEL +++')
         for i in list(range(self.steps)):
-            if float(i / 2000) == int(i /2000):
-                print(i)
             self.step()
            
-        # self.time2seconds()
+        print('Model completed... Saving results !')
+
         self.save_data()
-
-
-    def time2seconds(self):
-        self.T = [t / 2.0 for t in self.T] # convert from frames to seconds (FPS = 2)
+        print('+++ Results saved +++')
 
     def time2minutes(self):
-        self.T = [t / (2.0 * 60) for t in self.T]
+        self.T = [t / 60.0 for t in self.T]
 
     def retrieve_positions(self):
         result = {'agent': [],'pos': [],'t': [], 'tag': [], 'mia': []}
@@ -44,32 +41,22 @@ class Model(GillespieAlgorithm):
 
     def save_data(self):
 
-        # data = {'Time (s)': self.T,
-        # 'Connectivity': self.K,
-        # 'N': self.N,
-        # 'Interactions': self.I,
-        # 'Food in nest': self.F,
-        # 'Informed': self.population[Tag.INFORMED],
-        # 'Patches of food': self.metrics.efficiency(self.tfood),
-        # 'Number of explorers': self.population[State.EXPLORING],
-        # 'Number of recruiters': self.population[State.RECRUITING],
-        # 'Positions': self.retrieve_positions()}
-
         self.results = [{'Time (s)': self.T,
         'Connectivity': self.K,
         'N': self.N,
         'Interactions': self.I,
         'Food in nest': self.F,
-        'Informed': self.population[Tag.INFORMED]},
+        'Informed': self.population[Tag.INFORMED],
+        'Waiting': self.population[State.WAITING],
+        'Carrying food': list(map(lambda x, y: x+y,
+         self.population[State.EXPLORING_FOOD],
+          self.population[State.RECRUITING_FOOD])),
+        'Exploring': self.population[State.EXPLORING],
+        'Recruiting': self.population[State.RECRUITING]},
         self.metrics.efficiency(self.tfood),
         self.retrieve_positions()]
-
-        # self.results = {'data': [data['Time (s)'], data['Connectivity'], data['N'],
-        # data['Interactions'], data['Food in nest'], data['Informed'],
-        # data['Number of explorers'], data['Number of recruiters']],
-        # 'food': data['Patches of food'], 'pos': data['Positions']}
         
-    def data2json(self, folder = '', filename = 'Run_1'):    
+    def data2json(self, folder = '', filename = 'Run_1', get_pos = False):    
         
         if not hasattr(self, 'results'):
             self.save_data()
@@ -80,7 +67,9 @@ class Model(GillespieAlgorithm):
         with open(self.path + 'results/' + folder + filename + '_food.json', 'w') as f:
             json.dump(self.results[1], f)
 
-        with open(self.path + 'results/' + folder + filename + '_pos.json', 'w') as f:
-            json.dump(self.results[2], f)
+        if get_pos:
+            
+            with open(self.path + 'results/' + folder + filename + '_pos.json', 'w') as f:
+                json.dump(self.results[2], f)
 
 

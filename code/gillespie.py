@@ -124,20 +124,41 @@ class GillespieAlgorithm():
 		# time flags on food pick up
 		self.tfood = {'Pos': [self.environment.initial_node],
 		'Flag': [False], 'Time': [self.time]}
-
-
+	
 	def actualize_population(self):
+		tmp_pos = []
+		tmp_info = []
+		tmp_state = []
 
-		list_of_states = dir(State())[:6]
-		states = [self.agents[i].state for i in list(self.environment.out_nest.keys())]
-		indices = np.where([(i not in states) for i in list_of_states])[0]
-		non_used_states = list(map(list_of_states.__getitem__, indices))
+		for a in list(self.environment.out_nest.keys()):
+			tmp_pos.append(self.agents[a].pos)
+			tmp_info.append(self.agents[a].tag)
+			tmp_state.append(self.agents[a].state)
+		
+		self.metrics.pos = tmp_pos
+		self.population[Tag.INFORMED].append(tmp_info.count(Tag.INFORMED))
 
-		for i in list(set(states)):
-			self.population[i].append(states.count(i))
+		counter = 0
+		for i in list(set(tmp_state)):
+			counter += tmp_state.count(i)
+			self.population[i].append(tmp_state.count(i))
+		
+		self.population[State.WAITING].append(len(self.agents)- counter)
 
-		for i in non_used_states:
-			self.population[getattr(State(), i)].append(0)
+		
+
+	# def actualize_population(self):
+
+	# 	list_of_states = dir(State())[:6]
+	# 	states = [self.agents[i].state for i in list(self.environment.out_nest.keys())]
+	# 	indices = np.where([(i not in states) for i in list_of_states])[0]
+	# 	non_used_states = list(map(list_of_states.__getitem__, indices))
+
+	# 	for i in list(set(states)):
+	# 		self.population[i].append(states.count(i))
+
+	# 	for i in non_used_states:
+	# 		self.population[getattr(State(), i)].append(0)
 
 	
 	def step(self):
@@ -157,18 +178,18 @@ class GillespieAlgorithm():
 			self.agents[idx].actualize_path()
 
 			# actualize population states
-			#self.actualize_population()
+			self.actualize_population()
 			#self.population[State.WAITING] = len(self.environment.waiting_ants)
 
-			tmp_pos = []
-			tmp_info = []
-			for a in list(self.environment.out_nest.keys()):
-				tmp_pos.append(self.agents[a].pos)
-				tmp_info.append(self.agents[a].tag) 
+			# tmp_pos = []
+			# tmp_info = []
+			# for a in list(self.environment.out_nest.keys()):
+			# 	tmp_pos.append(self.agents[a].pos)
+			# 	tmp_info.append(self.agents[a].tag) 
 
-			self.metrics.pos = tmp_pos
-			# actualize number of informed ants
-			self.population[Tag.INFORMED].append(tmp_info.count(Tag.INFORMED))
+			# self.metrics.pos = tmp_pos
+			# # actualize number of informed ants
+			# self.population[Tag.INFORMED].append(tmp_info.count(Tag.INFORMED))
 
 			# actualize food collection times
 			self.tfood['Pos'].append(self.agents[idx].pos)

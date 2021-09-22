@@ -83,14 +83,16 @@ if params.n_runs > 1:
 		pool.close()
 
 		for i in range(len(models)):
-			models[i].data2json(folder = filename + '/', filename = filename + '_' + str(i))
+			models[i].data2json(folder = filename + '/', filename = filename + '_' + str(i),
+			get_pos = params.retrieve_positions)
 
 	else:
 		models = []
 		for run in range(params.n_runs):
 			model = create_instance()
 			model.run()
-			model.data2json(folder = filename + '/', filename = filename + '_' + str(run))
+			model.data2json(folder = filename + '/', filename = filename + '_' + str(run),
+			 get_pos = params.retrieve_positions)
 			models.append(model)
 
 	# AVERAGE DATAFRAME FOR THE RESULTS
@@ -102,4 +104,4 @@ if params.n_runs > 1:
 else:
 	model = create_instance()
 	model.run()
-	model.data2json(filename = filename)
+	model.data2json(filename = filename, get_pos = params.retrieve_positions)
