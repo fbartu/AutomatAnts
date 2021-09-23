@@ -96,10 +96,10 @@ if params.n_runs > 1:
 			models.append(model)
 
 	# AVERAGE DATAFRAME FOR THE RESULTS
-	mrg = merge_runs(models) # single data frame for all results
-	avg, sd = average_runs(mrg)
-	avg.to_csv(folder + filename + '_average.csv')
-	sd.to_csv(folder + filename + '_sd.csv')
+	# mrg = merge_runs(models) # single data frame for all results
+	# avg, sd = average_runs(mrg)
+	# avg.to_csv(folder + filename + '_average.csv')
+	# sd.to_csv(folder + filename + '_sd.csv')
 
 else:
 	model = create_instance()
