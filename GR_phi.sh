@@ -1,3 +1,13 @@
+#!/bin/bash
+
+# root directory
+cd
+
+export PATH=/home/soft/python-3.9.5/bin:$PATH
+export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
+
+. ~/research/automatenv/bin/activate
+
 # normal model
 python3 ~/research/AutomatAnts/code/run_model.py -r GR -x control_GR
 # scanning parameter phi (noise in recruitment)
