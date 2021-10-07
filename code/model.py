@@ -2,6 +2,7 @@ from gillespie import GillespieAlgorithm
 from agent import *
 import json
 import numpy as np
+import pandas as pd
 
 class Model(GillespieAlgorithm):
 
@@ -61,8 +62,10 @@ class Model(GillespieAlgorithm):
         if not hasattr(self, 'results'):
             self.save_data()
 
-        with open(self.path + 'results/' + folder + filename + '_data.json', 'w') as f:
-            json.dump(self.results[0], f)
+        pd.DataFrame(self.results[0]).to_csv(self.path + 'results/' + folder + filename + '_data.csv')
+
+        # with open(self.path + 'results/' + folder + filename + '_data.json', 'w') as f:
+        #     json.dump(self.results[0], f)
 
         with open(self.path + 'results/' + folder + filename + '_food.json', 'w') as f:
             json.dump(self.results[1], f)

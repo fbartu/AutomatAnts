@@ -1,11 +1,7 @@
-from os import environ
 import random
 import networkx as nx
 from copy import deepcopy
-
-# from lattice import Lattice
 import params
-
 
 '''
 STATES AND TAGS
@@ -39,6 +35,7 @@ class Ant():
 		# Position, state and rates initialization
 		self.pos = params.nest_node
 		self.state = 'W'
+		self.prev_state = 'W'
 		self.r_i = params.alpha
 		self.movement = 'random'
 
@@ -71,6 +68,9 @@ class Ant():
 		if 'GR' in cls.recruitment_strategy:
 			m = cls.GR
 
+		if 'F' in cls.recruitment_strategy:
+			m = cls.F
+
 		if 'm' not in locals() or 'NR' in cls.recruitment_strategy:
 			m = cls.NR
 		
@@ -80,8 +80,6 @@ class Ant():
 
 		else:
 			return m, cls.ant2nearfood
-
-
 	
 	
 	'''
@@ -90,6 +88,7 @@ class Ant():
 	IR = 1
 	HR = [0, 5]
 	GR = [3, 5]
+	F  = X
 	'''
 
 	# One possibility is: if you don't recruit, stay in nest
@@ -144,6 +143,21 @@ class Ant():
 			agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 		return r # return number of informed ants
 
+	# Forced recruitment (of r individuals)
+	def F(self, environment, ant_pool):
+		r = 4 # Force a recruitment of 4 individuals
+		samples = random.sample(list(environment.waiting_ants), r)
+		for sample in samples:
+			del environment.waiting_ants[sample]
+			environment.out_nest[sample] = sample
+			agent = ant_pool[sample]
+			agent.r_i = params.omega
+			agent.tag = Tag.INFORMED
+			agent.state = State.RECRUITING
+			agent.movement = '2food'
+			agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
+		return r # return number of informed ants
+
 	# No recruitment
 	def NR(self):
 		return 0
@@ -162,11 +176,13 @@ class Ant():
 		self.movement = 'random'
 
 	def ant2nearfood(self, environment):
-		if random.random() > params.phi / (self.r_i + params.phi):
+		print('Throwing the dice...')
+		if random.random() > params.phi:
 			self.movement = 'local'
 			self.move(environment)
-		
-		self.ant2explore(environment)
+		else:
+			print('... ant goes to randomly explore')
+			self.ant2explore(environment)
 
 	def actualize_path(self):
 		self.path.append(self.pos)
@@ -210,6 +226,9 @@ class Ant():
 				self.pos = random.choice(with_food)
 			else:
 				random.choice(possible_steps)
+				self.ant2explore(environment)
+
+			self.movement = 'random'
 
 		elif self.movement == 'ars':
 			pass
@@ -223,10 +242,16 @@ class Ant():
 		return 0
 
 
+	'''
+	METHODS FOR GETTING INFORMATION ABOUT THE ANT
+	'''
+
 	# Possible actions the ant may take, based on the position and the state
 	# returns true if food is found and picked up
 	# this value is fed into the gillespie algorithm
 	def action(self, environment, ant_pool):
+		# record the current state (as previous state)
+		self.prev_state = self.state
 		# If ant is waiting on the nest, explore.
 		if (self.state == State.WAITING):
 			environment.out_nest[self.id] = self.id
@@ -255,6 +280,7 @@ class Ant():
 		
 			# If food is found
 			if (self.pos in environment.food and environment.food[self.pos] > 0):
+				print('Explorer at food, food found !')
 				self.state = State.EXPLORING_FOOD
 				self.movement = '2nest'
 				self.r_i = params.beta_1
@@ -303,7 +329,7 @@ class Ant():
 
 		elif (self.state == State.RECRUITING):
 			# self.r_i should be equal to params.omega
-			if random.random() < (params.mu / (params.mu + self.r_i)):
+			if random.random() < params.mu:
 				self.state = State.EXPLORING
 				self.movement = 'random'
 				self.r_i = params.omega
@@ -312,7 +338,9 @@ class Ant():
 			else:
 				# pick up food
 				if (self.pos in environment.food):
+					print('Ant at food position')
 					if environment.food[self.pos] > 0:
+						print('Food found !')
 						self.state = State.RECRUITING_FOOD
 						self.r_i = params.beta_2
 						self.movement = '2nest'
@@ -327,6 +355,7 @@ class Ant():
 						# depending of foraging strategy:
 						# if serial, the ant will return to nest
 						# if parallel, the ant will explore
+						print('Recruitment happens !')
 						self.forage(environment)
 
 					return False
@@ -338,6 +367,7 @@ class Ant():
 						self.movement = '2food'
 
 					else:
+						self.prev_state = 'W'
 						self.move(environment)
 
 					return False

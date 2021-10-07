@@ -3,10 +3,12 @@ import os
 
 from pandas.core.reshape.merge import merge
 sys.path.append('~/research/AutomatAnts/code/')
+# sys.path.append('G:/research/AutomatAnts/code/')
 
 import numpy as np
 import math
-#import time
+import time
+import random
 import pandas as pd
 
 from model import Model
@@ -22,9 +24,12 @@ argparse(sys.argv[1:])
 path = params.path
 filename = params.file_name
 
-def create_instance():
-	environment = Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food)
-	return Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)
+def create_instance(n):
+	instances = []
+	for i in range(n):
+		environment = deepcopy(Lattice(params.n_agents, params.width, params.height, params.nest_node, params.food))
+		instances.append(deepcopy(Model(params.n_agents, params.recruitment, environment, params.n_steps, path, filename)))
+	return instances
 
 # check that folder to save results exists
 if 'folder' not in globals():
@@ -41,7 +46,7 @@ if params.n_runs > 1:
 	os.mkdir(folder + filename)
 
 	def merge_runs(runs):
-		results = pd.DataFrame.from_dict(runs[0].results[0])
+		results = pd.DataFrame(runs[0].results[0])
 		for i in range(1, len(runs)):
 			results.append(pd.DataFrame.from_dict(runs[i].results[0]))
 
@@ -70,17 +75,20 @@ if params.n_runs > 1:
 		return data, sd
 
 	if params.run_parallel:
-		def run_parallel():
-			model = create_instance()
+
+		def run_parallel(model):
+			random.seed(random.randrange(99999) * random.random() + time.time())
 			model.run()
 			return deepcopy(model)
 		
+		models = create_instance(params.n_runs)
+
 		import multiprocessing as mp
 		pool = mp.Pool(mp.cpu_count())
-		models = [pool.apply_async(run_parallel, ()) for i in range(params.n_runs)]
-		models = [i.get() for i in models]
-		# results = [i.results for i in models]
-		pool.close()
+		models = pool.map(run_parallel, models)
+		# models = [pool.apply(run_parallel, ()) for i in models]
+		# models = [m.get() for m in models]
+		pool.terminate()
 
 		for i in range(len(models)):
 			models[i].data2json(folder = filename + '/', filename = filename + '_' + str(i),
@@ -89,7 +97,9 @@ if params.n_runs > 1:
 	else:
 		models = []
 		for run in range(params.n_runs):
-			model = create_instance()
+			model = create_instance(1)[0]
+			random.seed(time.time())
+			print(model.environment.food)
 			model.run()
 			model.data2json(folder = filename + '/', filename = filename + '_' + str(run),
 			 get_pos = params.retrieve_positions)
