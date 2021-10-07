@@ -4,6 +4,7 @@ from scipy.stats import rv_discrete
 from agent import *
 import params
 import statistics
+import pandas as pd
 
 
 class ParameterMetrics():
@@ -102,14 +103,14 @@ class GillespieAlgorithm():
 		self.sample = []
 
 		# states of the population
-		self.population = {State.WAITING: [len(self.agents)], 
+		self.population = pd.DataFrame({State.WAITING: [len(self.agents)], 
 		State.EXPLORING: [0],
 		State.EXPLORING_FOOD: [0],
 		State.RECRUITING: [0],
 		State.RECRUITING_FOOD: [0],
 		State.DEAD: [0], # track number of recovered individuals
 		Tag.INFORMED: [0] # track number of informed individuals
-		}
+		})
 		
 		self.r = [params.alpha] * len(self.agents)
 		self.r_norm = np.array(self.r) / sum(self.r)
@@ -125,41 +126,22 @@ class GillespieAlgorithm():
 		self.tfood = {'Pos': [self.environment.initial_node],
 		'Flag': [False], 'Time': [self.time]}
 	
-	def actualize_population(self):
+	def actualize_population(self, previous_state, current_state):
 		tmp_pos = []
 		tmp_info = []
-		tmp_state = []
+		# tmp_state = []
 
 		for a in list(self.environment.out_nest.keys()):
 			tmp_pos.append(self.agents[a].pos)
 			tmp_info.append(self.agents[a].tag)
-			tmp_state.append(self.agents[a].state)
+			# tmp_state.append(self.agents[a].state)
 		
 		self.metrics.pos = tmp_pos
-		self.population[Tag.INFORMED].append(tmp_info.count(Tag.INFORMED))
 
-		counter = 0
-		for i in list(set(tmp_state)):
-			counter += tmp_state.count(i)
-			self.population[i].append(tmp_state.count(i))
-		
-		self.population[State.WAITING].append(len(self.agents)- counter)
-
-		
-
-	# def actualize_population(self):
-
-	# 	list_of_states = dir(State())[:6]
-	# 	states = [self.agents[i].state for i in list(self.environment.out_nest.keys())]
-	# 	indices = np.where([(i not in states) for i in list_of_states])[0]
-	# 	non_used_states = list(map(list_of_states.__getitem__, indices))
-
-	# 	for i in list(set(states)):
-	# 		self.population[i].append(states.count(i))
-
-	# 	for i in non_used_states:
-	# 		self.population[getattr(State(), i)].append(0)
-
+		self.population = self.population.append(self.population.iloc[-1])
+		self.population.iloc[-1][Tag.INFORMED] = tmp_info.count(Tag.INFORMED)
+		self.population.iloc[-1][previous_state] -= 1
+		self.population.iloc[-1][current_state] += 1
 	
 	def step(self):
 		
@@ -177,19 +159,11 @@ class GillespieAlgorithm():
 			flag = self.agents[idx].action(self.environment, self.agents)
 			self.agents[idx].actualize_path()
 
+			prev_state = self.agents[idx].prev_state
+			curr_state = self.agents[idx].state
+
 			# actualize population states
-			self.actualize_population()
-			#self.population[State.WAITING] = len(self.environment.waiting_ants)
-
-			# tmp_pos = []
-			# tmp_info = []
-			# for a in list(self.environment.out_nest.keys()):
-			# 	tmp_pos.append(self.agents[a].pos)
-			# 	tmp_info.append(self.agents[a].tag) 
-
-			# self.metrics.pos = tmp_pos
-			# # actualize number of informed ants
-			# self.population[Tag.INFORMED].append(tmp_info.count(Tag.INFORMED))
+			self.actualize_population(prev_state, curr_state)
 
 			# actualize food collection times
 			self.tfood['Pos'].append(self.agents[idx].pos)

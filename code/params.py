@@ -1,43 +1,35 @@
 import os
 import sys
 path = os.getcwd().split('/')
-if '/research/AutomatAnts/' in os.getcwd():
-	while path[-2:] != ['research', 'AutomatAnts']:
-		try:
-			path.pop(-1)
-		except:
-			print('Path is not a directory !! Exiting program...')
-			sys.exit(2)
 
-	path = '/'.join(path)
-	if path[-1] != '/':
-		path = path + '/'
-else:
-	path = os.getcwd()+'/research/AutomatAnts/'
-	if not os.path.isdir(path):
-		print('Path is not a directory !! Exiting program...')
-		sys.exit(2)
+# if '/research/AutomatAnts/' in os.getcwd():
+# 	while path[-2:] != ['research', 'AutomatAnts']:
+# 		try:
+# 			path.pop(-1)
+# 		except:
+# 			print('Path is not a directory !! Exiting program...')
+# 			sys.exit(2)
+
+# 	path = '/'.join(path)
+# 	if path[-1] != '/':
+# 		path = path + '/'
+# else:
+# 	path = os.getcwd()+'/research/AutomatAnts/'
+# 	if not os.path.isdir(path):
+# 		print('Path is not a directory !! Exiting program...')
+# 		sys.exit(2)
 		
-#path = 'G:/research/AutomatAnts/' # for debugging
+path = 'G:/research/AutomatAnts/' # for debugging
 #path = '/home/polfer/research/AutomatAnts/' # for debugging
 folder = None
 pathL = os.listdir(path + 'results/')
 #pathL.remove('run_info')
 
-# File name
-""" if len(pathL) == 0:
-	file_name = 'Run_1'
-else:
-	file_name = []
-	for i in pathL:
-		file_name.append(int(i.split('_')[1]))
-	file_name = 'Run_' + str(max(file_name)+1) """
-
 file_name = 'Test'
 
 #Model
-n_agents = 250
-n_steps  = 800000
+n_agents = 100 # 250
+n_steps  = 50000 # 300000 # 800000
 retrieve_positions = False
 
 nest_node = (0,22)
@@ -48,14 +40,6 @@ food = dict.fromkeys(
 	(6, 11), (6, 12), (7, 12), # patch 2
 	(7, 11), (7, 10), (6, 10)],
 	foodXvertex)
-
-# ADD distance in pairs, to change location of foodpatches...
-# Two options would be necessary: mirrored and non-mirrored
-'''
-if 'd' in locals():
-	if type(d) == tuple and sum(d) % 2 == 0:
-		food = [(i[0] + d[0], i[1] + d[1]) for i in list(food.keys())]
-'''
 
 #Lattice size
 width    = 22   
@@ -82,8 +66,9 @@ No recruitment ('NR)          = 0
 Individual recruitment ('IR') = 1
 Hybrid recruitment ('HR')     = [0, 5]
 Group recruitment ('GR')      = [3, 5]
+Force recruitment ('F')		  = X
 '''
-recruitment = 'HR'
+recruitment = 'F'
 
 
 '''

@@ -56,5 +56,3 @@ class Lattice():
 			del pos[L[-1]]
 
 		self.food = dict.fromkeys(L, 1)
-
-	
