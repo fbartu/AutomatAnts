@@ -48,6 +48,7 @@ class Ant():
 		# Recruitment related
 		self.recruitment_strategy = recruitment_strategy
 		self.recruit, self.forage = self.choose_recruitment()
+		self.recruited_ants = []
 
 		# No information about food
 		self.tag = Tag.NAIVE
@@ -109,7 +110,7 @@ class Ant():
 		agent.state = State.RECRUITING
 		agent.movement = '2food'
 		agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
-		return 1 # return number of informed ants
+		return sample # return index of sampled ants
 	
 	# Hybrid recruitment
 	def HR(self, environment, ant_pool):
@@ -126,7 +127,7 @@ class Ant():
 				agent.movement = '2food'
 				agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 
-		return r # return number of informed ants
+		return samples # return indices of sampled ants
 
 	# Group recruitment
 	def GR(self, environment, ant_pool):
@@ -141,7 +142,7 @@ class Ant():
 			agent.state = State.RECRUITING
 			agent.movement = '2food'
 			agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
-		return r # return number of informed ants
+		return samples # return indices of sampled ants
 
 	# Forced recruitment (of r individuals)
 	def F(self, environment, ant_pool):
@@ -156,11 +157,11 @@ class Ant():
 			agent.state = State.RECRUITING
 			agent.movement = '2food'
 			agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
-		return r # return number of informed ants
+		return samples # return indices of sampled ants
 
 	# No recruitment
 	def NR(self):
-		return 0
+		return []
 
 	def ant2nest(self, environment):
 
@@ -176,12 +177,10 @@ class Ant():
 		self.movement = 'random'
 
 	def ant2nearfood(self, environment):
-		print('Throwing the dice...')
 		if random.random() > params.phi:
 			self.movement = 'local'
 			self.move(environment)
 		else:
-			print('... ant goes to randomly explore')
 			self.ant2explore(environment)
 
 	def actualize_path(self):
@@ -228,8 +227,6 @@ class Ant():
 				random.choice(possible_steps)
 				self.ant2explore(environment)
 
-			self.movement = 'random'
-
 		elif self.movement == 'ars':
 			pass
 
@@ -252,6 +249,7 @@ class Ant():
 	def action(self, environment, ant_pool):
 		# record the current state (as previous state)
 		self.prev_state = self.state
+		self.recruited_ants = []
 		# If ant is waiting on the nest, explore.
 		if (self.state == State.WAITING):
 			environment.out_nest[self.id] = self.id
@@ -280,7 +278,6 @@ class Ant():
 		
 			# If food is found
 			if (self.pos in environment.food and environment.food[self.pos] > 0):
-				print('Explorer at food, food found !')
 				self.state = State.EXPLORING_FOOD
 				self.movement = '2nest'
 				self.r_i = params.beta_1
@@ -323,7 +320,8 @@ class Ant():
 				self.r_i = params.gamma_2
 				self.movement = '2food'
 			# else keep moving to nest
-			self.move(environment)
+			else:
+				self.move(environment)
 			
 			return False
 
@@ -338,9 +336,7 @@ class Ant():
 			else:
 				# pick up food
 				if (self.pos in environment.food):
-					print('Ant at food position')
 					if environment.food[self.pos] > 0:
-						print('Food found !')
 						self.state = State.RECRUITING_FOOD
 						self.r_i = params.beta_2
 						self.movement = '2nest'
@@ -354,8 +350,7 @@ class Ant():
 					else:
 						# depending of foraging strategy:
 						# if serial, the ant will return to nest
-						# if parallel, the ant will explore
-						print('Recruitment happens !')
+						# if parallel, the ant will explore	
 						self.forage(environment)
 
 					return False
@@ -363,7 +358,7 @@ class Ant():
 				elif self.pos == environment.initial_node:
 					if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
 						self.r_i = params.omega
-						self.recruit(environment, ant_pool)
+						self.recruited_ants = self.recruit(environment, ant_pool)
 						self.movement = '2food'
 
 					else:

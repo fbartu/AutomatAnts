@@ -2,24 +2,24 @@ import os
 import sys
 path = os.getcwd().split('/')
 
-# if '/research/AutomatAnts/' in os.getcwd():
-# 	while path[-2:] != ['research', 'AutomatAnts']:
-# 		try:
-# 			path.pop(-1)
-# 		except:
-# 			print('Path is not a directory !! Exiting program...')
-# 			sys.exit(2)
+if '/research/AutomatAnts/' in os.getcwd():
+	while path[-2:] != ['research', 'AutomatAnts']:
+		try:
+			path.pop(-1)
+		except:
+			print('Path is not a directory !! Exiting program...')
+			sys.exit(2)
 
-# 	path = '/'.join(path)
-# 	if path[-1] != '/':
-# 		path = path + '/'
-# else:
-# 	path = os.getcwd()+'/research/AutomatAnts/'
-# 	if not os.path.isdir(path):
-# 		print('Path is not a directory !! Exiting program...')
-# 		sys.exit(2)
+	path = '/'.join(path)
+	if path[-1] != '/':
+		path = path + '/'
+else:
+	path = os.getcwd()+'/research/AutomatAnts/'
+	if not os.path.isdir(path):
+		print('Path is not a directory !! Exiting program...')
+		sys.exit(2)
 		
-path = 'G:/research/AutomatAnts/' # for debugging
+#path = 'G:/research/AutomatAnts/' # for debugging
 #path = '/home/polfer/research/AutomatAnts/' # for debugging
 folder = None
 pathL = os.listdir(path + 'results/')
@@ -29,8 +29,8 @@ file_name = 'Test'
 
 #Model
 n_agents = 100 # 250
-n_steps  = 50000 # 300000 # 800000
-retrieve_positions = False
+n_steps  = 500000 # 800000
+retrieve_positions = True
 
 nest_node = (0,22)
 foodXvertex = 1

@@ -103,16 +103,18 @@ class GillespieAlgorithm():
 		self.sample = []
 
 		# states of the population
-		self.population = pd.DataFrame({State.WAITING: [len(self.agents)], 
+		self.population = pd.DataFrame({State.WAITING: [len(self.agents)-1], 
 		State.EXPLORING: [0],
 		State.EXPLORING_FOOD: [0],
-		State.RECRUITING: [0],
+		State.RECRUITING: [1],
 		State.RECRUITING_FOOD: [0],
 		State.DEAD: [0], # track number of recovered individuals
 		Tag.INFORMED: [0] # track number of informed individuals
 		})
 		
-		self.r = [params.alpha] * len(self.agents)
+		self.r = [params.omega]
+		self.r.extend([params.alpha] * (len(self.agents) - 1))
+		# self.r = [params.alpha] * len(self.agents)
 		self.r_norm = np.array(self.r) / sum(self.r)
 		self.R_t = sum(self.r)
 		
@@ -142,6 +144,7 @@ class GillespieAlgorithm():
 		self.population.iloc[-1][Tag.INFORMED] = tmp_info.count(Tag.INFORMED)
 		self.population.iloc[-1][previous_state] -= 1
 		self.population.iloc[-1][current_state] += 1
+
 	
 	def step(self):
 		
@@ -175,6 +178,8 @@ class GillespieAlgorithm():
 
 			# actualize rates
 			self.r[idx] = self.agents[idx].r_i
+			for i in self.agents[idx].recruited_ants:
+    				self.r[i] = self.agents[i].r_i
 			self.r_norm = np.array(self.r) / sum(self.r)
 			self.R_t = sum(self.r)
 

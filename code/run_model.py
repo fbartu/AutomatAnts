@@ -86,7 +86,7 @@ if params.n_runs > 1:
 		import multiprocessing as mp
 		pool = mp.Pool(mp.cpu_count())
 		models = pool.map(run_parallel, models)
-		# models = [pool.apply(run_parallel, ()) for i in models]
+		# models = [pool.apply(run_parallel, (models[i])) for i in range(len(models))]
 		# models = [m.get() for m in models]
 		pool.terminate()
 
@@ -112,6 +112,6 @@ if params.n_runs > 1:
 	# sd.to_csv(folder + filename + '_sd.csv')
 
 else:
-	model = create_instance()
+	model = create_instance(1)[0]
 	model.run()
 	model.data2json(filename = filename, get_pos = params.retrieve_positions)

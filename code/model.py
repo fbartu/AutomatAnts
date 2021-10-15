@@ -9,6 +9,13 @@ class Model(GillespieAlgorithm):
     def __init__(self, n_agents, recruitment_strategy, environment, steps, path, filename):
 
         ants = list(Ant(a, recruitment_strategy) for a in list(range(n_agents)))
+        '''
+        Experimentation !!
+        '''
+        ants[0].pos = list(environment.food.keys())[0]
+        ants[0].r_i = params.omega
+        ants[0].state = State.RECRUITING
+        ants[0].prev_state = State.RECRUITING
         super().__init__(ants, environment)
 
         self.steps = steps
@@ -41,7 +48,13 @@ class Model(GillespieAlgorithm):
         return result
 
     def save_data(self):
-
+        cols = list(self.population.columns)
+        try:
+            cols.remove('W')
+            self.population[State.WAITING] = len(self.agents) - self.population[cols]
+        except:
+            pass
+        
         self.results = [{'Time (s)': self.T,
         'Connectivity': self.K,
         'N': self.N,
