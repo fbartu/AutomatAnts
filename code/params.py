@@ -28,7 +28,7 @@ pathL = os.listdir(path + 'results/')
 file_name = 'Test' 
 
 #Model
-n_agents = 100 # 250
+n_agents = 250
 n_steps  = 0 #300000 # 800000
 retrieve_positions = True
 
@@ -52,7 +52,7 @@ beta_2  = 1.0
 gamma_1 = 1.0
 gamma_2 = 1.0
 omega   = 2.5  
-eta     = 0.01 # 0.035
+eta     = 0.035
 mu 		= 0.0 # noise in recruitment (at path to food)
 phi		= 0.0 # noise in recruitment (at food patch)
 
