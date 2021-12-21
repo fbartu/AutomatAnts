@@ -1,6 +1,8 @@
 import random
 import networkx as nx
 from copy import deepcopy
+
+from networkx.algorithms.cluster import square_clustering
 import params
 
 '''
@@ -11,6 +13,7 @@ class State():
 	
 	WAITING = 'W' # waiting in nest
 	EXPLORING = 'E' # exploring
+	EXPLORING_FROM_FOOD = 'E2' # exploring from food patch
 	RECRUITING = 'R' # recruiting or getting recruited
 	EXPLORING_FOOD = 'EF' # transporting food as explorer
 	RECRUITING_FOOD = 'RF' # transporting food as recruiter
@@ -36,6 +39,7 @@ class Ant():
 		self.pos = params.nest_node
 		self.state = 'W'
 		self.prev_state = 'W'
+		self.state_history = []
 		self.r_i = params.alpha
 		self.movement = 'random'
 
@@ -102,8 +106,8 @@ class Ant():
 	# Individual recruitment
 	def IR(self, environment, ant_pool):
 		sample = random.choice(environment.waiting_ants)
-		del environment.waiting_ants[sample]
-		environment.out_nest[sample] = sample
+		# del environment.waiting_ants[sample]
+		# environment.out_nest[sample] = sample
 		agent = ant_pool[sample]
 		agent.r_i = params.omega
 		agent.tag = Tag.INFORMED
@@ -118,8 +122,8 @@ class Ant():
 		if r > 0:
 			samples = random.sample(list(environment.waiting_ants), r)
 			for sample in samples:
-				del environment.waiting_ants[sample]
-				environment.out_nest[sample] = sample
+				# del environment.waiting_ants[sample]
+				# environment.out_nest[sample] = sample
 				agent = ant_pool[sample]
 				agent.r_i = params.omega
 				agent.tag = Tag.INFORMED
@@ -134,8 +138,8 @@ class Ant():
 		r = random.randrange(3, 6)
 		samples = random.sample(list(environment.waiting_ants), r)
 		for sample in samples:
-			del environment.waiting_ants[sample]
-			environment.out_nest[sample] = sample
+			# del environment.waiting_ants[sample]
+			# environment.out_nest[sample] = sample
 			agent = ant_pool[sample]
 			agent.r_i = params.omega
 			agent.tag = Tag.INFORMED
@@ -149,8 +153,8 @@ class Ant():
 		r = 4 # Force a recruitment of 4 individuals
 		samples = random.sample(list(environment.waiting_ants), r)
 		for sample in samples:
-			del environment.waiting_ants[sample]
-			environment.out_nest[sample] = sample
+			# del environment.waiting_ants[sample]
+			# environment.out_nest[sample] = sample
 			agent = ant_pool[sample]
 			agent.r_i = params.omega
 			agent.tag = Tag.INFORMED
@@ -185,6 +189,18 @@ class Ant():
 
 	def actualize_path(self):
 		self.path.append(self.pos)
+
+	def update_state(self):
+		self.prev_state = self.state
+
+	def leave_nest(self, environment):			
+		del environment.waiting_ants[self.id]
+		environment.out_nest[self.id] = self.id
+
+	def enter_nest(self, environment):
+		del environment.out_nest[self.id] 
+		environment.waiting_ants[self.id] = self.id
+			
 
 
 	# Move method
@@ -226,6 +242,7 @@ class Ant():
 			else:
 				random.choice(possible_steps)
 				self.ant2explore(environment)
+				self.state = State.EXPLORING_FROM_FOOD
 
 		elif self.movement == 'ars':
 			pass
@@ -238,23 +255,19 @@ class Ant():
 		
 		return 0
 
-
-	'''
-	METHODS FOR GETTING INFORMATION ABOUT THE ANT
-	'''
-
 	# Possible actions the ant may take, based on the position and the state
 	# returns true if food is found and picked up
 	# this value is fed into the gillespie algorithm
 	def action(self, environment, ant_pool):
-		# record the current state (as previous state)
-		self.prev_state = self.state
+
+		if self.prev_state == State.WAITING:
+			self.leave_nest(environment)
+			
 		self.recruited_ants = []
 		# If ant is waiting on the nest, explore.
-		if (self.state == State.WAITING):
-			environment.out_nest[self.id] = self.id
-			del environment.waiting_ants[self.id]
+		if self.state == State.WAITING:
 			self.ant2explore(environment)
+			
 
 			return False
 
@@ -265,16 +278,14 @@ class Ant():
 				self.state = State.WAITING
 				self.r_i = params.alpha
 				self.movement = 'random'
-				environment.waiting_ants[self.id] = self.id
-				del environment.out_nest[self.id]
+				self.enter_nest(environment)
 				self.path2nest = []
 				
 			else:
 				self.move(environment)
 			return False
 
-		elif self.state == State.EXPLORING:
-
+		elif self.state == State.EXPLORING or self.state == State.EXPLORING_FROM_FOOD:
 		
 			# If food is found
 			if (self.pos in environment.food and environment.food[self.pos] > 0):
@@ -328,7 +339,7 @@ class Ant():
 		elif (self.state == State.RECRUITING):
 			# self.r_i should be equal to params.omega
 			if random.random() < params.mu:
-				self.state = State.EXPLORING
+				self.state = State.EXPLORING_FROM_FOOD
 				self.movement = 'random'
 				self.r_i = params.omega
 				self.MIA = 1 # missing in action
@@ -362,7 +373,6 @@ class Ant():
 						self.movement = '2food'
 
 					else:
-						self.prev_state = 'W'
 						self.move(environment)
 
 					return False

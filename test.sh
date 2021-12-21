@@ -4,7 +4,7 @@
 cd
 
 . ~/research/automatenv/bin/activate
-python3 ~/research/AutomatAnts/code/run_model.py -x debug -p alpha=0,eta=0 --nruns 1,False
+python3 ~/research/AutomatAnts/code/run_model.py -x minidebug -p alpha=0,eta=0 --nruns 1,False
 # G:
 # G:\research\automatenv\Scripts\activate
 # cd G:\research\AutomatAnts\code\

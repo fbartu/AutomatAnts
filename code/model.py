@@ -1,3 +1,4 @@
+from os import environ
 from gillespie import GillespieAlgorithm
 from agent import *
 import json
@@ -11,11 +12,13 @@ class Model(GillespieAlgorithm):
         ants = list(Ant(a, recruitment_strategy) for a in list(range(n_agents)))
         '''
         Experimentation !!
-        '''
         ants[0].pos = list(environment.food.keys())[0]
         ants[0].r_i = params.omega
         ants[0].state = State.RECRUITING
         ants[0].prev_state = State.RECRUITING
+        environment.out_nest[0] = 0
+        del environment.waiting_ants[0]
+        '''
         super().__init__(ants, environment)
 
         self.steps = steps
@@ -26,6 +29,8 @@ class Model(GillespieAlgorithm):
 
         print('+++ RUNNING MODEL +++')
         for i in list(range(self.steps)):
+            if i % 2000 == 0:
+                print('Iteration ', str(i))
             self.step()
            
         print('Model completed... Saving results !')
@@ -37,13 +42,16 @@ class Model(GillespieAlgorithm):
         self.T = [t / 60.0 for t in self.T]
 
     def retrieve_positions(self):
-        result = {'agent': [],'pos': [],'t': [], 'tag': [], 'mia': []}
+        # result = {'agent': [],'pos': [],'t': [], 'state': [], 'tag': [], 'mia': []}
+        result = {'agent': [],'pos': [],'t': [], 'state': []}
         for i in range(len(self.agents)):
             result['agent'].extend([i] * len(self.agents[i].path))
             result['pos'].extend(self.agents[i].path)
             result['t'].extend(list(map(self.T.__getitem__, np.where(self.sample == np.array([i]))[0])))
-            result['tag'].extend(self.agents[i].tag)
-            result['mia'].append(self.agents[i].MIA)
+            if len(self.agents[i].state_history) > 1:
+                result['state'].extend(self.agents[i].state_history)
+            #result['tag'].extend(self.agents[i].tag)
+            #result['mia'].append(self.agents[i].MIA)
         
         return result
 
@@ -60,11 +68,10 @@ class Model(GillespieAlgorithm):
         'N': self.N,
         'Interactions': self.I,
         'Food in nest': self.F,
-        'Informed': self.population[Tag.INFORMED],
+        'Exploring from food': self.population[State.EXPLORING_FROM_FOOD],
+        #'Informed': self.population[Tag.INFORMED],
         'Waiting': self.population[State.WAITING],
-        'Carrying food': list(map(lambda x, y: x+y,
-         self.population[State.EXPLORING_FOOD],
-          self.population[State.RECRUITING_FOOD])),
+        'Carrying food': self.population[[State.EXPLORING_FOOD, State.RECRUITING_FOOD]].sum(axis = 1),
         'Exploring': self.population[State.EXPLORING],
         'Recruiting': self.population[State.RECRUITING]},
         self.metrics.efficiency(self.tfood),
