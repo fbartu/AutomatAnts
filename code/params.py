@@ -25,11 +25,11 @@ folder = None
 pathL = os.listdir(path + 'results/')
 #pathL.remove('run_info')
 
-file_name = 'Test'
+file_name = 'Test' 
 
 #Model
 n_agents = 100 # 250
-n_steps  = 300000 # 800000
+n_steps  = 0 #300000 # 800000
 retrieve_positions = True
 
 nest_node = (0,22)

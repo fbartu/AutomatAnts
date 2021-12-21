@@ -28,11 +28,16 @@ class Model(GillespieAlgorithm):
     def run(self):
 
         print('+++ RUNNING MODEL +++')
-        for i in list(range(self.steps)):
-            if i % 2000 == 0:
-                print('Iteration ', str(i))
-            self.step()
-           
+        if self.steps == 0:
+            while self.T[-1] < 10800:
+                self.step()
+        
+        else:
+            for i in list(range(self.steps)):
+                if i % 2000 == 0:
+                    print('Iteration ', str(i))
+                self.step()
+            
         print('Model completed... Saving results !')
 
         self.save_data()
