@@ -131,8 +131,10 @@ class Ant():
 				agent.movement = '2food'
 				agent.path2food = deepcopy(environment.paths2food[self.locations[-1]]) # path to where food was found
 
-		return samples # return indices of sampled ants
-
+			return samples # return indices of sampled ants
+		else:
+			return []
+  
 	# Group recruitment
 	def GR(self, environment, ant_pool):
 		r = random.randrange(3, 6)

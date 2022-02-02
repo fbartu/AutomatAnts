@@ -29,7 +29,12 @@ class Model(GillespieAlgorithm):
 
         print('+++ RUNNING MODEL +++')
         if self.steps == 0:
+            i = 0
             while self.T[-1] < 10800:
+                i+=1
+                if i % 2000 == 0:
+                    print('Iteration ', str(i))
+                    
                 self.step()
         
         else:
