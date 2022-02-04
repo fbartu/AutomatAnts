@@ -68,7 +68,7 @@ Hybrid recruitment ('HR')     = [0, 5]
 Group recruitment ('GR')      = [3, 5]
 Force recruitment ('F')		  = X
 '''
-recruitment = 'F'
+recruitment = 'HR'
 
 
 '''

@@ -1,4 +1,3 @@
-from os import environ
 from gillespie import GillespieAlgorithm
 from agent import *
 import json
@@ -74,7 +73,7 @@ class Model(GillespieAlgorithm):
             pass
         
         self.results = [{'Time (s)': self.T,
-        'Connectivity': self.K,
+        # 'Connectivity': self.K,
         'N': self.N,
         'Interactions': self.I,
         'Food in nest': self.F,

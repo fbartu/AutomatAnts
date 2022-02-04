@@ -369,12 +369,15 @@ class Ant():
 					return False
 				# recruit other ants
 				elif self.pos == environment.initial_node:
+					
 					if self.r_i == params.gamma_1 or self.r_i == params.gamma_2:
 						self.r_i = params.omega
 						self.recruited_ants = self.recruit(environment, ant_pool)
 						self.movement = '2food'
 
 					else:
+						# if not len(self.path):
+						# 	self.leave_nest(environment)
 						self.move(environment)
 
 					return False

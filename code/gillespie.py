@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from scipy.stats import rv_discrete
+# from scipy.stats import rv_discrete
 from agent import *
 import params
 import statistics
@@ -156,15 +156,13 @@ class GillespieAlgorithm():
 	def step(self):
 		
 		#sample = rv_discrete(values=(list(self.agents.keys()), self.r_norm)).rvs(size=1)
-		sample = rv_discrete(values=(list(range(len(self.agents))), self.r_norm)).rvs()
+		idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm))
+		#sample = rv_discrete(values=(list(range(len(self.agents))), self.r_norm)).rvs()
 
 
-		if self.rng_action < float(self.r_norm[sample]):
-			self.sample.append(sample) # for debugging and tracking agents' actions
+		if self.rng_action < float(self.r_norm[idx]):
+			self.sample.append(idx) # for debugging and tracking agents' actions
 
-			# get the index of the ant performing an action
-			idx = sample
-			
 			# do action & report if food is found (@bool flag)
 			flag = self.agents[idx].action(self.environment, self.agents)
 			self.agents[idx].actualize_path()
@@ -182,7 +180,8 @@ class GillespieAlgorithm():
 			self.tfood['Time'].append(self.time)
 
 			# get dynamics of the population
-			self.retrieve_data(self.metrics.interactions(), self.metrics.connectivity())
+			# self.retrieve_data(self.metrics.interactions(), self.metrics.connectivity())
+			self.retrieve_data(self.metrics.interactions())
 
 			# actualize rates
 			self.r[idx] = self.agents[idx].r_i
@@ -198,12 +197,12 @@ class GillespieAlgorithm():
 		# get time for next iteration
 		self.time += abs(np.log(self.rng_t)/self.R_t)
 
-	def retrieve_data(self, ints, connectivity):
-		
+	# def retrieve_data(self, ints, connectivity):
+	def retrieve_data(self, ints):
 		self.N.append(sum(self.population.iloc[-1][self.population.columns != State.WAITING]))
 		self.T.append(self.time)
 		self.I.append(ints)
-		self.K.append(connectivity)
+		# self.K.append(connectivity)
 		self.F.append(self.environment.food_in_nest)
 		# food nest / patches evolution !
 		# exploring / recruiting ants !	
