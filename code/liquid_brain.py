@@ -10,7 +10,9 @@ Complex Systems, eds. H. Haken and A. Mikhailov, Springer
 Series in Synergetics, Vol. 62 (Springer, 1993) p. 77.
 
 O. Miramontes, R.V. Solé and B.C. Goodwin, Physica D 63
-(1993) 145.
+(1993) 145. 
+LINK: https://www.sciencedirect.com/science/article/pii/016727899390152Q?via%3Dihub
+
 
 O. Miramontes, R.V. Solé and B.C. Goodwin, Antichaos in
 Ants: the Excitability Metaphor at Two Hierarchical Levels,
@@ -28,12 +30,14 @@ import random
 
 """ PARAMETERS """
 L = 10 # lattice grid
-N = [] # number of automata
+N = 10 # number of automata
 rho = N / L**2 # agent density
-g = 0.035 # gain (sensitivity) parameter; from 0.005 to 0.5
+g = 0.05 # 0.035 # gain (sensitivity) parameter; from 0.005 to 0.5
 theta = 10**-16 # threshold of spontaneous activation (if Si_t > theta) 
-Sa = 10**-6 # spontaneous activationa activity
+# Sa = 10**-6 # spontaneous activation activity
+Sa = 0.01 # spontaneous activation activity
 Pa = 0.01 # probability of spontaneous activation
+# Coupling coefficients (Jij, intensity of interaction?) are 1
 
 
 # Si_t = [] # state of the ith automata at time t
@@ -48,21 +52,23 @@ Pa = 0.01 # probability of spontaneous activation
 
 # Si_t1 = Phi * ( g * ( Jii * Sj_t + np.sum( Jij * Sj_t - Theta_i ) ) ) # // STATE FUNCTION
 
+# Initial positions and activity (-1, 1) chosen randomly
+
 class Agent:
-    def __init__(self, pos, g):
+    def __init__(self, pos):
         self.pos = pos
         self.new_pos = pos
-        self.g = g
-        self.activity = 0
-        self.old_activity = 0
+
+        self.Si = random.uniform(-1.0, 1.0) # activity
+        self.old_activity = self.Si
         self.new_activity = 0
         
         
         self.check_state()
         
     def check_state(self):
-        if self.activity <= theta:
-            self.activity = 0
+        if self.Si <= theta:
+            self.Si = 0
             self.old_activity = 0
             self.state = 'inactive'
             
@@ -75,14 +81,14 @@ class Agent:
         
         if self.state == 'inactive':
             if random.random() < Pa:
-                self.activity = Sa
+                self.Si = Sa
                 
         else:
             self.move(grid)
     
     def assign_activity(self):
-        self.old_activity = self.activity
-        self.activity = self.new_activity
+        self.old_activity = self.Si
+        self.Si = self.new_activity
         self.pos = self.new_pos
         
     def move(self, grid):
@@ -106,7 +112,7 @@ class Agent:
         else:
             s = [self.old_activity]
             
-        self.new_activity = math.tanh(self.g * (sum(s)))
+        self.new_activity = math.tanh(g * (sum(s)))
         
 
 class Lattice:
@@ -138,6 +144,14 @@ class Lattice:
         else:
             return []
         
+        
+class Model:
+    def __init__(self):
+        self.grid = Lattice(L = L)
+        self.agents = []
+        for i in range(N):
+            pos = random.choice(list(zip(*np.where(self.grid == 0))))
+            self.agents.append(Agent(pos = pos))
         
 
 
