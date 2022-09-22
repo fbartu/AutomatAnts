@@ -28,13 +28,13 @@ import math
 import numpy as np
 import random
 
+
 """ PARAMETERS """
 L = 10 # lattice grid
-N = 10 # number of automata
+N = 50 # number of automata
 rho = N / L**2 # agent density
-g = 0.05 # 0.035 # gain (sensitivity) parameter; from 0.005 to 0.5
-theta = 10**-16 # threshold of spontaneous activation (if Si_t > theta) 
-# Sa = 10**-6 # spontaneous activation activity
+g = 0.4 # gain (sensitivity) parameter
+theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Sa = 0.01 # spontaneous activation activity
 Pa = 0.01 # probability of spontaneous activation
 # Coupling coefficients (Jij, intensity of interaction?) are 1
@@ -50,119 +50,152 @@ Pa = 0.01 # probability of spontaneous activation
 # Inactive = []
 
 
-# Si_t1 = Phi * ( g * ( Jii * Sj_t + np.sum( Jij * Sj_t - Theta_i ) ) ) # // STATE FUNCTION
+# Si_t+1 = tanh { g [ sum(Jij * Sj_t-1) + Jii * Si_t-1 ] }
+
+# Si_t1 = Phi * ( g * ( Jii * Si_t + np.sum( Jij * Sj_t - Theta_i ) ) ) # // STATE FUNCTION
 
 # Initial positions and activity (-1, 1) chosen randomly
 
 class Agent:
     def __init__(self, pos):
         self.pos = pos
-        self.new_pos = pos
+        self.prev_pos = pos
 
         self.Si = random.uniform(-1.0, 1.0) # activity
-        self.old_activity = self.Si
-        self.new_activity = 0
-        
+        self.Ai = self.Si
         
         self.check_state()
         
+    def update_activity(self):
+        self.Si = self.Ai
+        
     def check_state(self):
-        if self.Si <= theta:
-            self.Si = 0
-            self.old_activity = 0
-            self.state = 'inactive'
+        if self.Si < theta:
+            self.state = 0 # inactive
             
         else:
-            self.state = 'active'
+            self.state = 1 # active
             
     def action(self, grid):
         
         self.check_state()
+        self.compute_activity(grid)
         
-        if self.state == 'inactive':
+        if self.state == 0:
+            
+            # chance of spontaneous activity
             if random.random() < Pa:
-                self.Si = Sa
+                # self.Si = Sa
+                self.Ai = Sa
+                self.state = 1
+                
+            grid.grid[self.pos] = self.Si
+                
+
                 
         else:
             self.move(grid)
-    
-    def assign_activity(self):
-        self.old_activity = self.Si
-        self.Si = self.new_activity
-        self.pos = self.new_pos
         
     def move(self, grid):
-        m = grid.available_positions(self.pos)
-        if len(m):
-            pos = tuple(random.choice(m))
-        else:
-            pos = self.pos
-            
-        self.new_pos = pos
-        grid[self.new_pos] = 1
+
+        m = grid.get_real_positions(self.pos)
+        m = [tuple(x) for x in m]
+        i = 0
         
-    def compute_activity(self, neighbors):
-        if len(neighbors):
-            s = []
-            for i in neighbors:
-                s.append(i.old_activity)
-                
-            s.append(self.old_activity)
-                
-        else:
-            s = [self.old_activity]
-            
-        self.new_activity = math.tanh(g * (sum(s)))
+        # try to move at random to an empty positions (capped at six attempts)
+        while i < 6:
+            pos = random.choice(m)
+            if grid.grid[pos] != 0:
+                i += 1
+
+            else:
+                i = 6
+                grid.grid[pos] = self.Si
+                grid.grid[self.pos] = 0
+                self.pos = pos
+        
+        
+    def compute_activity(self, grid):
+        
+        z = grid.get_activity(self.pos)
+        z = (np.sum(z)) + self.Si
+        self.Ai = math.tanh(g * z)
         
 
 class Lattice:
     
-    def __init__(self, L):
+    def __init__(self):
         
-        self.L = L
-        self.grid = np.zeros((L, L), dtype = int)
+        self.grid = np.zeros((L, L), dtype = float)
         self.neighborhood = [(-1, 1), (0, 1), (1, 1), (-1, 0),
              (1, 0), (-1, -1), (0,-1), (1,-1)]
-        # i = np.indices((L, L))
-        # x = np.concatenate(i[0]).ravel().tolist()
-        # y = np.concatenate(i[1]).ravel().tolist()
-        # self.coords = list(zip(x, y))
-        # self.x, self.y = np.meshgrid(np.linspace(0, L, L), np.linspace(0, L, L))
+        i = np.indices((L, L))
+        x = np.concatenate(i[0]).ravel().tolist()
+        y = np.concatenate(i[1]).ravel().tolist()
+        self.coords = list(zip(x, y))
         
-    def available_positions(self, pos):
+    def get_real_positions(self, pos):
         new_positions = np.array(pos) + self.neighborhood
         
-        # filter 1, eliminate non-existing coordinates
-        idx = np.sum((new_positions > -1) & (new_positions < (L+1)), axis = 1)
+        # filter to eliminate non-existing coordinates
+        idx = np.sum((new_positions > -1) & (new_positions < L), axis = 1)
         new_positions = new_positions[np.where(idx == 2)]
         
-        # filter 2, eliminate busy coordinates
-        idx = np.where(self.grid[tuple(new_positions.T.tolist())] == 0)[0]
-        if len(idx):
-            return list(new_positions[idx])
+        return new_positions
+    
+    def get_neighbors(self, pos):
+        positions = self.get_real_positions(pos)
+        pos = tuple(positions.T.tolist())
         
-        else:
-            return []
+        return pos
+    
+    def get_activity(self, pos):
+        
+        xy = self.get_neighbors(pos)
+        
+        return self.grid[xy]
         
         
 class Model:
     def __init__(self):
-        self.grid = Lattice(L = L)
+        self.grid = Lattice()
         self.agents = []
         for i in range(N):
-            pos = random.choice(list(zip(*np.where(self.grid == 0))))
+            pos = random.choice(list(zip(*np.where(self.grid.grid == 0))))
             self.agents.append(Agent(pos = pos))
+            self.grid.grid[pos] = self.agents[-1].Si
         
+    def update_agents(self):
+        
+        for a in self.agents:
+            a.update_activity()
+            self.grid.grid[a.pos] = a.Si
 
+    def run(self, iters):
+        
+        self.results = []
+        for i in range(iters):
+            
+            act = 0
+            
+            for a in self.agents:
+                a.action(self.grid)
+                act += a.state
 
-
-# sigmoid function
-# def Phi(g, z):
-#     mu = g * z
-#     return math.tanh(mu)
-
-
-
-# Step 1: Check state (active, inactive)
-# Step 2: Compute state ()
-# Step 3: Assign states
+            self.update_agents()
+            self.results.append(act)
+            
+        self.results = {'Time': list(range(iters)), 'Activity': self.results}
+       
+       
+""" FOR FAST SIMULATIONS AND RESULT VISUALIZATION """
+import matplotlib.pyplot as plt
+def model_run(iters):
+    m = Model()
+    m.run(iters)
+    plt.plot(m.results['Time'], m.results['Activity'])
+    plt.ylabel('Active Objects')
+    plt.title(rho)
+    plt.show()
+    
+    return m
