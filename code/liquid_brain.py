@@ -31,9 +31,9 @@ import random
 
 """ PARAMETERS """
 L = 10 # lattice grid
-N = 50 # number of automata
+N = 60 # number of automata
 rho = N / L**2 # agent density
-g = 0.4 # gain (sensitivity) parameter
+g = 0.05 # gain (sensitivity) parameter
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Sa = 0.01 # spontaneous activation activity
 Pa = 0.01 # probability of spontaneous activation
