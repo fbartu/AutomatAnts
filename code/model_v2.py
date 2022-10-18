@@ -19,7 +19,7 @@ import statistics
 """ PARAMETERS """
 """"""""""""""""""
 N = 60 # number of automata
-g = 0.8 # gain (sensitivity) parameter
+g = 0.5 # gain (sensitivity) parameter
 Theta = 0
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Sa = 10**-6 # spontaneous activation activity
@@ -28,6 +28,11 @@ Jij = {'Active-Active': 1, 'Active-Inactive' : 0.2,
  'Inactive-Active': 0.5, 'Inactive-Inactive': 0.1, 
  'Active-FoodActive': 1, 'Active-FoodInactive': -1,
  'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 0} # Coupling coefficients
+
+Jij = {'Active-Active': 1, 'Active-Inactive' : 0.6,
+ 'Inactive-Active': 1, 'Inactive-Inactive': 1, 
+ 'Active-FoodActive': 1, 'Active-FoodInactive': 1,
+ 'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 1} # Coupling coefficients
 weight = 2 # number of times it is more likely to choose the preferred direction over the other possibilities
 
 nest = (0,22)
@@ -69,6 +74,9 @@ class Food:
 		self.Si = 1
 		self.Si_t1 = self.Si
 
+	def compute_activity(self):
+		pass
+
 ''' ANT AGENT '''
 
 class Ant(Agent):
@@ -77,12 +85,14 @@ class Ant(Agent):
 		
 		super().__init__(unique_id, model)
 
-		self.Si = random.uniform(-1.0, 0.0) # activity
-		self.Si = self.Si_t1
+		self.Si = random.gauss(0, 1) # activity
+		# self.Si = random.uniform(-1.0, 0.0) # activity
+		self.Si_t1 = self.Si
 		self.food = []
 		
 		self.check_state()
 		self.movement = 'random'
+		self.is_out = 0
 
 	def update_activity(self):
 		self.Si = self.Si_t1
@@ -96,9 +106,11 @@ class Ant(Agent):
 
 	# Si_t+1 = tanh { g [ sum(Jij * Sj_t-1) + Jii * Si_t-1 ] }
 	def compute_activity(self):
-		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in self.model.grid.get_cell_list_contents([self.pos])]
+		neighbors = self.model.grid.get_cell_list_contents([self.pos])
+		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in neighbors]
 		z = sum(z) + Jij[self.state + "-" + self.state]* self.Si
 		self.Si_t1 = math.tanh(g * z)
+		return neighbors
 
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
@@ -128,9 +140,10 @@ class Ant(Agent):
 			idx = np.argmin(d)
 
 			if self.movement == 'persistant':
-				v = 1 / (len(d) + weight)
-				p = [weight / (len(d) + weight) if i == idx else v for i in range(len(d))]
-				pos = np.random.choice(possible_steps, p = p)
+				v = 1 / (len(d) + weight - 1)
+				p = [weight / (len(d) + weight - 1) if i == idx else v for i in range(len(d))]
+				pos = np.random.choice(range(len(d)), p = p)
+				pos = possible_steps[pos]
 
 			else:
 				pos = possible_steps[idx]
@@ -159,19 +172,20 @@ class Ant(Agent):
 					self.move()
 
 			elif self.pos == nest:
-				if len(self.food):
-					self.food2nest()
+
 				if self.movement == 'random':
 					self.move()
+					self.is_out = 1
 
 				else:
-					if self.food:
+					if len(self.food):
 						self.food2nest() ## ??
 
 			else:
 				self.move()
 
-		self.compute_activity()
+		neighbors = self.compute_activity()
+		return neighbors
 
 ''' MODEL '''
 
@@ -180,14 +194,12 @@ class Model(Model):
 	def __init__(self, N = 100, width = width, height = height):
 
 		super().__init__()
-		self.update = []
 
 		# Lattice
 		self.g = nx.hexagonal_lattice_graph(width, height, periodic = False)
 		self.grid = space.NetworkGrid(self.g)
 		self.coords = nx.get_node_attributes(self.g, 'pos')
-		self.in_nest = list(range(N))
-		self.out_nest = [N - len(self.in_nest)]
+		self.sample = []
 
 		# Agents
 		self.agents = []
@@ -200,22 +212,35 @@ class Model(Model):
 			for f in range(foodXvertex):
 				self.grid.place_agent(self.food[i][f], i)
 
-		idx = random.randrange(N)
-		self.agents[idx].Si = 30 # ON PARAMETRIZATION !
-		self.agents[idx].check_state()
+		# idx = random.randrange(N)
+		# self.agents[idx].Si = 30 # ON PARAMETRIZATION !
+		# self.agents[idx].check_state()
 		
 		# Rates
 		self.r = np.array([a.Si for a in self.agents])
-		self.r = self.r + abs(np.min(self.r)) # normalization (1: convert to positive values)
-		self.r = self.r / np.sum(self.r) # normaliation (2: convert to probabilities)
-
+		self.rate2prob()
 
 		# Time & Gillespie
 		self.time = 0
-		self.T = [0]
-		self.rnorm = []
 		self.rng_t = random.random()
 		self.rng_action = random.random()
+
+		# Metrics
+		self.T = [0] # time
+		self.I = [0] # interactions
+		self.N = [0] # activity
+
+	# transforms rates into probabilities
+	def rate2prob(self):
+		m = np.min(self.r)
+
+		# normalization to only positive values if necessary
+		if m < 0:
+			self.R_t = np.sum(self.r + abs(m))
+			self.r_norm = (self.r + abs(m)) / self.R_t
+		else:
+			self.R_t = np.sum(self.r)
+			self.r_norm = self.r / self.R_t
 
 	def remove_agent(self, agent: Agent) -> None:
 		""" Remove the agent from the network and set its pos variable to None. """
@@ -230,29 +255,47 @@ class Model(Model):
 
 	def step(self):
 		
-		idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r))
+		idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm))
 
 		if self.rng_action < float(self.r_norm[idx]):
-			# get sampled id
+
+			# get sampled id (for debugging)
 			self.sample.append(idx) 
 
-			# do action & report 
-			# step 1: scheduled action
-			# step 2: get results to data collector
-			flag = self.agents[idx].action(self.environment, self.agents)
+			# do action & report interactions
+			interactions = self.agents[idx].action()
+			interactions = list(filter(lambda a: a.__class__ == Ant, interactions))
 
+
+			# update interactions
+			self.I.append(len(interactions) - 1)
+
+			# update activity
+			is_out = self.agents[idx].is_out
+			if is_out:
+				self.N.append(self.N[-1] + is_out)
+				self.agents[idx].is_out = 0
+			else:
+				self.N.append(self.N[-1])
+			
 			# update rates in the model
-			self.r[idx] = self.agents[idx].r_i
-			for i in self.agents[idx].recruited_ants:
-					self.r[i] = self.agents[i].r_i
-			self.r_norm = np.array(self.r) / sum(self.r)
-			self.R_t = sum(self.r)
+			for i in interactions:
+				i.compute_activity()
+				self.r[i.unique_id] = i.Si_t1
 
+			self.update_agents(interactions)
+
+			self.rate2prob()
+		
 			# update time
 			self.T.append(self.time)
 
-		if self.rng_action < Sa:
-			pass # activate random ant in nest
+		# activate random ant in nest
+		# if self.rng_action < Pa:
+		# 	a = list(filter(lambda i: i.Si < 0, self.agents))
+		# 	agent = np.random.choice(a)
+		# 	agent.Si = Sa
+		# 	agent.check_state()
 
 		# get rng for next iteration
 		self.rng_t = random.random()
@@ -260,6 +303,11 @@ class Model(Model):
 
 		# get time for next iteration
 		self.time += abs(np.log(self.rng_t)/self.R_t)
+
+	def update_agents(self, agents):
+		for a in agents:
+			a.update_activity()
+			a.check_state()
 
 	
 	def run(self):
