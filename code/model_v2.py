@@ -1,14 +1,14 @@
 import random
 import networkx as nx
-from mesa import space, Agent, datacollection, Model
+from mesa import space, Agent, Model #, datacollection
 import json
 import math
 import random
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 from scipy.spatial import distance
-from copy import deepcopy
+# from copy import deepcopy
 # from scipy.stats import rv_discrete
 import statistics
 
@@ -18,19 +18,19 @@ import statistics
 """"""""""""""""""
 """ PARAMETERS """
 """"""""""""""""""
-N = 60 # number of automata
-g = 0.5 # gain (sensitivity) parameter
+N = 100 # number of automata
+g = 0.01 # gain (sensitivity) parameter
 Theta = 0
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
-Sa = 10**-6 # spontaneous activation activity
-Pa = 10**-16 # probability of spontaneous activation
+Sa = 10**-3 # spontaneous activation activity
+Pa = 0 # probability of spontaneous activation
 Jij = {'Active-Active': 1, 'Active-Inactive' : 0.2,
  'Inactive-Active': 0.5, 'Inactive-Inactive': 0.1, 
  'Active-FoodActive': 1, 'Active-FoodInactive': -1,
  'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 0} # Coupling coefficients
 
-Jij = {'Active-Active': 1, 'Active-Inactive' : 0.6,
- 'Inactive-Active': 1, 'Inactive-Inactive': 1, 
+Jij = {'Active-Active': 1, 'Active-Inactive' : 1,
+ 'Inactive-Active': 0.01, 'Inactive-Inactive': 0, 
  'Active-FoodActive': 1, 'Active-FoodInactive': 1,
  'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 1} # Coupling coefficients
 weight = 2 # number of times it is more likely to choose the preferred direction over the other possibilities
@@ -73,6 +73,7 @@ class Food:
 		self.state = 'FoodInactive'
 		self.Si = 1
 		self.Si_t1 = self.Si
+		self.unique_id = -1
 
 	def compute_activity(self):
 		pass
@@ -92,7 +93,6 @@ class Ant(Agent):
 		
 		self.check_state()
 		self.movement = 'random'
-		self.is_out = 0
 
 	def update_activity(self):
 		self.Si = self.Si_t1
@@ -107,6 +107,9 @@ class Ant(Agent):
 	# Si_t+1 = tanh { g [ sum(Jij * Sj_t-1) + Jii * Si_t-1 ] }
 	def compute_activity(self):
 		neighbors = self.model.grid.get_cell_list_contents([self.pos])
+		neighbors = list(filter(lambda a: a.unique_id != self.unique_id, neighbors))
+		# if len(neighbors) > 20:
+		# 	neighbors = random.sample(neighbors, random.randrange(20))
 		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in neighbors]
 		z = sum(z) + Jij[self.state + "-" + self.state]* self.Si
 		self.Si_t1 = math.tanh(g * z)
@@ -114,6 +117,10 @@ class Ant(Agent):
 
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
+		self.movement = 'persistant'
+  
+	def ant2food(self):
+		self.target = self.model.coords[random.sample(food.keys(), 1)[0]]
 		self.movement = 'persistant'
 
 	def pick_food(self):
@@ -123,7 +130,8 @@ class Ant(Agent):
 		food[self.pos] -= 1
 
 	def food2nest(self):
-		self.model.place_agent(self.food.pop(), self.pos)
+		self.model.grid.place_agent(self.food.pop(), self.pos)
+		self.movement = 'random'
 			
 	# Move method
 	def move(self):
@@ -164,34 +172,38 @@ class Ant(Agent):
 						self.ant2nest()
 
 					else:
+						self.move()
 						# smell food ???
-						self.Si += weight
+						# self.Si += 0.1
 
 				else:
 					self.ant2nest()
 					self.move()
 
 			elif self.pos == nest:
-
-				if self.movement == 'random':
-					self.move()
-					self.is_out = 1
+				
+				if len(self.food):
+					self.food2nest()
 
 				else:
-					if len(self.food):
-						self.food2nest() ## ??
+					self.move()
 
 			else:
 				self.move()
 
-		neighbors = self.compute_activity()
+			neighbors = self.compute_activity()
+
+		else:
+			self.compute_activity()
+			neighbors = []
+
 		return neighbors
 
 ''' MODEL '''
 
 class Model(Model):
 
-	def __init__(self, N = 100, width = width, height = height):
+	def __init__(self, N = N, width = width, height = height):
 
 		super().__init__()
 
@@ -200,6 +212,7 @@ class Model(Model):
 		self.grid = space.NetworkGrid(self.g)
 		self.coords = nx.get_node_attributes(self.g, 'pos')
 		self.sample = []
+		
 
 		# Agents
 		self.agents = []
@@ -229,6 +242,12 @@ class Model(Model):
 		self.T = [0] # time
 		self.I = [0] # interactions
 		self.N = [0] # activity
+  
+		self.dict = {self.T[-1]: [a.Si for a in self.agents]}
+  
+	# def rate2prob(self):
+	# 	self.R_t = np.sum(abs(self.r))
+	# 	self.r_norm = abs(self.r) / self.R_t
 
 	# transforms rates into probabilities
 	def rate2prob(self):
@@ -271,12 +290,7 @@ class Model(Model):
 			self.I.append(len(interactions) - 1)
 
 			# update activity
-			is_out = self.agents[idx].is_out
-			if is_out:
-				self.N.append(self.N[-1] + is_out)
-				self.agents[idx].is_out = 0
-			else:
-				self.N.append(self.N[-1])
+			self.N.append(len(list(filter(lambda a: a.pos != nest, self.agents))))
 			
 			# update rates in the model
 			for i in interactions:
@@ -289,13 +303,15 @@ class Model(Model):
 		
 			# update time
 			self.T.append(self.time)
+			self.dict[self.T[-1]]=  [a.Si for a in self.agents]
 
 		# activate random ant in nest
-		# if self.rng_action < Pa:
-		# 	a = list(filter(lambda i: i.Si < 0, self.agents))
-		# 	agent = np.random.choice(a)
-		# 	agent.Si = Sa
-		# 	agent.check_state()
+		if self.rng_action < Pa:
+			a = list(filter(lambda i: i.Si < 0, self.agents))
+			agent = np.random.choice(a)
+			agent.Si = Sa
+			agent.check_state()
+
 
 		# get rng for next iteration
 		self.rng_t = random.random()
