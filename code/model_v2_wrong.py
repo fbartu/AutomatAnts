@@ -19,10 +19,10 @@ import statistics
 """ PARAMETERS """
 """"""""""""""""""
 N = 100 # number of automata
-g = 0.01 # gain (sensitivity) parameter
+g = 0.001 # gain (sensitivity) parameter
 Theta = 0
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
-Sa = 0.1 # spontaneous activation activity
+Sa = 10**-3 # spontaneous activation activity
 Pa = 0 # probability of spontaneous activation
 Jij = {'Active-Active': 1, 'Active-Inactive' : 0.2,
  'Inactive-Active': 0.5, 'Inactive-Inactive': 0.1, 
@@ -30,7 +30,7 @@ Jij = {'Active-Active': 1, 'Active-Inactive' : 0.2,
  'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 0} # Coupling coefficients
 
 Jij = {'Active-Active': 1, 'Active-Inactive' : 1,
- 'Inactive-Active': 1, 'Inactive-Inactive': 1, 
+ 'Inactive-Active': 10**-6, 'Inactive-Inactive': 0, 
  'Active-FoodActive': 1, 'Active-FoodInactive': 1,
  'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 1} # Coupling coefficients
 weight = 2 # number of times it is more likely to choose the preferred direction over the other possibilities
@@ -112,8 +112,7 @@ class Ant(Agent):
 		# 	neighbors = random.sample(neighbors, random.randrange(20))
 		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in neighbors]
 		z = sum(z) + Jij[self.state + "-" + self.state]* self.Si
-		# self.Si_t1 = math.tanh(g * z)
-		self.Si = math.tanh(g * z)
+		self.Si_t1 = math.tanh(g * z)
 		return neighbors
 
 	def ant2nest(self):
@@ -192,23 +191,13 @@ class Ant(Agent):
 			else:
 				self.move()
 
-			# neighbors = self.compute_activity()
+			neighbors = self.compute_activity()
 
 		else:
-	
-			# activate random ant in nest
-			if random.random() < Pa:
-				self.Si = Sa
-				self.check_state()
-    
-			# else:
-			# 	neighbors = self.compute_activity()
-    
-		neighbors = self.compute_activity()
-		self.check_state()
-    
-		return neighbors
+			self.compute_activity()
+			neighbors = []
 
+		return neighbors
 
 ''' MODEL '''
 
@@ -241,47 +230,36 @@ class Model(Model):
 		# self.agents[idx].check_state()
 		
 		# Rates
-		# self.r = np.array([a.Si for a in self.agents])
-		self.r = np.array([abs(a.Si) for a in self.agents])
+		self.r = np.array([a.Si for a in self.agents])
 		self.rate2prob()
 
 		# Time & Gillespie
 		self.time = 0
-		self.sample_time()
-		# self.rng_t = random.random()
-
+		self.rng_t = random.random()
+		self.rng_action = random.random()
 
 		# Metrics
 		self.T = [0] # time
 		self.I = [0] # interactions
-		self.N = [0] # 
-		self.A = [self.active_agents()] # activity
-		self.iters = 0
+		self.N = [0] # activity
   
 		self.dict = {self.T[-1]: [a.Si for a in self.agents]}
   
-	def active_agents(self):
-		return sum([a.state == 'Active' for a in self.agents]) / len(self.agents)
-  
-	def rate2prob(self):
-		self.R_t = np.sum(self.r)
-		self.r_norm = self.r / self.R_t
-  
-	def sample_time(self):
-		self.rng_t = np.random.exponential(1 + 1 / np.sum(self.r))
-		# self.rng_t = np.random.exponential(np.sum(self.r))
-
-	# # transforms rates into probabilities
 	# def rate2prob(self):
-	# 	m = np.min(self.r)
+	# 	self.R_t = np.sum(abs(self.r))
+	# 	self.r_norm = abs(self.r) / self.R_t
 
-	# 	# normalization to only positive values if necessary
-	# 	if m < 0:
-	# 		self.R_t = np.sum(self.r + abs(m))
-	# 		self.r_norm = (self.r + abs(m)) / self.R_t
-	# 	else:
-	# 		self.R_t = np.sum(self.r)
-	# 		self.r_norm = self.r / self.R_t
+	# transforms rates into probabilities
+	def rate2prob(self):
+		m = np.min(self.r)
+
+		# normalization to only positive values if necessary
+		if m < 0:
+			self.R_t = np.sum(self.r + abs(m))
+			self.r_norm = (self.r + abs(m)) / self.R_t
+		else:
+			self.R_t = np.sum(self.r)
+			self.r_norm = self.r / self.R_t
 
 	def remove_agent(self, agent: Agent) -> None:
 		""" Remove the agent from the network and set its pos variable to None. """
@@ -294,10 +272,11 @@ class Model(Model):
 
 		self.g.nodes[node_id]["agent"].remove(agent)
 
-	def step(self, time):
+	def step(self):
 		
-		while self.time < time:
-			idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm))
+		idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm))
+
+		if self.rng_action < float(self.r_norm[idx]):
 
 			# get sampled id (for debugging)
 			self.sample.append(idx) 
@@ -312,50 +291,63 @@ class Model(Model):
 
 			# update activity
 			self.N.append(len(list(filter(lambda a: a.pos != nest, self.agents))))
-			self.A.append(self.active_agents())
 			
 			# update rates in the model
-			# for i in interactions:
-			# 	i.compute_activity()
-			# 	self.r[i.unique_id] = i.Si_t1
-			# self.update_agents([self.agents[idx]])
-			self.r[idx] = abs(self.agents[idx].Si)
+			for i in interactions:
+				i.compute_activity()
+				self.r[i.unique_id] = i.Si_t1
 
-			# self.update_agents(interactions)
+			self.update_agents(interactions)
 
 			self.rate2prob()
 		
 			# update time
 			self.T.append(self.time)
 			self.dict[self.T[-1]]=  [a.Si for a in self.agents]
-   
-			# get time for next iteration
-			self.time += self.rng_t
 
-			# get rng for next iteration
-			self.sample_time()
-   
-			self.iters += 1
-
+		# activate random ant in nest
+		if self.rng_action < Pa:
+			a = list(filter(lambda i: i.Si < 0, self.agents))
+			agent = np.random.choice(a)
+			agent.Si = Sa
+			agent.check_state()
 
 
-	# def update_agents(self, agents):
-	# 	for a in agents:
-	# 		a.update_activity()
-	# 		a.check_state()
+		# get rng for next iteration
+		self.rng_t = random.random()
+		self.rng_action = random.random()
+
+		# get time for next iteration
+		self.time += abs(np.log(self.rng_t)/self.R_t)
+
+	def update_agents(self, agents):
+		for a in agents:
+			a.update_activity()
+			a.check_state()
 
 	
-	def run(self, time = list(range(10800))):
-		for i in time:
-			self.step(time = i)
-   
-	def plot_activity(self):
-		plt.plot(self.T, self.A)
-		plt.show()
-  
-	def plot_N(self):
-		plt.plot(self.T, self.N)
-		plt.show()
+	def run(self):
+
+		print('+++ RUNNING MODEL +++')
+		if self.steps == 0:
+			i = 0
+			while self.T[-1] < 10800:
+				i+=1
+				if i % 2000 == 0:
+					print('Iteration ', str(i))
+					
+				self.step()
+		
+		else:
+			for i in list(range(self.steps)):
+				if i % 2000 == 0:
+					print('Iteration ', str(i))
+				self.step()
+			
+		print('Model completed... Saving results !')
+
+		self.save_data()
+		print('+++ Results saved +++')
 
 	def time2minutes(self):
 		self.T = [t / 60.0 for t in self.T]
@@ -413,12 +405,6 @@ class Model(Model):
 			
 			with open(self.path + 'results/' + folder + filename + '_pos.json', 'w') as f:
 				json.dump(self.results[2], f)
-    
-class Visual(Model):
-	def __init__(self):
-		pass
-    
-    
 
 ''' METRICS '''
 
