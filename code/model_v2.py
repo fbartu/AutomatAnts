@@ -19,11 +19,11 @@ import statistics
 """ PARAMETERS """
 """"""""""""""""""
 N = 100 # number of automata
-g = 0.01 # gain (sensitivity) parameter
+g = 1 # gain (sensitivity) parameter
 Theta = 0
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Sa = 0.1 # spontaneous activation activity
-Pa = 0 # probability of spontaneous activation
+Pa = 0.01 # probability of spontaneous activation
 Jij = {'Active-Active': 1, 'Active-Inactive' : 0.2,
  'Inactive-Active': 0.5, 'Inactive-Inactive': 0.1, 
  'Active-FoodActive': 1, 'Active-FoodInactive': -1,
@@ -62,6 +62,12 @@ def dist(origin, target):
 	return distance.euclidean(origin, target)
 
 
+def rotate(x, y, theta = math.pi / 2):
+	x1 = round(x * math.cos(theta) - y * math.sin(theta), 2)
+	y1 = round(x * math.sin(theta) + y * math.cos(theta), 2)
+	return x1, y1
+
+
 """"""""""""""#
 """ CLASSES """
 """"""""""""""#
@@ -86,8 +92,9 @@ class Ant(Agent):
 		
 		super().__init__(unique_id, model)
 
-		self.Si = random.gauss(0, 1) # activity
+		# self.Si = random.gauss(0, 1) # activity
 		# self.Si = random.uniform(-1.0, 0.0) # activity
+		self.Si = random.uniform(0, 1)
 		self.Si_t1 = self.Si
 		self.food = []
 		
@@ -108,8 +115,8 @@ class Ant(Agent):
 	def compute_activity(self):
 		neighbors = self.model.grid.get_cell_list_contents([self.pos])
 		neighbors = list(filter(lambda a: a.unique_id != self.unique_id, neighbors))
-		# if len(neighbors) > 20:
-		# 	neighbors = random.sample(neighbors, random.randrange(20))
+		if len(neighbors) > 8:
+			neighbors = random.sample(neighbors, random.randrange(8))
 		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in neighbors]
 		z = sum(z) + Jij[self.state + "-" + self.state]* self.Si
 		# self.Si_t1 = math.tanh(g * z)
@@ -242,7 +249,8 @@ class Model(Model):
 		
 		# Rates
 		# self.r = np.array([a.Si for a in self.agents])
-		self.r = np.array([abs(a.Si) for a in self.agents])
+		self.r = np.array([0.05] * N)
+		# self.r = np.array([abs(a.Si) for a in self.agents])
 		self.rate2prob()
 
 		# Time & Gillespie
@@ -256,6 +264,7 @@ class Model(Model):
 		self.I = [0] # interactions
 		self.N = [0] # 
 		self.A = [self.active_agents()] # activity
+		self.XY = {self.T[-1]: [a.pos for a in self.agents]}
 		self.iters = 0
   
 		self.dict = {self.T[-1]: [a.Si for a in self.agents]}
@@ -271,7 +280,7 @@ class Model(Model):
 		self.rng_t = np.random.exponential(1 + 1 / np.sum(self.r))
 		# self.rng_t = np.random.exponential(np.sum(self.r))
 
-	# # transforms rates into probabilities
+	# transforms rates into probabilities
 	# def rate2prob(self):
 	# 	m = np.min(self.r)
 
@@ -294,48 +303,81 @@ class Model(Model):
 
 		self.g.nodes[node_id]["agent"].remove(agent)
 
-	def step(self, time):
+	# def step(self, time):
 		
-		while self.time < time:
-			idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm))
+	# 	while self.time < time:
+	# 		idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm))
 
-			# get sampled id (for debugging)
-			self.sample.append(idx) 
+	# 		# get sampled id (for debugging)
+	# 		self.sample.append(idx) 
 
-			# do action & report interactions
-			interactions = self.agents[idx].action()
-			interactions = list(filter(lambda a: a.__class__ == Ant, interactions))
+	# 		# do action & report interactions
+	# 		interactions = self.agents[idx].action()
+	# 		interactions = list(filter(lambda a: a.__class__ == Ant, interactions))
 
 
-			# update interactions
-			self.I.append(len(interactions) - 1)
+	# 		# update interactions
+	# 		self.I.append(len(interactions) - 1)
 
-			# update activity
-			self.N.append(len(list(filter(lambda a: a.pos != nest, self.agents))))
-			self.A.append(self.active_agents())
+	# 		# update activity
+	# 		self.N.append(len(list(filter(lambda a: a.pos != nest, self.agents))))
+	# 		self.A.append(self.active_agents())
 			
-			# update rates in the model
-			# for i in interactions:
-			# 	i.compute_activity()
-			# 	self.r[i.unique_id] = i.Si_t1
-			# self.update_agents([self.agents[idx]])
-			self.r[idx] = abs(self.agents[idx].Si)
+	# 		# update rates in the model
+	# 		# for i in interactions:
+	# 		# 	i.compute_activity()
+	# 		# 	self.r[i.unique_id] = i.Si_t1
+	# 		# self.update_agents([self.agents[idx]])
+	# 		self.r[idx] = abs(self.agents[idx].Si)
 
-			# self.update_agents(interactions)
+	# 		# self.update_agents(interactions)
 
-			self.rate2prob()
+	# 		self.rate2prob()
 		
-			# update time
-			self.T.append(self.time)
-			self.dict[self.T[-1]]=  [a.Si for a in self.agents]
+	# 		# update time
+	# 		self.T.append(self.time)
+	# 		self.dict[self.T[-1]]=  [a.Si for a in self.agents]
+	# 		self.XY[self.T[-1]] = [a.pos for a in self.agents]
    
-			# get time for next iteration
-			self.time += self.rng_t
+	# 		# get time for next iteration
+	# 		self.time += self.rng_t
 
-			# get rng for next iteration
-			self.sample_time()
+	# 		# get rng for next iteration
+	# 		self.sample_time()
    
-			self.iters += 1
+	# 		self.iters += 1
+ 
+	def step(self):
+    		
+		idx = int(np.random.choice(list(range(len(self.agents))), 1, p = self.r_norm)) 
+
+		# do action & report interactions
+		interactions = self.agents[idx].action()
+
+		# update activity
+		self.N.append(len(list(filter(lambda a: a.pos != nest, self.agents))))
+		self.A.append(self.active_agents())
+		
+		if self.agents[idx].state == 'Active':
+			self.r[idx] = 1
+   
+		else:
+			self.r[idx] = 0.05
+
+		self.rate2prob()
+	
+		# update time
+		self.T.append(self.time)
+		self.dict[self.T[-1]]=  [a.Si for a in self.agents]
+		self.XY[self.T[-1]] = [a.pos for a in self.agents]
+
+		# get time for next iteration
+		self.time += self.rng_t
+
+		# get rng for next iteration
+		self.sample_time()
+
+		self.iters += 1
 
 
 
@@ -344,10 +386,49 @@ class Model(Model):
 	# 		a.update_activity()
 	# 		a.check_state()
 
+	def run(self, steps = 21600):
+		for i in range(steps):
+			self.step()
+   
+		c = []
+		for i in self.XY:
+			c += self.XY[i]
+
+		self.z = [0 if i == nest else c.count(i) for i in self.coords]
+  
+		print('Number of iterations: %s' % self.iters)
+  
+		print('Food status:\n %s' % self.food)
+		self.plots()
+
 	
-	def run(self, time = list(range(10800))):
-		for i in time:
-			self.step(time = i)
+	# def run(self, time = list(range(10800))):
+	# 	for i in time:
+	# 		self.step(time = i)
+   
+	# 	c = []
+	# 	for i in self.XY:
+	# 		c += self.XY[i]
+
+	# 	self.z = [0 if i == nest else c.count(i) for i in self.coords]
+  
+	# 	print('Number of iterations: %s' % self.iters)
+  
+	# 	print('Food status:\n %s' % self.food)
+	# 	self.plots()
+
+   
+	def plot_lattice(self, z = None):
+		x = [xy[0] for xy in self.coords.values()]
+		y = [xy[1] for xy in self.coords.values()]
+		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
+  
+		if z is None:
+			plt.scatter([x[0] for x in xy], [x[1] for x in xy])
+			plt.show()
+		else:
+			plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z)
+			plt.show()
    
 	def plot_activity(self):
 		plt.plot(self.T, self.A)
@@ -356,9 +437,11 @@ class Model(Model):
 	def plot_N(self):
 		plt.plot(self.T, self.N)
 		plt.show()
-
-	def time2minutes(self):
-		self.T = [t / 60.0 for t in self.T]
+  
+	def plots(self):
+		self.plot_activity()
+		self.plot_N()
+		self.plot_lattice(self.z)
 
 	def retrieve_positions(self):
 		# result = {'agent': [],'pos': [],'t': [], 'state': [], 'tag': [], 'mia': []}
@@ -373,46 +456,6 @@ class Model(Model):
 			#result['mia'].append(self.agents[i].MIA)
 		
 		return result
-
-	def save_data(self):
-		cols = list(self.population.columns)
-		try:
-			cols.remove('W')
-			self.population[State.WAITING] = len(self.agents) - self.population[cols]
-		except:
-			pass
-		
-		self.results = [{'Time (s)': self.T,
-		# 'Connectivity': self.K,
-		'N': self.N,
-		'Interactions': self.I,
-		'Food in nest': self.F,
-		'Exploring from food': self.population[State.EXPLORING_FROM_FOOD],
-		#'Informed': self.population[Tag.INFORMED],
-		'Waiting': self.population[State.WAITING],
-		'Carrying food': self.population[[State.EXPLORING_FOOD, State.RECRUITING_FOOD]].sum(axis = 1),
-		'Exploring': self.population[State.EXPLORING],
-		'Recruiting': self.population[State.RECRUITING]},
-		self.metrics.efficiency(self.tfood),
-		self.retrieve_positions()]
-		
-	def data2json(self, folder = '', filename = 'Run_1', get_pos = False):    
-		
-		if not hasattr(self, 'results'):
-			self.save_data()
-
-		pd.DataFrame(self.results[0]).to_csv(self.path + 'results/' + folder + filename + '_data.csv')
-
-		# with open(self.path + 'results/' + folder + filename + '_data.json', 'w') as f:
-		#     json.dump(self.results[0], f)
-
-		with open(self.path + 'results/' + folder + filename + '_food.json', 'w') as f:
-			json.dump(self.results[1], f)
-
-		if get_pos:
-			
-			with open(self.path + 'results/' + folder + filename + '_pos.json', 'w') as f:
-				json.dump(self.results[2], f)
     
 class Visual(Model):
 	def __init__(self):
