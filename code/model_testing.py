@@ -12,7 +12,7 @@ from scipy.spatial import distance
 """"""""""""""""""
 N = 100 # number of automata
 g = 1 # gain (sensitivity) parameter
-Theta = 0.5
+Theta = 0.1
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Sa = 0.1 # spontaneous activation activity
 Pa = 0.01 # probability of spontaneous activation
@@ -58,9 +58,9 @@ def rotate(x, y, theta = math.pi / 2):
 ''' ANT AGENT '''
 
 
-alpha = N / 2e5 # 0.0005
-beta = N / 80 # 1
-phi = 0.75
+alpha = 0.0005 # N / 2e5 
+beta = 1 # N / 80
+phi = 0.05
 
 class Ant(Agent):
 	
@@ -69,7 +69,7 @@ class Ant(Agent):
 		super().__init__(unique_id, model)
   
 		self.rate = alpha
-		self.Si = random.uniform(-1.0, 1.0)
+		self.Si = 0
 		self.history = 0
 		self.is_active = False
 		
@@ -85,15 +85,35 @@ class Ant(Agent):
 					self.Si = alpha
 				self.is_active = False
 				self.rate = self.Si
+				if  self.model.time > 5000 and self.model.time < 15000:
+        
+					self.interaction()
 
 			else:
-				self.history += random.random() * random.choice([1, -1])
+				self.Si = math.tanh(self.Si)
+				self.history += random.uniform(-0.01, 0.01)# random.random() * random.choice([1, -1])
 		else:
 			if self.Si < 0:
 				self.Si = alpha
-			self.is_active = True
-			self.rate = beta
+			else:
+				self.is_active = True
+				self.rate = beta
 
+	def interaction(self):
+		alist = list(filter(lambda a: a.is_active == False, self.model.agents))
+		a = np.random.choice(alist, size = 3, replace = False)
+		id = [i.unique_id for i in a]
+		ids = [i.unique_id for i in self.model.agents]
+		for i in self.model.agents:
+			if i.unique_id in id:
+				i.Si += self.history - Theta
+				if i.Si < 0:
+					i.rate = alpha
+				else:   
+					i.rate = i.Si
+     
+				self.model.r[i.unique_id] = i.rate
+		
 
 
 ''' MODEL '''
