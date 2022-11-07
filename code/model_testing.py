@@ -74,30 +74,40 @@ class Ant(Agent):
 		self.is_active = False
 		
 			
+   
+	def back2nest(self):
+		pass
 	# Possible actions the ant may take
 	def action(self):
-     
 		if self.is_active:
-     
-			if random.random() < phi:
-				self.Si += self.history
-				if self.Si < 0:
-					self.Si = alpha
-				self.is_active = False
-				self.rate = self.Si
-				if  self.model.time > 5000 and self.model.time < 15000:
-        
-					self.interaction()
 
-			else:
-				self.Si = math.tanh(self.Si)
-				self.history += random.uniform(-0.01, 0.01)# random.random() * random.choice([1, -1])
+			if self.Si < theta:
+				self.back2nest()
 		else:
-			if self.Si < 0:
-				self.Si = alpha
-			else:
-				self.is_active = True
-				self.rate = beta
+			pass
+	# def action(self):
+     
+	# 	if self.is_active:
+     
+	# 		if random.random() < phi:
+	# 			self.Si += self.history
+	# 			if self.Si < 0:
+	# 				self.Si = alpha
+	# 			self.is_active = False
+	# 			self.rate = self.Si
+	# 			if  self.model.time > 5000 and self.model.time < 15000:
+        
+	# 				self.interaction()
+
+	# 		else:
+	# 			self.Si = math.tanh(self.Si)
+	# 			self.history += random.uniform(-0.01, 0.01)# random.random() * random.choice([1, -1])
+	# 	else:
+	# 		if self.Si < 0:
+	# 			self.Si = alpha
+	# 		else:
+	# 			self.is_active = True
+	# 			self.rate = beta
 
 	def interaction(self):
 		alist = list(filter(lambda a: a.is_active == False, self.model.agents))
