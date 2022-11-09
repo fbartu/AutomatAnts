@@ -6,31 +6,32 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
-from collections import Counter
+# from collections import Counter
 
 """"""""""""""""""
 """ PARAMETERS """
 """"""""""""""""""
-alpha = 0.00005
-beta = 0.5
+alpha = 0.00005 # 0.000025
+beta = 0.5 # 0.25
 N = 100 # number of automata
 g = 0.9 # gain (sensitivity) parameter
 Theta = 0
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
+Interactions = 4
 
 Jij = {'Active-Active': 1, 'Active-Inactive': 1,
  'Inactive-Active': 1, 'Inactive-Inactive': 1, 
  'Active-FoodActive': 1, 'Active-FoodInactive': 1,
  'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 1} # Coupling coefficients
 
-weight = 3 # number of times it is more likely to choose the preferred direction over the other possibilities
+weight = 5 # number of times it is more likely to choose the preferred direction over the other possibilities
 
 nest = (0,22)
 food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),
 	(6, 11), (6, 12), (7, 12), # patch 2
 	(7, 11), (7, 10), (6, 10)]
-foodXvertex = 1
+foodXvertex = 0
 
 food = dict.fromkeys(food_positions, foodXvertex)
 
@@ -131,10 +132,13 @@ class Ant(Agent):
 		self.rate = alpha
 		self.state = 'Inactive'
 		self.pos = 'nest'
+		self.movement = 'random'
+		del self.target
 		
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
 		self.movement = 'persistant'
+
   
 	def ant2food(self):
 		self.target = self.model.coords[self.food_location]
@@ -158,8 +162,12 @@ class Ant(Agent):
 			
 			if self.pos == nest:
        
-				if self.Si < theta:
-					self.enter_nest()
+				if hasattr(self, 'target'):
+					if self.target == self.model.coords[nest]:
+						self.enter_nest()
+					
+				# elif self.Si < theta:
+				# 	self.enter_nest()
      
 				elif len(self.food):
 					self.food2nest()
@@ -183,13 +191,13 @@ class Ant(Agent):
       
 						self.move()
 				else:
-					if self.Si < theta:
+					if self.Si < theta: # random.random() < self.Si
 						self.ant2nest()
 					
 					self.move()
      
 			else:
-				if self.Si < theta:
+				if self.Si < theta: # random.random() < self.Si
 					self.ant2nest()
      
 				self.move()
@@ -208,11 +216,13 @@ class Ant(Agent):
 
 	def update(self):
 		self.Si = self.Si_t1
+		if self.Si > theta and self.rate == alpha:
+			self.rate = self.Si
 	
 	def compute_activity(self):
 		if self.pos == 'nest':
 			alist = list(filter(lambda a: a.unique_id in self.model.in_nest, list(self.model.agents.values())))
-			neighbors = np.random.choice(alist, size = 4, replace = False)
+			neighbors = np.random.choice(alist, size = Interactions, replace = False)
 
 		else:
       
@@ -298,7 +308,7 @@ class Model(Model):
  
 	def step(self, tmax):
      
-		samples = []
+		# samples = []
 		
 		while self.time < tmax:
       
@@ -306,7 +316,7 @@ class Model(Model):
 			# self.sampled_agent.append(id)
 	  
 			agent = self.agents[id]
-			samples.append(agent.pos)
+			# samples.append(agent.pos)
    
 	
 			# do action & report interactions
@@ -324,14 +334,15 @@ class Model(Model):
 
 			self.iters += 1
 		
-  		# update activity
-		self.N.append(N - len(self.in_nest))
-		counts = Counter(samples).values()
-		self.I.append(sum([1 if i > 1 else 0 for i in counts]))
-  
-		# update time
-		self.T.append(int(self.time))
-		self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
+			# update activity
+			self.N.append(N - len(self.in_nest))
+
+			# update time
+			self.T.append(int(self.time))
+   
+		# counts = Counter(samples).values()
+		# self.I.append(sum([1 if i > 1 else 0 for i in counts]))
+			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
 
 	def run(self, steps = 21600):
 		for i in range(steps):
@@ -340,8 +351,8 @@ class Model(Model):
 		c = []
 		for i in self.XY:
 			c += self.XY[i]
-
-		self.z = [0 if i == 'nest' else c.count(i) for i in self.coords]
+   
+		self.z = [0 if i == nest else c.count(i) for i in self.coords]
   
    
 		self.plots()
