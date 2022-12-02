@@ -6,12 +6,13 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
+from statistics import mean
 # from collections import Counter
 
 """"""""""""""""""
 """ PARAMETERS """
 """"""""""""""""""
-alpha = 0.00005 # 0.000025
+alpha = 0.00005 # <- BON PARAMETRE  #### 0.000025
 beta = 0.5 # 0.25
 N = 100 # number of automata
 g = 0.9 # gain (sensitivity) parameter
@@ -20,18 +21,17 @@ theta = 10**-16 # threshold of activity (inactive if Activity < theta)
 Interactions = 4
 
 Jij = {'Active-Active': 1, 'Active-Inactive': 1,
- 'Inactive-Active': 1, 'Inactive-Inactive': 1, 
- 'Active-FoodActive': 1, 'Active-FoodInactive': 1,
- 'Inactive-FoodActive': 1, 'Inactive-FoodInactive': 1} # Coupling coefficients
+ 'Inactive-Active': 1, 'Inactive-Inactive': 1} # Coupling coefficients
 
-weight = 5 # number of times it is more likely to choose the preferred direction over the other possibilities
+weight = 3 # number of times it is more likely to choose the preferred direction over the other possibilities
+max_memory = 50 # 50 frames
 
 nest = (0,22)
 food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),
 	(6, 11), (6, 12), (7, 12), # patch 2
 	(7, 11), (7, 10), (6, 10)]
-foodXvertex = 0
+foodXvertex = 1
 
 food = dict.fromkeys(food_positions, foodXvertex)
 
@@ -55,11 +55,35 @@ def rotate(x, y, theta = math.pi / 2):
 """ CLASSES """
 """"""""""""""#
 
+class Node:
+	
+	def __init__(self):
+		self.memory = []
+		self.is_active = False
+	
+	def compute_activity(self):
+		pass
+
+	def activity(self, n):
+		pass
+
+	def update(self):
+		if self.is_active:
+			self.memory.append(1)
+
+		else:
+			self.memory.append(0)
+   
+		if len(self.memory) > max_memory:
+			self.memory.pop(0)
+
+		self.is_active = False
+
 class Food:
 	def __init__(self, pos):
-		self.state = 'FoodInactive'
+		self.state = 'Active'
 		self.is_active = True
-		self.Si = 5
+		self.Si = 1
 		self.Si_t1 = self.Si
 		self.unique_id = -1
 		self.initial_pos = pos
@@ -98,22 +122,40 @@ class Ant(Agent):
 		possible_steps = self.model.grid.get_neighbors(
 		self.pos,
 		include_center = False)
+  
+		possible_steps = [i for i in possible_steps if self.model.coords[i][0] > 0]
+  
+		l = len(possible_steps)
 
-		if self.movement == 'random':
-			pos = random.choice(possible_steps)
+		if l > 1:
 
-		else:
-			d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
-			idx = np.argmin(d)
+			if self.movement == 'random':
+				uniform = np.array([1 / l for i in range(l)])
+				weights = [mean(self.model.nodes[i].memory) for i in possible_steps]
+    
+				# odds = np.array((uniform + weights) * 100, dtype = 'int64') # method 1
+				odds = np.array((uniform + (weights * uniform)) * 100, dtype = 'int64') # method 2
+				p = odds / sum(odds)
 
-			if self.movement == 'persistant':
-				v = 1 / (len(d) + weight - 1)
-				p = [weight / (len(d) + weight - 1) if i == idx else v for i in range(len(d))]
-				pos = np.random.choice(range(len(d)), p = p)
+				pos = np.random.choice(l, p = p)
 				pos = possible_steps[pos]
 
+
 			else:
-				pos = possible_steps[idx]
+				d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
+				idx = np.argmin(d)
+
+				if self.movement == 'persistant':
+					v = 1 / (l + weight - 1)
+					p = [weight / (l + weight - 1) if i == idx else v for i in range(l)]
+					pos = np.random.choice(range(l), p = p)
+					pos = possible_steps[pos]
+
+				else:
+					pos = possible_steps[idx]
+     
+		else:
+			pos = possible_steps[0]
 
 		self.model.grid.move_agent(self, pos)
   
@@ -157,18 +199,18 @@ class Ant(Agent):
 
   
 	def action(self):
-     
+	 
 		if self.is_active:
 			
 			if self.pos == nest:
-       
+	   
 				if hasattr(self, 'target'):
 					if self.target == self.model.coords[nest]:
 						self.enter_nest()
 					
 				# elif self.Si < theta:
 				# 	self.enter_nest()
-     
+	 
 				elif len(self.food):
 					self.food2nest()
 
@@ -177,7 +219,7 @@ class Ant(Agent):
 		
 				else:
 					self.move()
-      
+	  
 			elif self.pos in food_positions:
 				if not len(self.food):
 					if food[self.pos] > 0:
@@ -188,20 +230,22 @@ class Ant(Agent):
 					else:
 						if hasattr(self, 'food_location') and self.pos == self.food_location:
 							self.movement = 'random'
-      
+	  
 						self.move()
 				else:
 					if self.Si < theta: # random.random() < self.Si
 						self.ant2nest()
 					
 					self.move()
-     
+	 
 			else:
 				if self.Si < theta: # random.random() < self.Si
 					self.ant2nest()
-     
+	 
 				self.move()
     
+			self.antenal_contact()
+	
 		else:
 			if self.Si > theta:
 				self.leave_nest()
@@ -209,6 +253,11 @@ class Ant(Agent):
 		self.compute_activity()
 		self.history.append(self.model.time)
 	
+	def antenal_contact(self):
+		if self.pos != 'nest':
+			self.model.nodes[self.pos].is_active = True
+
+ 
 	def activity(self, agents):
 		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in agents]
 		z = sum(z) + Jij[self.state + "-" + self.state]* self.Si
@@ -225,7 +274,7 @@ class Ant(Agent):
 			neighbors = np.random.choice(alist, size = Interactions, replace = False)
 
 		else:
-      
+	  
 			neighbors = self.model.grid.get_cell_list_contents([self.pos])
 			neighbors = list(filter(lambda a: a.unique_id != self.unique_id, neighbors))
    
@@ -251,6 +300,9 @@ class Model(Model):
 		self.g = nx.hexagonal_lattice_graph(width, height, periodic = False)
 		self.grid = space.NetworkGrid(self.g)
 		self.coords = nx.get_node_attributes(self.g, 'pos')
+  
+		self.nodes = dict(zip(list(self.coords.keys()),
+                             [Node() for i in list(self.coords.keys())]))
 
 		# Agents
 		self.agents = {}
@@ -307,11 +359,11 @@ class Model(Model):
 
  
 	def step(self, tmax):
-     
+	 
 		# samples = []
 		
 		while self.time < tmax:
-      
+	  
 			id = np.random.choice(self.ids, p = self.r_norm)
 			# self.sampled_agent.append(id)
 	  
@@ -344,6 +396,8 @@ class Model(Model):
 		# self.I.append(sum([1 if i > 1 else 0 for i in counts]))
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
 
+		[self.nodes[i].update() for i in self.nodes]
+
 	def run(self, steps = 21600):
 		for i in range(steps):
 			self.step(tmax = i)
@@ -367,7 +421,8 @@ class Model(Model):
 			plt.scatter([x[0] for x in xy], [x[1] for x in xy])
 			plt.show()
 		else:
-			plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z)
+			plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z, cmap = 'coolwarm')
+			# plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z)
 			plt.show()
   
 	def plot_N(self):
@@ -380,4 +435,4 @@ class Model(Model):
   
 	def plots(self):
 		self.plot_N()
-		# self.plot_lattice(self.z)
+		self.plot_lattice(self.z)
