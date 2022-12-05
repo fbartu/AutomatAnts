@@ -1,22 +1,18 @@
-import random
 import networkx as nx
 from mesa import space, Agent, Model
 import math
-import random
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
-from statistics import mean
-# from collections import Counter
 
 """"""""""""""""""
 """ PARAMETERS """
 """"""""""""""""""
-alpha = 0.00005 # <- BON PARAMETRE  #### 0.000025
-beta = 0.5 # 0.25
+alpha = 0.00005 # rate of nest exit
+beta = 0.4 # rate of action
 N = 100 # number of automata
 g = 0.9 # gain (sensitivity) parameter
-Theta = 0
+Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4
 
@@ -24,7 +20,7 @@ Jij = {'Active-Active': 1, 'Active-Inactive': 1,
  'Inactive-Active': 1, 'Inactive-Inactive': 1} # Coupling coefficients
 
 weight = 3 # number of times it is more likely to choose the preferred direction over the other possibilities
-max_memory = 50 # 50 frames
+max_memory = 600 # 50 frames
 
 nest = (0,22)
 food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
@@ -83,7 +79,7 @@ class Food:
 	def __init__(self, pos):
 		self.state = 'Active'
 		self.is_active = True
-		self.Si = 1
+		self.Si = 5
 		self.Si_t1 = self.Si
 		self.unique_id = -1
 		self.initial_pos = pos
@@ -130,12 +126,15 @@ class Ant(Agent):
 		if l > 1:
 
 			if self.movement == 'random':
-				uniform = np.array([1 / l for i in range(l)])
-				weights = [mean(self.model.nodes[i].memory) for i in possible_steps]
+				# uniform = np.array([1 / l for i in range(l)])
+				uniform = np.array([max_memory] * l)
+				# weights = [mean(self.model.nodes[i].memory) for i in possible_steps]
+				weights = [sum(self.model.nodes[i].memory) for i in possible_steps]
     
 				# odds = np.array((uniform + weights) * 100, dtype = 'int64') # method 1
-				odds = np.array((uniform + (weights * uniform)) * 100, dtype = 'int64') # method 2
-				p = odds / sum(odds)
+				# odds = np.array((uniform + (weights * uniform)) * 100, dtype = 'int64') # method 2
+				odds = np.array((uniform + weights), dtype='int64')
+				p = odds / np.sum(odds)
 
 				pos = np.random.choice(l, p = p)
 				pos = possible_steps[pos]
@@ -396,7 +395,14 @@ class Model(Model):
 		# self.I.append(sum([1 if i > 1 else 0 for i in counts]))
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
 
+		self.update_food()
 		[self.nodes[i].update() for i in self.nodes]
+  
+	def update_food(self):
+
+		for i in self.food:
+			if type(self.food[i] == list):
+				self.nodes[i].is_active = True
 
 	def run(self, steps = 21600):
 		for i in range(steps):
@@ -407,6 +413,8 @@ class Model(Model):
 			c += self.XY[i]
    
 		self.z = [0 if i == nest else c.count(i) for i in self.coords]
+		q = np.quantile(self.z, 0.95)
+		self.z = [i if i < q else q for i in self.z] 
   
    
 		self.plots()
@@ -416,14 +424,23 @@ class Model(Model):
 		x = [xy[0] for xy in self.coords.values()]
 		y = [xy[1] for xy in self.coords.values()]
 		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
+		coordsfood = [self.coords[i] for i in self.food]
+		xyfood = [[rotate(x[0], x[1], theta= math.pi / 2) for x in coordsfood[:6]],
+             [rotate(x[0], x[1], theta= math.pi / 2) for x in coordsfood[6:]]]
+  
+		plt.fill([x[0] for x in xyfood[0]], [x[1] for x in xyfood[0]], c = 'grey')
+		plt.fill([x[0] for x in xyfood[1]], [x[1] for x in xyfood[1]], c = 'grey')
   
 		if z is None:
+
 			plt.scatter([x[0] for x in xy], [x[1] for x in xy])
-			plt.show()
+		
 		else:
 			plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z, cmap = 'coolwarm')
 			# plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z)
-			plt.show()
+		xynest = rotate(self.coords[nest][0], self.coords[nest][1], math.pi / 2)
+		plt.scatter(xynest[0], 0, marker = '^', s = 50, c = 'black')
+		plt.show()
   
 	def plot_N(self):
 		plt.plot(self.T, self.N)
