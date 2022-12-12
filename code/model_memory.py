@@ -4,6 +4,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
+import pandas as pd
 
 """"""""""""""""""
 """ PARAMETERS """
@@ -418,6 +419,17 @@ class Model(Model):
   
    
 		self.plots()
+
+	def save_results(self, path):
+		self.results = pd.DataFrame({'N': self.N, 'T': self.T})
+		x = [xy[0] for xy in self.coords.values()]
+		y = [xy[1] for xy in self.coords.values()]
+		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
+		self.xyz = pd.DataFrame({'x': [i[0] for i in xy],
+                          'y': [i[1] for i in xy],
+                          'z': self.z})
+		self.results.to_csv(path + 'N.csv')
+		self.xyz.to_csv(path + 'xyz.csv')
 
    
 	def plot_lattice(self, z = None):
