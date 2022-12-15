@@ -10,9 +10,9 @@ import pandas as pd
 """ PARAMETERS """
 """"""""""""""""""
 alpha = 0.00005 # rate of nest exit
-beta = 0.4 # rate of action
+beta = 1 # rate of action
 N = 100 # number of automata
-g = 0.9 # gain (sensitivity) parameter
+g = 0.75 # gain (sensitivity) parameter
 Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4
@@ -80,7 +80,7 @@ class Food:
 	def __init__(self, pos):
 		self.state = 'Active'
 		self.is_active = True
-		self.Si = 5
+		self.Si = 1
 		self.Si_t1 = self.Si
 		self.unique_id = -1
 		self.initial_pos = pos
@@ -247,8 +247,9 @@ class Ant(Agent):
 			self.antenal_contact()
 	
 		else:
-			if self.Si > theta:
-				self.leave_nest()
+			# if self.Si > theta:
+			# 	self.leave_nest()
+			self.leave_nest()
 
 		self.compute_activity()
 		self.history.append(self.model.time)
@@ -456,6 +457,11 @@ class Model(Model):
   
 	def plot_N(self):
 		plt.plot(self.T, self.N)
+		times = [i[0] for i in list(self.food.values()) if type(i[0]) == float]
+		minv = np.min(times)
+		maxv = np.max(times)
+		plt.axvline(x = minv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
+		plt.axvline(x = maxv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
 		plt.show()
   
 	def plot_I(self):
