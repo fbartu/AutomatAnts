@@ -155,18 +155,18 @@ class Ant(Agent):
 
   
 	def action(self):
-     
+	 
 		if self.is_active:
 			
 			if self.pos == nest:
-       
+	   
 				if hasattr(self, 'target'):
 					if self.target == self.model.coords[nest]:
 						self.enter_nest()
 					
 				# elif self.Si < theta:
 				# 	self.enter_nest()
-     
+	 
 				elif len(self.food):
 					self.food2nest()
 
@@ -175,7 +175,7 @@ class Ant(Agent):
 		
 				else:
 					self.move()
-      
+	  
 			elif self.pos in food_positions:
 				if not len(self.food):
 					if food[self.pos] > 0:
@@ -186,20 +186,20 @@ class Ant(Agent):
 					else:
 						if hasattr(self, 'food_location') and self.pos == self.food_location:
 							self.movement = 'random'
-      
+	  
 						self.move()
 				else:
 					if self.Si < theta: # random.random() < self.Si
 						self.ant2nest()
 					
 					self.move()
-     
+	 
 			else:
 				if self.Si < theta: # random.random() < self.Si
 					self.ant2nest()
-     
+	 
 				self.move()
-    
+	
 		else:
 			if self.Si > theta:
 				self.leave_nest()
@@ -223,7 +223,7 @@ class Ant(Agent):
 			neighbors = np.random.choice(alist, size = Interactions, replace = False)
 
 		else:
-      
+	  
 			neighbors = self.model.grid.get_cell_list_contents([self.pos])
 			neighbors = list(filter(lambda a: a.unique_id != self.unique_id, neighbors))
    
@@ -305,11 +305,11 @@ class Model(Model):
 
  
 	def step(self, tmax):
-     
+	 
 		# samples = []
 		
 		while self.time < tmax:
-      
+	  
 			id = np.random.choice(self.ids, p = self.r_norm)
 			# self.sampled_agent.append(id)
 	  
@@ -360,14 +360,23 @@ class Model(Model):
 		x = [xy[0] for xy in self.coords.values()]
 		y = [xy[1] for xy in self.coords.values()]
 		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
+		coordsfood = [self.coords[i] for i in self.food]
+		xyfood = [[rotate(x[0], x[1], theta= math.pi / 2) for x in coordsfood[:6]],
+			 [rotate(x[0], x[1], theta= math.pi / 2) for x in coordsfood[6:]]]
+  
+		plt.fill([x[0] for x in xyfood[0]], [x[1] for x in xyfood[0]], c = 'grey')
+		plt.fill([x[0] for x in xyfood[1]], [x[1] for x in xyfood[1]], c = 'grey')
   
 		if z is None:
+
 			plt.scatter([x[0] for x in xy], [x[1] for x in xy])
-			plt.show()
+		
 		else:
 			plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z, cmap = 'coolwarm')
 			# plt.scatter([x[0] for x in xy], [x[1] for x in xy], c = z)
-			plt.show()
+		xynest = rotate(self.coords[nest][0], self.coords[nest][1], math.pi / 2)
+		plt.scatter(xynest[0], 0, marker = '^', s = 50, c = 'black')
+		plt.show()
   
 	def plot_N(self):
 		plt.plot(self.T, self.N)
