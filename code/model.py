@@ -371,6 +371,15 @@ class Model(Model):
   
 	def plot_N(self):
 		plt.plot(self.T, self.N)
+		times = [i[0] for i in list(self.food.values()) if type(i[0]) == float]
+		if len(times):
+			minv = np.min(times)
+			maxv = np.max(times)
+		else:
+			minv = np.nan
+			maxv = np.nan
+		plt.axvline(x = minv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
+		plt.axvline(x = maxv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
 		plt.show()
   
 	def plot_I(self):
