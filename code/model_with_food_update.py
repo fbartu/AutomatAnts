@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
 import pandas as pd
+from sklearn.linear_model import LinearRegression
 
 """"""""""""""""""
 """ PARAMETERS """
@@ -22,6 +23,8 @@ Jij = {'Active-Active': 1, 'Active-Inactive': 1,
 
 weight = 3 # number of times it is more likely to choose the preferred direction over the other possibilities
 max_memory = 600 # 50 frames
+lm = LinearRegression().fit(np.array(list(range(0, 21600))).reshape((-1, 1)),
+                      np.linspace(1, 0.25, num = 21600, endpoint = True))
 
 nest = (0,22)
 food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
@@ -52,39 +55,55 @@ def rotate(x, y, theta = math.pi / 2):
 """ CLASSES """
 """"""""""""""#
 
-class Node:
+# class Node:
 	
-	def __init__(self):
-		self.memory = []
-		self.is_active = False
+# 	def __init__(self):
+# 		self.memory = []
+# 		self.is_active = False
 	
-	def compute_activity(self):
-		pass
+# 	def compute_activity(self):
+# 		pass
 
-	def activity(self, n):
-		pass
+# 	def activity(self, n):
+# 		pass
 
-	def update(self):
-		if self.is_active:
-			self.memory.append(1)
+# 	def update(self):
+# 		if self.is_active:
+# 			self.memory.append(1)
 
-		else:
-			self.memory.append(0)
+# 		else:
+# 			self.memory.append(0)
    
-		if len(self.memory) > max_memory:
-			self.memory.pop(0)
+# 		if len(self.memory) > max_memory:
+# 			self.memory.pop(0)
 
-		self.is_active = False
+# 		self.is_active = False
 
 class Food:
 	def __init__(self, pos):
 		self.state = 'Active'
 		self.is_active = True
-		self.Si = 1
+		self.Si = 1 # Interactions
 		self.Si_t1 = self.Si
-		self.unique_id = -1
 		self.initial_pos = pos
 		self.rate = 0
+		self.is_collected = False
+   
+	def __repr__(self):
+		if self.is_collected:
+			t = self.collection_time / 120
+			t = (int(t), round((t - int(t)) * 60))
+
+			msg = 'Food collected at %s minutes and %s seconds' % t
+   
+		else:
+			msg = 'Food not collected yet!!'
+   
+		return msg
+	
+	def collected(self, time):
+		self.collection_time = time
+		self.is_collected = True
 
 	def compute_activity(self):
 		pass
@@ -94,6 +113,9 @@ class Food:
 
 	def update(self):
 		pass
+		# self.Si -= 0.15
+		# if self.Si < 0:
+		# 	self.Si = 0
 
 ''' ANT AGENT '''
 class Ant(Agent):
@@ -114,49 +136,30 @@ class Ant(Agent):
 		self.pos = 'nest'
 		self.movement = 'random'
 		
+
 	# Move method
 	def move(self):
 
 		possible_steps = self.model.grid.get_neighbors(
 		self.pos,
 		include_center = False)
-  
-		possible_steps = [i for i in possible_steps if self.model.coords[i][0] > 0]
-  
-		l = len(possible_steps)
 
-		if l > 1:
+		if self.movement == 'random':
+			idx = np.random.choice(list(range(len(possible_steps))))
+			pos = possible_steps[idx]
 
-			if self.movement == 'random':
-				# uniform = np.array([1 / l for i in range(l)])
-				uniform = np.array([max_memory] * l)
-				# weights = [mean(self.model.nodes[i].memory) for i in possible_steps]
-				weights = [sum(self.model.nodes[i].memory) for i in possible_steps]
-    
-				# odds = np.array((uniform + weights) * 100, dtype = 'int64') # method 1
-				# odds = np.array((uniform + (weights * uniform)) * 100, dtype = 'int64') # method 2
-				odds = np.array((uniform + weights), dtype='int64')
-				p = odds / np.sum(odds)
+		else:
+			d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
+			idx = np.argmin(d)
 
-				pos = np.random.choice(l, p = p)
+			if self.movement == 'persistant':
+				v = 1 / (len(d) + weight - 1)
+				p = [weight / (len(d) + weight - 1) if i == idx else v for i in range(len(d))]
+				pos = np.random.choice(range(len(d)), p = p)
 				pos = possible_steps[pos]
 
-
 			else:
-				d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
-				idx = np.argmin(d)
-
-				if self.movement == 'persistant':
-					v = 1 / (l + weight - 1)
-					p = [weight / (l + weight - 1) if i == idx else v for i in range(l)]
-					pos = np.random.choice(range(l), p = p)
-					pos = possible_steps[pos]
-
-				else:
-					pos = possible_steps[idx]
-     
-		else:
-			pos = possible_steps[0]
+				pos = possible_steps[idx]
 
 		self.model.grid.move_agent(self, pos)
   
@@ -183,7 +186,6 @@ class Ant(Agent):
 		self.target = self.model.coords[nest]
 		self.movement = 'persistant'
 
-  
 	def ant2food(self):
 		self.target = self.model.coords[self.food_location]
 		self.movement = 'persistant'
@@ -191,13 +193,23 @@ class Ant(Agent):
 	def pick_food(self):
 		self.model.remove_agent(self.model.food[self.pos][0])
 		self.food.append(self.model.food[self.pos].pop(0))
-		self.model.food[self.pos].append(self.model.time)
+		self.model.food[self.pos].extend(self.food)
+		self.model.food[self.pos][-1].collected(self.model.time)
+
 		food[self.pos] -= 1
 		self.food_location = self.pos
 
 	def food2nest(self):
 		self.model.grid.place_agent(self.food.pop(), self.pos)
 		self.movement = 'random'
+
+	# def food2nest(self):
+	# 	self.model.food_in_nest += 1
+	# 	food = self.food.pop()
+	# 	self.model.in_nest.append(food.unique_id)
+	# 	self.model.agents[food.unique_id] = food
+	# 	self.model.grid.place_agent(self.food.pop(), self.pos)
+	# 	self.movement = 'random'
 
   
 	def action(self):
@@ -212,9 +224,6 @@ class Ant(Agent):
 				if hasattr(self, 'target'):
 					if self.target == self.model.coords[nest]:
 						self.enter_nest()
-					
-				# elif self.Si < theta:
-				# 	self.enter_nest()
 
 				elif hasattr(self, 'food_location'):
 					self.ant2food()
@@ -246,20 +255,17 @@ class Ant(Agent):
 	 
 				self.move()
     
-			self.antenal_contact()
+			# self.antenal_contact()
 	
 		else:
-			# if self.Si > theta:
-			# 	self.leave_nest()
 			self.leave_nest()
 
 		self.compute_activity()
 		self.history.append(self.model.time)
 	
-	def antenal_contact(self):
-		if self.pos != 'nest':
-			self.model.nodes[self.pos].is_active = True
-
+	# def antenal_contact(self):
+	# 	if self.pos != 'nest':
+	# 		self.model.nodes[self.pos].is_active = True
  
 	def activity(self, agents):
 		z = [Jij[self.state+"-"+n.state] * n.Si - Theta for n in agents]
@@ -268,12 +274,14 @@ class Ant(Agent):
 
 	def update(self):
 		self.Si = self.Si_t1
-		# if self.Si > theta and self.rate == alpha:
-		# 	self.rate = beta # self.Si
+		if self.Si > theta and self.rate == alpha:
+			self.rate = beta # self.Si
 	
 	def compute_activity(self):
 		if self.pos == 'nest':
-			alist = list(filter(lambda a: a.unique_id in self.model.in_nest, list(self.model.agents.values())))
+			alist = list(filter(lambda a: a.unique_id in self.model.in_nest and
+                       a.unique_id != self.unique_id,
+                       list(self.model.agents.values())))
 			neighbors = np.random.choice(alist, size = Interactions, replace = False)
 
 		else:
@@ -282,13 +290,8 @@ class Ant(Agent):
 			neighbors = list(filter(lambda a: a.unique_id != self.unique_id, neighbors))
    
 		self.activity(neighbors)
-		idx = list(range(len(neighbors)))
-
-		# for a in range(len(neighbors)):
-		# 	idx.remove(a)
-		# 	neighbors[a].activity(list(filter(lambda i: i in idx, neighbors))+ [self])
-		# 	idx.append(a)
-		# [a.activity([self]) for a in neighbors]
+		# for a in neighbors:
+		# 	a.activity([self])
 		
 		self.update()
 		# self.model.update_agents(neighbors)
@@ -305,8 +308,8 @@ class Model(Model):
 		self.grid = space.NetworkGrid(self.g)
 		self.coords = nx.get_node_attributes(self.g, 'pos')
   
-		self.nodes = dict(zip(list(self.coords.keys()),
-                             [Node() for i in list(self.coords.keys())]))
+		# self.nodes = dict(zip(list(self.coords.keys()),
+        #                      [Node() for i in list(self.coords.keys())]))
 
 		# Agents
 		self.agents = {}
@@ -318,12 +321,16 @@ class Model(Model):
 		self.lefood = 0
   
   		# Food
+		self.food_id = -1
+		self.food_in_nest = 0
 		if foodXvertex > 0:
 			self.food = {}
 			for i in food:
 				self.food[i] = [Food(i)] * foodXvertex
 				for x in range(foodXvertex):
 					self.grid.place_agent(self.food[i][x], i)
+					self.food[i][x].unique_id = self.food_id
+					self.food_id -= 1
 
 		else:
 			self.food = dict.fromkeys(food.keys(), [np.nan])
@@ -397,7 +404,7 @@ class Model(Model):
 			self.iters += 1
 		
 			# update activity
-			self.N.append(N - len(self.in_nest))
+			self.N.append(N - len(self.in_nest) + self.food_in_nest)
 
 			# update time
 			self.T.append(int(self.time))
@@ -406,15 +413,21 @@ class Model(Model):
 		# self.I.append(sum([1 if i > 1 else 0 for i in counts]))
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
 
-		# self.update_food()
-		[self.nodes[i].update() for i in self.nodes]
+		self.update_food()
+		# [self.nodes[i].update() for i in self.nodes]
+  
   
 	def update_food(self):
-
 		for i in self.food:
-			if type(self.food[i][0]) == Food:
-				self.lefood += 1
-				self.nodes[i].is_active = True
+			for x in self.food[i]:
+				x.Si = float(lm.predict(np.array([[self.time]])))
+  
+	# def update_food(self):
+
+	# 	for i in self.food:
+	# 		if type(self.food[i][0]) == Food:
+	# 			self.lefood += 1
+	# 			self.nodes[i].is_active = True
 
 	def run(self, steps = 21600):
 		for i in range(steps):
@@ -467,10 +480,10 @@ class Model(Model):
   
 	def plot_N(self):
 		plt.plot(self.T, self.N)
-		times = [i[0] for i in list(self.food.values()) if type(i[0]) == float]
+		times = list(filter(lambda i: i[0].is_collected, self.food.values()))
 		if len(times):
-			minv = np.min(times)
-			maxv = np.max(times)
+			minv = np.min([i[0].collection_time for i in times])
+			maxv = np.max([i[0].collection_time for i in times])
 		else:
 			minv = np.nan
 			maxv = np.nan
