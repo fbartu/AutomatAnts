@@ -25,33 +25,54 @@ def discretize_time(x, t, solve = -1):
 
 			result.append(np.mean(x[idx]))
 		else:
-      
+	  
 			if solve == -1:
 				if i > 0:
 					result.append(result[-1])
 				else:
 					result.append(0)
-     
+	 
 			else:
 				result.append(0)
 		
 	return result
 
-def moving_average(x, t, overlap = 0):
+def moving_average(x, t, overlap = 0, tvec = None):
+	
 	slide = t // 2
 	if overlap > slide:
 		overlap = slide
-		
-	x0 = slide
-	xn = len(x) - slide - 1
-	sq = range(x0, xn, (slide - overlap + 1))
- 
-	v = [np.mean(x[(i - slide):(i+slide)]) for i in sq]
- 
-	if overlap == slide:
-		return np.concatenate([x[:slide], v, x[xn:len(x)]])
+	
+	if tvec is None:
+			
+		x0 = slide
+		xn = len(x) - slide - 1
+		sq = range(x0, xn, (slide - overlap + 1))
+	
+		v = [np.mean(x[(i - slide):(i+slide)]) for i in sq]
+	
+		if overlap == slide:
+			return np.concatenate([x[:slide], v, x[xn:len(x)]])
+		else:
+			return v
+
 	else:
+		if len(tvec) != len(x):
+			raise ValueError('tvec must have the same length as x')
+		
+		x = np.array(x)
+		tvec = np.array(tvec)
+
+		v = []
+		for i in range(np.min(tvec), np.max(tvec), (slide - overlap + 1)):
+			idx = np.where((tvec > (i - slide)) & (tvec <= (i + slide)))
+			if len(idx[0]):
+				v.append(np.mean(x[idx]))
+			else:
+				v.append(0)
+    
 		return v
+
 
 
 	

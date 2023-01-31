@@ -5,16 +5,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 from functions import *
 
 """"""""""""""""""
 """ PARAMETERS """
 """"""""""""""""""
-Alpha = 0.000075
+Alpha = 0.000075 # 0.0001
 alpha = 0.000075 # rate of nest exit
-alpha2 = 0.005
-beta = 0.65 # 0.8 # 0.225 rate of action
+alpha2 = 0.0005
+# beta = 0.65 # 0.8 # 0.225 rate of action
 N = 100 # number of automata
 g = 0.8 # gain (sensitivity) parameter
 Theta = 0 # threshold
@@ -26,8 +26,8 @@ Jij = {'Active-Active': 1, 'Active-Inactive': 1,
 
 weight = 3 # number of times it is more likely to choose the preferred direction over the other possibilities
 max_memory = 600 # 50 frames
-lm = LinearRegression().fit(np.array(list(range(0, 21600))).reshape((-1, 1)),
-					  np.linspace(1, 0, num = 21600, endpoint = True))
+# lm = LinearRegression().fit(np.array(list(range(0, 21600))).reshape((-1, 1)),
+# 					  np.linspace(1, 0, num = 21600, endpoint = True))
 
 nest = (0,22)
 food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
@@ -135,7 +135,7 @@ class Ant(Agent):
 		self.model.grid.place_agent(self, nest)
 		self.is_active = True
 		self.model.in_nest.remove(self.unique_id)
-		self.rate = beta
+		self.rate = abs(self.Si) # beta
 		# self.rate = abs(self.Si)
 		self.state = 'Active'
   
@@ -325,6 +325,7 @@ class Model(Model):
 		self.T = [0] # time
 		self.N = [0]
 		self.I = [0] # interactions
+		self.A = [0] # alpha ~ nest departures and entries
 		self.XY = {self.T[-1]: [a.pos for a in self.agents.values()]}
 		self.iters = 0
   
@@ -375,9 +376,13 @@ class Model(Model):
 			agent = self.agents[id]
 			# samples.append(agent.pos)
    
+			prev_state = agent.is_active
+   
 	
 			# do action & report interactions
 			agent.action()
+   
+			curr_state = agent.is_active
    
 			self.r[agent.unique_id] = agent.rate
 
@@ -396,6 +401,13 @@ class Model(Model):
 
 			# update time
 			self.T.append(int(self.time))
+   
+			if prev_state == curr_state:
+				self.A.append(0)
+			elif prev_state is True and curr_state is False:
+				self.A.append(-1)
+			elif prev_state is False and curr_state is True:
+				self.A.append(1)
    
 		# counts = Counter(samples).values()
 		# self.I.append(sum([1 if i > 1 else 0 for i in counts]))
@@ -461,17 +473,25 @@ class Model(Model):
 		plt.show()
   
 	def plot_N(self):
+     
+		t2min = 120
 		v = discretize_time(self.N, self.T)
-		plt.plot(list(range(len(v))), v)
+		t = np.array(list(range(len(v)))) / t2min
+		plt.plot(t, v)
+		if self.food[list(self.food.keys())[0]][0] is np.nan:
+			times = []
 		times = list(filter(lambda i: i[0].is_collected, self.food.values()))
 		if len(times):
-			minv = np.min([i[0].collection_time for i in times])
-			maxv = np.max([i[0].collection_time for i in times])
+			minv = np.min([i[0].collection_time for i in times]) / t2min
+			maxv = np.max([i[0].collection_time for i in times]) / t2min
 		else:
 			minv = np.nan
 			maxv = np.nan
 		plt.axvline(x = minv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
 		plt.axvline(x = maxv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
+		plt.xlabel('Time (min)')
+		plt.ylabel('Number of active ants')
+		plt.xticks(list(range(0, 185, 15)))
 		plt.show()
   
 	def plot_I(self):
@@ -486,10 +506,10 @@ class Model(Model):
 	 
 		if not hasattr(self, 'dpt_ent'):
 			
-			diff = np.diff(self.N)
+			# diff = np.diff(self.N)
 	
-			dpt = [1 if i > 0 else 0 for i in diff]
-			ent = [1 if i < 0 else 0 for i in diff]
+			dpt = [1 if i > 0 else 0 for i in self.A]
+			ent = [1 if i < 0 else 0 for i in self.A]
 	
 			dpt_disc = discretize_time(dpt, self.T, solve = 0)
 			ent_disc = discretize_time(ent, self.T, solve = 0)
@@ -512,6 +532,8 @@ class Model(Model):
    
 		print('R = %s' % round(R[0], 3))
 		plt.scatter(dpt_ma, ent_ma)
+		plt.xlabel('Nest departures')
+		plt.ylabel('Nest entries')
 		plt.show()
 
 
