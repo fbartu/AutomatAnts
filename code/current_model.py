@@ -11,7 +11,7 @@ from functions import *
 """"""""""""""""""
 N = 100 # number of automata
 alpha = 0.00005
-beta = 0.5
+beta = 0.8
 Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4 # integer
@@ -19,12 +19,12 @@ weight = 3 # must be an integer equal or greater than 1
 
 # Coupling coefficients
 # 1: No info, 2: Indirect info, 3: Direct info
-# Jij = {'1-1': 0, '1-2': 1, '1-3': 1,
-# 	   '2-1': 0, '2-2': 0, '2-3': 1,
+Jij = {'1-1': 0.5, '1-2': 1, '1-3': 1.25,
+	   '2-1': 0.25, '2-2': 0.1, '2-3': 1,
+	   '3-1': 0, '3-2': 0.5, '3-3': 1}
+# Jij = {'1-1': 1, '1-2': 1, '1-3': 1,
+# 	   '2-1': 1, '2-2': 1, '2-3': 1,
 # 	   '3-1': 1, '3-2': 1, '3-3': 1}
-Jij = {'1-1': 1, '1-2': 1, '1-3': 1,
-	   '2-1': 1, '2-2': 1, '2-3': 1,
-	   '3-1': 1, '3-2': 1, '3-3': 1}
 
 # nest coords
 nest = (0, 22)
@@ -92,7 +92,7 @@ class Ant(Agent):
 		self.Si = np.random.uniform(0.0, 1.0)# np.random.normal(0.5, 0.2)
 		self.rate = alpha
 		# self.update_rate()
-		self.g = np.random.normal(0.65, 0.1)
+		self.g = 0.8# np.random.uniform(0.0, 1.0)# np.random.normal(0.65, 0.1)
 		self.history = []
 		# self.history = 0
   
@@ -131,14 +131,22 @@ class Ant(Agent):
 	def find_neighbors(self):
      
 		if self.pos == 'nest':
+			l = len(self.model.in_nest)
       
-			if len(self.model.in_nest) > 1:
+			if l > 4:
       
 				alist = list(filter(lambda a: a.unique_id in self.model.in_nest and
 					a.unique_id != self.unique_id,
 					list(self.model.agents.values())))
    
 				neighbors = np.random.choice(alist, size = Interactions, replace = False)
+
+			elif l > 1:
+				alist = list(filter(lambda a: a.unique_id in self.model.in_nest and
+				a.unique_id != self.unique_id,
+				list(self.model.agents.values())))
+   
+				neighbors = np.random.choice(alist, size = l - 1, replace = False)
 			else:
 				neighbors = []
    
@@ -174,21 +182,30 @@ class Ant(Agent):
 
 	# tambe podria fer-ho tirant una moneda: 50/50 de canviar o seguir igual
 	def update_role(self, states, food):
-		pass
-		# if self.state == '3' or sum(food) > 0:
-		# 	self.state = '3'
-		# elif self.state == '1' and '2' in states:
-		# 	self.state = '2'
+		# pass
+		if self.state == '3' or sum(food) > 0:
+			self.state = '3'
+		elif self.state == '1' and '2' in states:
+			self.state = '2'
+		elif '3' in states:
+			self.state = '2'
 
 	def update_rate(self):
 		self.rate = abs(self.Si)
+		# self.rate = self.g
+  
+	def report(self):
+		neighbors = self.find_neighbors()
+		for i in neighbors:
+			i.rate = math.tanh(i.g * (i.Si + Jij[i.state + "-" + self.state] * self.Si))
+		# print('Self Si is %s' % self.Si)
   
 	def leave_nest(self):
 		self.model.grid.place_agent(self, nest)
 		self.is_active = True
 		self.model.in_nest.remove(self.unique_id)
 		# self.update_rate()
-		self.rate = beta
+		# self.rate = beta
 
 	def enter_nest(self):
 		self.model.grid.remove_agent(self)
@@ -197,8 +214,9 @@ class Ant(Agent):
 		self.pos = 'nest'
 		self.movement = 'random'
 		del self.target
+		self.report()
 		# self.update_rate()
-		self.rate = alpha
+		# self.rate = alpha
 		
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
@@ -216,30 +234,37 @@ class Ant(Agent):
 		self.food.pop() # possibilitat de que el food actui dins el nest (com a estat '3')
   
 	def action(self):
+		# update = False
 
 		if self.is_active: # in arena
 	  
-			if len(self.food) or self.Si < theta:
+			if len(self.food):
 				self.ant2nest()
+			elif self.Si < theta:
+			# elif self.Si < np.random.exponential(10**-16):
+				self.ant2nest()
+			# else:
+			# 	self.movement = np.random.choice(['random', self.movement], p = [0.2, 0.8])
+				# self.movement = 'random'
 	
-			else:
 		
-				if self.pos == nest:
-					if hasattr(self, 'target') and self.target == self.model.coords[nest]:
-						self.enter_nest()
-		
-					else:
-						self.move()
-		
-				elif self.pos in food_positions:
-					if food[self.pos] > 0:
-						self.pick_food()
-						
-					else:
-						self.move()
-	  
+			if self.pos == nest:
+				if hasattr(self, 'target') and self.target == self.model.coords[nest]:
+					self.enter_nest()
+					# update = True
+	
 				else:
 					self.move()
+	
+			elif self.pos in food_positions:
+				if food[self.pos] > 0 and not len(self.food):
+					self.pick_food()
+					
+				else:
+					self.move()
+	
+			else:
+				self.move()
      
 		else:
       
@@ -247,11 +272,15 @@ class Ant(Agent):
 				self.drop_food()
 
 			else:
-				if self.Si > theta:
-					self.leave_nest()
+				# if self.Si > theta:
+					# self.leave_nest()
+				if self.rate == alpha:
+					self.update_rate()
+				self.leave_nest()
 	 
 		self.interaction()
-		# self.update_rate()
+		# if update:
+		# 	self.update_rate()
   
 ''' MODEL '''
 class Model(Model):
