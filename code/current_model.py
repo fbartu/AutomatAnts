@@ -11,7 +11,7 @@ from functions import *
 """"""""""""""""""
 N = 100 # number of automata
 alpha = 0.00005
-beta = 0.8
+# beta = 0.8
 Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4 # integer
@@ -19,9 +19,9 @@ weight = 3 # must be an integer equal or greater than 1
 
 # Coupling coefficients
 # 1: No info, 2: Indirect info, 3: Direct info
-Jij = {'1-1': 0.5, '1-2': 1, '1-3': 1.25,
-	   '2-1': 0.25, '2-2': 0.1, '2-3': 1,
-	   '3-1': 0, '3-2': 0.5, '3-3': 1}
+Jij = {'1-1': 0.25, '1-2': 1, '1-3': 1,
+	   '2-1': 0.5, '2-2': 1, '2-3': 1,
+	   '3-1': 0.5, '3-2': 0.5, '3-3': 1}
 # Jij = {'1-1': 1, '1-2': 1, '1-3': 1,
 # 	   '2-1': 1, '2-2': 1, '2-3': 1,
 # 	   '3-1': 1, '3-2': 1, '3-3': 1}
@@ -92,7 +92,7 @@ class Ant(Agent):
 		self.Si = np.random.uniform(0.0, 1.0)# np.random.normal(0.5, 0.2)
 		self.rate = alpha
 		# self.update_rate()
-		self.g = 0.8# np.random.uniform(0.0, 1.0)# np.random.normal(0.65, 0.1)
+		self.g = np.random.normal(0.5, 0.125) #np.random.uniform(0.0, 1.0)# 0.8 # np.random.normal(0.5, 0.125)
 		self.history = []
 		# self.history = 0
   
@@ -133,20 +133,20 @@ class Ant(Agent):
 		if self.pos == 'nest':
 			l = len(self.model.in_nest)
       
-			if l > 4:
+			if l > Interactions:
       
 				alist = list(filter(lambda a: a.unique_id in self.model.in_nest and
 					a.unique_id != self.unique_id,
 					list(self.model.agents.values())))
    
-				neighbors = np.random.choice(alist, size = Interactions, replace = False)
+				neighbors = np.random.choice(alist, size = np.random.choice(list(range(Interactions))), replace = False)
 
 			elif l > 1:
 				alist = list(filter(lambda a: a.unique_id in self.model.in_nest and
 				a.unique_id != self.unique_id,
 				list(self.model.agents.values())))
    
-				neighbors = np.random.choice(alist, size = l - 1, replace = False)
+				neighbors = np.random.choice(alist, size = np.random.choice(list(range(l - 1))), replace = False)
 			else:
 				neighbors = []
    
@@ -163,13 +163,13 @@ class Ant(Agent):
 	def interaction(self):
 		neighbors = self.find_neighbors()
 
-		g = [] # gain
+		# g = [] # gain
 		s = [] # state
 		f = [] # food
 		z = [] # activity
   
 		for i in neighbors:
-			g.append(i.g)
+			# g.append(i.g)
 			s.append(i.state)
 			f.append(len(i.food))
 			z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
@@ -197,30 +197,46 @@ class Ant(Agent):
 	def report(self):
 		neighbors = self.find_neighbors()
 		for i in neighbors:
-			i.rate = math.tanh(i.g * (i.Si + Jij[i.state + "-" + self.state] * self.Si))
-		# print('Self Si is %s' % self.Si)
+			i.Si = math.tanh(i.g * np.mean([i.Si, Jij[i.state + "-" + self.state] * self.Si]))
+			# self.model.r[i.unique_id] = rate
+			# i.rate = rate
+
+	# def report(self):
+	# 	if self.Si > theta:
+	# 		neighbors = self.find_neighbors()
+	# 		for i in neighbors:
+	# 			rate = math.tanh(i.g * (i.Si + Jij[i.state + "-" + self.state] * self.Si))
+	# 			self.model.r[i.unique_id] = rate
+	# 			i.rate = rate
+    
   
 	def leave_nest(self):
 		self.model.grid.place_agent(self, nest)
 		self.is_active = True
 		self.model.in_nest.remove(self.unique_id)
-		# self.update_rate()
+		self.update_rate()
 		# self.rate = beta
 
 	def enter_nest(self):
-		self.model.grid.remove_agent(self)
+		# self.model.grid.remove_agent(self)
+		self.model.remove_agent(self)
 		self.is_active = False
 		self.model.in_nest.append(self.unique_id)
 		self.pos = 'nest'
 		self.movement = 'random'
 		del self.target
-		self.report()
+		# self.report()
 		# self.update_rate()
-		# self.rate = alpha
+		self.rate = alpha
 		
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
-		self.movement = 'persistant'		
+		self.movement = 'persistant'
+	
+	def ant2explore(self):
+		if hasattr(self, 'target'):
+			del self.target
+		self.movement = 'random'
 
 	def pick_food(self):
 		self.model.remove_agent(self.model.food[self.pos][0])
@@ -238,11 +254,17 @@ class Ant(Agent):
 
 		if self.is_active: # in arena
 	  
-			if len(self.food):
+			if len(self.food) or self.Si < theta:
 				self.ant2nest()
-			elif self.Si < theta:
+    
+			# else:
+			# 	if np.random.uniform() < self.Si:
+			# 		self.ant2explore()
+    
+
+			# elif self.Si < theta:
 			# elif self.Si < np.random.exponential(10**-16):
-				self.ant2nest()
+				# self.ant2nest()
 			# else:
 			# 	self.movement = np.random.choice(['random', self.movement], p = [0.2, 0.8])
 				# self.movement = 'random'
@@ -273,9 +295,9 @@ class Ant(Agent):
 
 			else:
 				# if self.Si > theta:
-					# self.leave_nest()
-				if self.rate == alpha:
-					self.update_rate()
+				# 	self.leave_nest()
+				# if self.rate == alpha:
+				# 	self.update_rate()
 				self.leave_nest()
 	 
 		self.interaction()
@@ -299,6 +321,8 @@ class Model(Model):
 		self.ids = list(range(N))
 		for i in range(N):
 			self.agents[i] = Ant(i, self)
+   
+		self.Si = [self.agents[i].Si for i in self.agents]
    
 		self.in_nest = list(range(N))
 		# self.lefood = 0
@@ -342,6 +366,10 @@ class Model(Model):
   
 	def sample_time(self):
 		self.rng_t = np.random.exponential(1 / self.R_t)
+  
+	def update_alpha(self):
+		global alpha
+		alpha = np.mean(self.Si) * 1e-4
 
 	def remove_agent(self, agent: Agent) -> None:
 		""" Remove the agent from the network and set its pos variable to None. """
@@ -371,6 +399,7 @@ class Model(Model):
 			# curr_state = agent.is_active
    
 			self.r[agent.unique_id] = agent.rate
+			self.Si[agent.unique_id] = agent.Si
 
 			self.rate2prob()
 
@@ -396,6 +425,7 @@ class Model(Model):
 			# 	self.A.append(1)
    
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
+		# self.update_alpha()
 
 	def run(self, steps = 21600):
 		for i in range(steps):
