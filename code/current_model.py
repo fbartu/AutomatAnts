@@ -10,8 +10,8 @@ from functions import *
 """ PARAMETERS """
 """"""""""""""""""
 N = 100 # number of automata
-alpha = 0.00005
-# beta = 0.8
+alpha = 0.5 / N # expected average of a random uniform U(0, 1)
+beta = 2.5
 Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4 # integer
@@ -19,12 +19,9 @@ weight = 3 # must be an integer equal or greater than 1
 
 # Coupling coefficients
 # 1: No info, 2: Indirect info, 3: Direct info
-Jij = {'1-1': 0.25, '1-2': 1, '1-3': 1,
-	   '2-1': 0.5, '2-2': 1, '2-3': 1,
+Jij = {'1-1': 0.5, '1-2': 1, '1-3': 1.5,
+	   '2-1': 0.5, '2-2': 0.5, '2-3': 1.5,
 	   '3-1': 0.5, '3-2': 0.5, '3-3': 1}
-# Jij = {'1-1': 1, '1-2': 1, '1-3': 1,
-# 	   '2-1': 1, '2-2': 1, '2-3': 1,
-# 	   '3-1': 1, '3-2': 1, '3-3': 1}
 
 # nest coords
 nest = (0, 22)
@@ -191,13 +188,16 @@ class Ant(Agent):
 			self.state = '2'
 
 	def update_rate(self):
-		self.rate = abs(self.Si)
+		self.rate = beta
+		# self.rate = abs(self.Si)
 		# self.rate = self.g
   
 	def report(self):
 		neighbors = self.find_neighbors()
 		for i in neighbors:
-			i.Si = math.tanh(i.g * np.mean([i.Si, Jij[i.state + "-" + self.state] * self.Si]))
+			i.Si = math.tanh(i.g * i.Si + Jij[i.state + "-" + self.state] * self.Si)
+			# i.Si = math.tanh(i.g * np.mean([i.Si, Jij[i.state + "-" + self.state] * self.Si]))
+			# i.Si = math.tanh(i.g * Jij[i.state + "-" + self.state] * self.Si)
 			# self.model.r[i.unique_id] = rate
 			# i.rate = rate
 
@@ -369,7 +369,8 @@ class Model(Model):
   
 	def update_alpha(self):
 		global alpha
-		alpha = np.mean(self.Si) * 1e-4
+		global N
+		alpha = np.mean(self.Si) / N
 
 	def remove_agent(self, agent: Agent) -> None:
 		""" Remove the agent from the network and set its pos variable to None. """
@@ -400,6 +401,7 @@ class Model(Model):
    
 			self.r[agent.unique_id] = agent.rate
 			self.Si[agent.unique_id] = agent.Si
+			self.Si = [self.agents[i].Si for i in self.agents]
 
 			self.rate2prob()
 
@@ -425,7 +427,7 @@ class Model(Model):
 			# 	self.A.append(1)
    
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
-		# self.update_alpha()
+		self.update_alpha()
 
 	def run(self, steps = 21600):
 		for i in range(steps):
