@@ -11,7 +11,7 @@ from functions import *
 """"""""""""""""""
 N = 100 # number of automata
 alpha = 0.5 / N # expected average of a random uniform U(0, 1)
-beta = 2.5
+beta = 1
 Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4 # integer
@@ -19,8 +19,8 @@ weight = 3 # must be an integer equal or greater than 1
 
 # Coupling coefficients
 # 1: No info, 2: Indirect info, 3: Direct info
-Jij = {'1-1': 0.5, '1-2': 1, '1-3': 1.5,
-	   '2-1': 0.5, '2-2': 0.5, '2-3': 1.5,
+Jij = {'1-1': 0.5, '1-2': 1, '1-3': 1,
+	   '2-1': 0.5, '2-2': 0.5, '2-3': 1,
 	   '3-1': 0.5, '3-2': 0.5, '3-3': 1}
 
 # nest coords
@@ -86,10 +86,10 @@ class Ant(Agent):
 		
 		super().__init__(unique_id, model)
 
-		self.Si = np.random.uniform(0.0, 1.0)# np.random.normal(0.5, 0.2)
+		self.Si = np.random.uniform(-1.0, 1.0)# np.random.normal(0.5, 0.2)
 		self.rate = alpha
 		# self.update_rate()
-		self.g = np.random.normal(0.5, 0.125) #np.random.uniform(0.0, 1.0)# 0.8 # np.random.normal(0.5, 0.125)
+		self.g = np.random.uniform(0.0, 1.0)# 0.8 # np.random.normal(0.5, 0.125)
 		self.history = []
 		# self.history = 0
   
@@ -223,19 +223,20 @@ class Ant(Agent):
 		self.is_active = False
 		self.model.in_nest.append(self.unique_id)
 		self.pos = 'nest'
-		self.movement = 'random'
-		del self.target
+		self.ant2explore()
+		# self.movement = 'random'
+		# del self.target
 		# self.report()
 		# self.update_rate()
-		self.rate = alpha
+		# self.rate = alpha
+		self.rate = self.model.alpha
 		
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
 		self.movement = 'persistant'
 	
 	def ant2explore(self):
-		if hasattr(self, 'target'):
-			del self.target
+		del self.target
 		self.movement = 'random'
 
 	def pick_food(self):
@@ -294,11 +295,11 @@ class Ant(Agent):
 				self.drop_food()
 
 			else:
-				# if self.Si > theta:
-				# 	self.leave_nest()
+				if self.Si > theta:
+					self.leave_nest()
 				# if self.rate == alpha:
 				# 	self.update_rate()
-				self.leave_nest()
+				# self.leave_nest()
 	 
 		self.interaction()
 		# if update:
@@ -323,6 +324,10 @@ class Model(Model):
 			self.agents[i] = Ant(i, self)
    
 		self.Si = [self.agents[i].Si for i in self.agents]
+		self.update_alpha()
+
+		for i in range(N):
+			self.agents[i].rate = self.alpha
    
 		self.in_nest = list(range(N))
 		# self.lefood = 0
@@ -356,6 +361,7 @@ class Model(Model):
 		self.I = [0] # interactions
 		# self.A = [0] # alpha ~ nest departures and entries
 		self.XY = {self.T[-1]: [a.pos for a in self.agents.values()]}
+		self.A = [self.alpha]
 		self.iters = 0
   
 		self.sampled_agent = []
@@ -368,9 +374,7 @@ class Model(Model):
 		self.rng_t = np.random.exponential(1 / self.R_t)
   
 	def update_alpha(self):
-		global alpha
-		global N
-		alpha = np.mean(self.Si) / N
+		self.alpha = abs(np.mean(self.Si)) / N
 
 	def remove_agent(self, agent: Agent) -> None:
 		""" Remove the agent from the network and set its pos variable to None. """
@@ -398,10 +402,15 @@ class Model(Model):
 			agent.action()
    
 			# curr_state = agent.is_active
-   
+			self.update_alpha()
+			for i in self.agents:
+				if not self.agents[i].is_active:
+					self.agents[i].rate = self.alpha
+				self.Si[i] = self.agents[i].Si
+
 			self.r[agent.unique_id] = agent.rate
-			self.Si[agent.unique_id] = agent.Si
-			self.Si = [self.agents[i].Si for i in self.agents]
+			# self.Si[agent.unique_id] = agent.Si
+			# self.Si = [self.agents[i].Si for i in self.agents]
 
 			self.rate2prob()
 
@@ -418,6 +427,7 @@ class Model(Model):
 
 			# update time
 			self.T.append(int(self.time))
+			self.A.append(self.alpha)
    
 			# if prev_state == curr_state:
 			# 	self.A.append(0)
@@ -427,18 +437,21 @@ class Model(Model):
 			# 	self.A.append(1)
    
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
-		self.update_alpha()
+			
 
 	def run(self, steps = 21600):
-		for i in range(steps):
-			self.step(tmax = i)
+		# for i in range(steps):
+		# 	self.step(tmax = i)
+   
+		self.step(tmax = steps)
    
 		c = []
 		for i in self.XY:
 			c += self.XY[i]
    
-		self.z = [0 if i == nest else c.count(i) for i in self.coords]
-		q = np.quantile(self.z, 0.95)
+		# self.z = [0 if i == nest else c.count(i) for i in self.coords]
+		self.z = [c.count(i) for i in self.coords]
+		q = np.quantile(self.z, 0.99)
 		self.z = [i if i < q else q for i in self.z] 
   
 		self.plots()
