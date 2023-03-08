@@ -11,7 +11,8 @@ from functions import *
 """"""""""""""""""
 N = 100 # number of automata
 alpha = 0.5 / N # expected average of a random uniform U(0, 1)
-beta = 1
+beta = 2
+gamma = beta# alpha # handling time
 Theta = 0 # threshold
 theta = 10**-16 # threshold of activity (inactive if Activity < theta) 
 Interactions = 4 # integer
@@ -19,9 +20,10 @@ weight = 3 # must be an integer equal or greater than 1
 
 # Coupling coefficients
 # 1: No info, 2: Indirect info, 3: Direct info
-Jij = {'1-1': 0.5, '1-2': 1, '1-3': 1,
-	   '2-1': 0.5, '2-2': 0.5, '2-3': 1,
-	   '3-1': 0.5, '3-2': 0.5, '3-3': 1}
+Jij = {'0-0': 0.5, '0-1': 1, '0-2': 1, '0-3': 1,
+        '1-0': 0, '1-1': 1, '1-2': 1, '1-3': 1,
+	   '2-0': 0, '2-1': 1, '2-2': 1, '2-3': 1,
+	   '3-0':0, '3-1': 1, '3-2': 1, '3-3': 1}
 
 # nest coords
 nest = (0, 22)
@@ -86,15 +88,15 @@ class Ant(Agent):
 		
 		super().__init__(unique_id, model)
 
-		self.Si = np.random.uniform(-1.0, 1.0)# np.random.normal(0.5, 0.2)
-		self.rate = alpha
+		self.Si = np.random.uniform(-0.5, 0.5)# np.random.uniform(-1.0, 1.0)# np.random.normal(0.5, 0.2)
+		# self.rate = abs(alpha)
 		# self.update_rate()
-		self.g = np.random.uniform(0.0, 1.0)# 0.8 # np.random.normal(0.5, 0.125)
+		self.g = 0.9#0.8#np.random.uniform(0.0, 1.0)# 0.8 # np.random.normal(0.5, 0.125)
 		self.history = []
 		# self.history = 0
   
 		self.is_active = False
-		self.state = '1'
+		self.state = '0'
 		self.food = []
   
 		self.pos = 'nest'
@@ -214,8 +216,10 @@ class Ant(Agent):
 		self.model.grid.place_agent(self, nest)
 		self.is_active = True
 		self.model.in_nest.remove(self.unique_id)
-		self.update_rate()
-		# self.rate = beta
+		# self.update_rate()
+		if self.state == '0':
+			self.state = '1'
+		self.rate = beta
 
 	def enter_nest(self):
 		# self.model.grid.remove_agent(self)
@@ -234,6 +238,7 @@ class Ant(Agent):
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
 		self.movement = 'persistant'
+		self.rate = beta
 	
 	def ant2explore(self):
 		del self.target
@@ -246,6 +251,7 @@ class Ant(Agent):
 		self.model.food[self.pos][-1].collected(self.model.time)
 		food[self.pos] -= 1
 		self.food_location = self.pos
+		self.rate = gamma
 
 	def drop_food(self):
 		self.food.pop() # possibilitat de que el food actui dins el nest (com a estat '3')
@@ -295,8 +301,8 @@ class Ant(Agent):
 				self.drop_food()
 
 			else:
-				if self.Si > theta:
-					self.leave_nest()
+				#if self.Si > theta:
+				self.leave_nest()
 				# if self.rate == alpha:
 				# 	self.update_rate()
 				# self.leave_nest()
@@ -374,7 +380,7 @@ class Model(Model):
 		self.rng_t = np.random.exponential(1 / self.R_t)
   
 	def update_alpha(self):
-		self.alpha = abs(np.mean(self.Si)) / N
+		self.alpha = abs(np.mean(self.Si)) / 50
 
 	def remove_agent(self, agent: Agent) -> None:
 		""" Remove the agent from the network and set its pos variable to None. """
