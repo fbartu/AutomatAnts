@@ -12,11 +12,10 @@ from copy import deepcopy
 """ PARAMETERS """
 """"""""""""""""""
 N = 100 # number of automata
-fact = N *10
 alpha = 0.5 / N # expected average of a random uniform U(0, 1)
-beta = 100
+beta = 1
 gamma = beta# alpha # handling time
-Theta = 10**-4 # threshold
+Theta = 10**-10 # threshold
 theta = 0 # threshold of activity (inactive if Activity < theta)
 Interactions = 4 # integer
 weight = 3 # must be an integer equal or greater than 1
@@ -27,11 +26,6 @@ Jij = {'0-0': 0.75, '0-1': 1, '0-2': 2, '0-3': 3,
         '1-0': 0.5, '1-1': 0.75, '1-2': 1, '1-3': 2,
 	   '2-0': 0.25, '2-1': 0.5, '2-2': 0.75, '2-3': 1,
 	   '3-0': 0, '3-1': 0.25, '3-2': 0.5, '3-3': 0.75}
-
-# 1: No info, 2: Indirect info, 3: Direct info
-Jij = {'1-1': 1, '1-2': 1.5, '1-3': 2,
-	   '2-1': 0.5, '2-2': 1, '2-3': 1.5,
-	   '3-1': 0.25, '3-2': 0.5, '3-3': 1}
 
 # REFERENCE MATRIX, WORKS "KIND OF"
 # Jij = {'0-0': 0.1, '0-1': 3, '0-2': 10, '0-3': 10,
@@ -68,8 +62,7 @@ class Food:
 
 	def __repr__(self):
 		if self.is_collected:
-			# t = self.collection_time / 120
-			t = self.collection_time /60
+			t = self.collection_time / 120
 			t = (int(t), round((t - int(t)) * 60))
 
 			msg = 'Food collected at %s minutes and %s seconds' % t
@@ -83,6 +76,19 @@ class Food:
 		self.collection_time = time
 		self.is_collected = True
 
+	def compute_activity(self):
+		pass
+
+	def activity(self, n):
+		pass
+
+	def update(self):
+		pass
+		# self.Si -= 0.15
+		# if self.Si < 0:
+		# 	self.Si = 0
+
+
 ''' ANT AGENT '''
 class Ant(Agent):
 
@@ -91,21 +97,24 @@ class Ant(Agent):
 		super().__init__(unique_id, model)
 
 		self.Si = np.random.uniform(0.0, 1.0)# np.random.uniform(-1.0, 1.0)# np.random.normal(0.5, 0.2)
-		self.g = np.random.normal(0.6, 0.2)
-		self.history = 0
+		# self.rate = abs(alpha)
+		# self.update_rate()
+		self.g = np.random.normal(0.7, 0.2)
+		self.history = []
+		# self.history = 0
 
 		self.is_active = False
-		# self.state = '0'
-		self.state = '1'
-  
+		self.state = '0'
 		self.food = []
 
 		self.pos = 'nest'
 		self.movement = 'random'
 
+		# self.memory = {'1': [0] * 21600, '2': [0] *21600, '3': [0]* 21600}
+
+
 	# Move method
 	def move(self):
-		self.history += 1
 
 		possible_steps = self.model.grid.get_neighbors(
 		self.pos,
@@ -164,31 +173,15 @@ class Ant(Agent):
 		# g = [] # gain
 		s = [] # state
 		z = [] # activity
-  
-		l = len(neighbors)
-		if l:
-			for i in neighbors:
-				# g.append(i.g)
-				s.append(i.state)
-				z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
 
-			z = sum(z)
-   
-			if self.pos != 'nest':
-				self.model.I.append(+1)
-			else:
-				self.model.I.append(0)
-    
-		else:
-			z = 0
-			self.model.I.append(0)
+		for i in neighbors:
+			# g.append(i.g)
+			s.append(i.state)
+			z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
 
+		z = sum(z)
 
-  
-		prev_Si = self.Si
 		self.Si = math.tanh(self.g * (z + self.Si * Jij[self.state + "-" + self.state]) ) # update activity
-		self.model.update_alpha(self.Si - prev_Si)
-
 		# self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
 		# self.g = np.mean(g + [self.g]) # update gain
 		self.update_role(s) # update state
@@ -207,18 +200,11 @@ class Ant(Agent):
 		self.rate = beta
 		# self.rate = abs(self.Si)
 		# self.rate = self.g
-  
-	# def update_model_alpha(self, alpha):
-	# 	self.model.alpha += (alpha) / fact
 
-	def report_info(self):
+	def report(self):
 		neighbors = self.find_neighbors()
 		for i in neighbors:
-			state = i.state + "-" + self.state
-			Si = i.Si
-			i.Si = math.tanh(i.g * i.Si + Jij[state] * self.Si)
-			self.model.update_alpha(i.Si - Si)
-			
+			i.Si = math.tanh(i.g * i.Si + Jij[i.state + "-" + self.state] * self.Si)
 			# i.Si = math.tanh(i.g * np.mean([i.Si, Jij[i.state + "-" + self.state] * self.Si]))
 			# i.Si = math.tanh(i.g * Jij[i.state + "-" + self.state] * self.Si)
 			# self.model.r[i.unique_id] = rate
@@ -232,37 +218,28 @@ class Ant(Agent):
 	# 			self.model.r[i.unique_id] = rate
 	# 			i.rate = rate
 
-	def report_exit(self):
-		self.model.S[0] -= 1
-		self.model.S[1] += 1
-		self.model.out.append(self.unique_id)
-		self.model.in_nest.remove(self.unique_id)
-		self.model.C.append(+1)
-
-	def report_entry(self):
-		self.model.S[0] += 1
-		self.model.S[1] -= 1
-		self.model.out.remove(self.unique_id)
-		self.model.in_nest.append(self.unique_id)
-		self.model.C.append(-1)
 
 	def leave_nest(self):
 		self.model.grid.place_agent(self, nest)
 		self.is_active = True
-		# self.model.in_nest.remove(self.unique_id)
-		# if self.state == '0':
-		# 	self.state = '1'
+		self.model.in_nest.remove(self.unique_id)
+		# self.update_rate()
+		if self.state == '0':
+			self.state = '1'
 		self.rate = beta
-		self.report_exit()
 
 	def enter_nest(self):
+		# self.model.grid.remove_agent(self)
 		self.model.remove_agent(self)
 		self.is_active = False
-		# self.model.in_nest.append(self.unique_id)
+		self.model.in_nest.append(self.unique_id)
 		self.pos = 'nest'
 		self.ant2explore()
-		self.report_info()
-		self.report_entry()
+		# self.movement = 'random'
+		# del self.target
+		self.report()
+		# self.update_rate()
+		# self.rate = alpha
 		self.rate = self.model.alpha
 
 	def ant2nest(self):
@@ -281,9 +258,8 @@ class Ant(Agent):
 		self.model.food[self.pos][-1].collected(self.model.time)
 		food[self.pos] -= 1
 		self.food_location = self.pos
-		# self.rate = gamma
+		self.rate = gamma
 		self.state = '3'
-		# self.model.info += 1
 
 	def drop_food(self):
 		# self.model.in_nest.append(self.food.pop())
@@ -291,6 +267,8 @@ class Ant(Agent):
 		self.food.pop() # possibilitat de que el food actui dins el nest (com a estat '3')
 
 	def action(self):
+		# update = False
+
 		if self.is_active: # in arena
 
 			if len(self.food) or self.Si < theta:
@@ -299,6 +277,7 @@ class Ant(Agent):
 			if self.pos == nest:
 				if hasattr(self, 'target') and self.target == self.model.coords[nest]:
 					self.enter_nest()
+
 
 				else:
 					self.move()
@@ -315,15 +294,15 @@ class Ant(Agent):
 
 		else:
       
-			# if self.state == '3':
+			if self.state == '3':
 
-			if len(self.food):
-				self.drop_food()
+				if len(self.food):
+					self.drop_food()
      
-				# self.report_info()
+				self.report()
     
-				# if np.random.uniform(0.0, 1.0) > self.Si:
-				# 	self.state = '2'
+				if np.random.uniform(0.0, 1.0) > self.Si:
+					self.state = '2'
 
 			else:
 				if self.Si > theta:
@@ -331,7 +310,6 @@ class Ant(Agent):
 
 
 		self.interaction()
-		# self.history.append(+1)
 
 
 ''' MODEL '''
@@ -345,23 +323,21 @@ class Model(Model):
 		self.g = nx.hexagonal_lattice_graph(width, height, periodic = False)
 		self.grid = space.NetworkGrid(self.g)
 		self.coords = nx.get_node_attributes(self.g, 'pos')
-  
+
 		# Agents
 		self.agents = {}
 		self.ids = list(range(N))
 		for i in range(N):
 			self.agents[i] = Ant(i, self)
-   
-		# states & rates
+
+		self.Si = [self.agents[i].Si for i in self.agents]
+		self.update_alpha()
+
+		for i in range(N):
+			self.agents[i].rate = self.alpha
+
 		self.in_nest = list(range(N))
-		self.out = []
-		self.S = np.array([N, 0])
-		self.alpha = np.sum([self.agents[i].Si for i in self.agents]) / fact
-		# self.alpha = 0.0005
-		self.beta = 1
-		# self.info = 0
-    
-		self.Si = [0]
+		# self.lefood = 0
 
   		# Food
 		self.food_id = -1
@@ -379,7 +355,7 @@ class Model(Model):
 			self.food = dict.fromkeys(food.keys(), [np.nan])
 
 		# Rates
-		self.update_rates()
+		self.r = [self.agents[i].rate for i in self.agents]
 		self.rate2prob()
 
 		# Time & Gillespie
@@ -393,15 +369,12 @@ class Model(Model):
 		self.C = [0] # alpha ~ nest departures and entries
 		self.XY = {self.T[-1]: [a.pos for a in self.agents.values()]}
 		self.A = [self.alpha]
-		self.n = [np.mean([self.agents[i].Si for i in self.agents])]
+		self.n = [np.mean(self.Si)]
 		self.o = [0]
 		self.iters = 0
-		# self.df = {0: deepcopy(self.Si)}
+		self.df = {0: deepcopy(self.Si)}
 
 		self.sampled_agent = []
-  
-	def update_rates(self):
-		self.r = self.S * np.array([self.alpha, self.beta]) 
 
 	def rate2prob(self):
 		self.R_t = np.sum(self.r)
@@ -410,13 +383,9 @@ class Model(Model):
 	def sample_time(self):
 		self.rng = np.random.random()
 		self.rng_t = (1 /self.R_t) * np.log(1 / self.rng)
-  
-	def update_alpha(self, alpha):
-		self.alpha += alpha / fact
-		# self.alpha = abs(self.alpha)
 
-	# def update_alpha(self):
-	# 	self.alpha = abs(np.mean(self.Si)/20)
+	def update_alpha(self):
+		self.alpha = abs(np.mean(self.Si)/20)
 		# self.alpha = abs(np.mean(self.Si) / N)
 		# self.alpha = abs(np.mean(self.Si)) / (N * 20)
 
@@ -434,55 +403,56 @@ class Model(Model):
 	def step(self, tmax):
 
 		while self.time < tmax:
-      
-			process = np.random.choice(['alpha', 'beta'], p = self.r_norm)
-   
-			if process == 'alpha':
-				id = np.random.choice(self.in_nest)
-    
-			else:
-				id = np.random.choice(self.out)
 
+			id = np.random.choice(self.ids, p = self.r_norm)
 			agent = self.agents[id]
-			self.sampled_agent.append(id)
+			
+			if self.rng < agent.rate:
 
-			# do action
-			agent.action()
-			if len(self.C) == len(self.T):
-				self.C.append(0)
+				self.sampled_agent.append(id)
 
-			# tmp_o = []
-			# tmp_n = []
-			# for i in self.agents:
-			# 	if not self.agents[i].is_active:
-			# 		self.agents[i].rate = self.alpha
-			# 		tmp_n.append(self.agents[i].Si)
-			# 	else:
-			# 		tmp_o.append(self.agents[i].Si)
-			# 	self.Si[i] = self.agents[i].Si
+				prev_state = agent.is_active
 
-			# self.r[agent.unique_id] = agent.rate
-			self.update_rates()
-			self.rate2prob()
-			# self.Si[agent.unique_id] = agent.Si
-			# self.Si = [self.agents[i].Si for i in self.agents]
+				# do action
+				agent.action()
 
-			# update activity
-			# self.N.append(N - len(self.in_nest) + self.food_in_nest)
-			self.N.append(len(self.out))
+				curr_state = agent.is_active
+				self.update_alpha()
+				tmp_o = []
+				tmp_n = []
+				for i in self.agents:
+					if not self.agents[i].is_active:
+						self.agents[i].rate = self.alpha
+						tmp_n.append(self.agents[i].Si)
+					else:
+						tmp_o.append(self.agents[i].Si)
+					self.Si[i] = self.agents[i].Si
 
-			# update time
-			# self.T.append(int(self.time))
-			self.T.append(self.time)
-			self.A.append(self.alpha)
+				self.r[agent.unique_id] = agent.rate
+				self.rate2prob()
+				# self.Si[agent.unique_id] = agent.Si
+				# self.Si = [self.agents[i].Si for i in self.agents]
+    
+				# update activity
+				self.N.append(N - len(self.in_nest) + self.food_in_nest)
 
+				# update time
+				self.T.append(int(self.time))
+				self.A.append(self.alpha)
 
-			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
-			self.n.append(np.mean([self.agents[i].Si for i in self.in_nest]))
-			self.o.append(np.mean([self.agents[i].Si for i in self.out]))
-			# self.df[self.T[-1]] = deepcopy(self.Si)
+				if prev_state == curr_state:
+					self.C.append(0)
+				elif prev_state is True and curr_state is False:
+					self.C.append(-1)
+				elif prev_state is False and curr_state is True:
+					self.C.append(1)
 
-			self.iters += 1
+				self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
+				self.n.append(np.mean(tmp_n))
+				self.o.append(np.mean(tmp_o))
+				self.df[self.T[-1]] = deepcopy(self.Si)
+    
+				self.iters += 1
 
 			# get time for next iteration
 			self.time += self.rng_t
@@ -548,8 +518,7 @@ class Model(Model):
 
 	def plot_N(self):
 
-		t2min = 60
-		# t2min = 120
+		t2min = 120
 		# v = discretize_time(self.N, self.T)
 		v = self.N
 		t = np.array(self.T) / t2min
