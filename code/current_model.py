@@ -12,14 +12,14 @@ from copy import deepcopy
 """ PARAMETERS """
 """"""""""""""""""
 N = 100 # number of automata
-fact = N *10
+fact = N
 alpha = 0.5 / N # expected average of a random uniform U(0, 1)
-beta = 100
+beta = 1 / 4
 gamma = beta# alpha # handling time
-Theta = 10**-4 # threshold
+Theta = 0 # threshold
 theta = 0 # threshold of activity (inactive if Activity < theta)
 Interactions = 4 # integer
-weight = 3 # must be an integer equal or greater than 1
+weight = 2 # must be an integer equal or greater than 1
 
 # Coupling coefficients
 # 1: No info, 2: Indirect info, 3: Direct info
@@ -33,6 +33,12 @@ Jij = {'1-1': 1, '1-2': 1.5, '1-3': 2,
 	   '2-1': 0.5, '2-2': 1, '2-3': 1.5,
 	   '3-1': 0.25, '3-2': 0.5, '3-3': 1}
 
+
+Jij = {'1-1': 0.75, '1-2': 5, '1-3': 5,
+	   '2-1': 0.5, '2-2': 0.75, '2-3': 5,
+	   '3-1': 0.25, '3-2': 0.5, '3-3': 0.75}
+
+
 # REFERENCE MATRIX, WORKS "KIND OF"
 # Jij = {'0-0': 0.1, '0-1': 3, '0-2': 10, '0-3': 10,
 #         '1-0': 0.25, '1-1': 3, '1-2': 10, '1-3': 10,
@@ -41,6 +47,7 @@ Jij = {'1-1': 1, '1-2': 1.5, '1-3': 2,
 
 # nest coords
 nest = (0, 22)
+nest_influence = [nest, (1, 21), (1, 22), (1, 23)]
 
 food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),
@@ -90,8 +97,8 @@ class Ant(Agent):
 
 		super().__init__(unique_id, model)
 
-		self.Si = np.random.uniform(0.0, 1.0)# np.random.uniform(-1.0, 1.0)# np.random.normal(0.5, 0.2)
-		self.g = np.random.normal(0.6, 0.2)
+		self.Si = np.random.uniform(-1.0, 1.0)# np.random.uniform(-1.0, 1.0)# np.random.normal(0.5, 0.2)
+		self.g = np.random.normal(0.7, 0.2)
 		self.history = 0
 
 		self.is_active = False
@@ -174,13 +181,13 @@ class Ant(Agent):
 
 			z = sum(z)
    
-			if self.pos != 'nest':
+			if self.pos in ['nest'] + nest_influence:
 				self.model.I.append(+1)
 			else:
 				self.model.I.append(0)
     
 		else:
-			z = 0
+			z = -Theta
 			self.model.I.append(0)
 
 
@@ -341,10 +348,14 @@ class Model(Model):
 
 		super().__init__()
 
+		nds = [(0, i) for i in range(1, 44, 2)]
+
 		# Lattice
 		self.g = nx.hexagonal_lattice_graph(width, height, periodic = False)
-		self.grid = space.NetworkGrid(self.g)
+		[self.g.remove_node(i) for i in nds]
 		self.coords = nx.get_node_attributes(self.g, 'pos')
+		self.grid = space.NetworkGrid(self.g)
+
   
 		# Agents
 		self.agents = {}
@@ -356,9 +367,9 @@ class Model(Model):
 		self.in_nest = list(range(N))
 		self.out = []
 		self.S = np.array([N, 0])
-		self.alpha = np.sum([self.agents[i].Si for i in self.agents]) / fact
+		self.alpha = abs(np.mean([self.agents[i].Si for i in self.agents]))# / fact
 		# self.alpha = 0.0005
-		self.beta = 1
+		self.beta = 1/3
 		# self.info = 0
     
 		self.Si = [0]
@@ -410,9 +421,18 @@ class Model(Model):
 	def sample_time(self):
 		self.rng = np.random.random()
 		self.rng_t = (1 /self.R_t) * np.log(1 / self.rng)
+
+	# def update_beta(self, beta):
+	# 	if self.o[-1] != np.nan:
+	# 		self.beta = self.o[-1]
   
 	def update_alpha(self, alpha):
-		self.alpha += alpha / fact
+		self.alpha += alpha #/ fact
+		self.alpha = abs(self.alpha)
+		# if not math.isnan(self.n[-1]):
+		# 	self.alpha = abs((N * self.n[-1]) / fact)
+		# else:
+		# 	self.alpha = 0.0005
 		# self.alpha = abs(self.alpha)
 
 	# def update_alpha(self):
@@ -462,8 +482,8 @@ class Model(Model):
 			# 	self.Si[i] = self.agents[i].Si
 
 			# self.r[agent.unique_id] = agent.rate
-			self.update_rates()
-			self.rate2prob()
+			# self.update_rates()
+			# self.rate2prob()
 			# self.Si[agent.unique_id] = agent.Si
 			# self.Si = [self.agents[i].Si for i in self.agents]
 
@@ -480,6 +500,14 @@ class Model(Model):
 			self.XY[self.T[-1]] = [a.pos for a in self.agents.values()]
 			self.n.append(np.mean([self.agents[i].Si for i in self.in_nest]))
 			self.o.append(np.mean([self.agents[i].Si for i in self.out]))
+
+
+			self.update_alpha(0)
+			# self.update_beta(0)
+			self.update_rates()
+			self.rate2prob()
+
+
 			# self.df[self.T[-1]] = deepcopy(self.Si)
 
 			self.iters += 1
