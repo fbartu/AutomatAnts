@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from functions import *
 from scipy.stats import pearsonr
-import time
 # from copy import deepcopy
 
 """"""""""""""""""
@@ -19,8 +18,8 @@ beta = 1 / 4
 p = 0.1
 time_memory = 0 # seconds
 gamma = beta# alpha # handling time
-Theta = 10**-15 # threshold
-theta = 0# 10**-15 # threshold of activity (inactive if Activity < theta)
+Theta = 0 # threshold
+theta = 10**-15 # threshold of activity (inactive if Activity < theta)
 Interactions = 4 # integer
 weight = 3 # must be an integer equal or greater than 1
 
@@ -44,7 +43,7 @@ Jij = {'1-1': 0.7, '1-2': 10**10, '1-3': 10**15,
 	   '2-1': 0.3, '2-2': 0.7, '2-3': 10**10,
 	   '3-1': 0.1, '3-2': 0.3, '3-3': 0.7}
 
-Jij = {'0-0': 1, '0-1': 10**5,
+Jij = {'0-0': 1, '0-1': 10**10,
        '1-0': 0.5, '1-1': 0.5}
 
 # Jij = {'1-1': 0.1, '1-2': 1, '1-3': 2,
@@ -115,7 +114,7 @@ class Ant(Agent):
 
 		super().__init__(unique_id, model)
 
-		self.Si = np.random.normal(0.0, 0.2)# np.random.uniform(-1.0, 1.0)
+		self.Si = np.random.uniform(-1.0, 1.0)# np.random.normal(0.0, 0.2)# np.random.uniform(-1.0, 1.0)
 		self.g = np.random.normal(0.8, 0.1)
 		# self.theta = np.random.uniform(10**-10, 10**-20)
 		self.history = 0
@@ -142,7 +141,6 @@ class Ant(Agent):
 			
 			if self.pos == nest:
 				idx = np.random.choice([0, 'nest'], p = [2/3, 1/3])
-				# idx = np.random.choice([0, 'nest'], p = [4/5, 1/5])
 
 				if idx == 'nest':
 					self.enter_nest()
@@ -228,9 +226,9 @@ class Ant(Agent):
 			z = sum(z)
    
 			if self.pos in ['nest'] + nest_influence:
-				self.model.I.append(0)
-			else:
 				self.model.I.append(+1)
+			else:
+				self.model.I.append(0)
     
 		else:
 			z = -Theta
@@ -626,8 +624,6 @@ class Model(Model):
 		# 	self.step(tmax = i)
 
 		self.step(tmax = steps)
-		# print('FINISHED MODEL!')
-		# t = time.time()
 
 		# c = []
 		# for i in self.XY:
@@ -637,25 +633,21 @@ class Model(Model):
 		# self.z = [c.count(i) for i in self.coords]
 		# q = np.quantile(self.z, 0.99)
 		# self.z = [i if i < q else q for i in self.z]
-  
-		# print(time.time() - t)
 
 		# self.plots()
 		self.plot_N()
 
 	def save_results(self, path):
-		self.results = pd.DataFrame({'N': self.N, 'T': self.T, 'I':self.I, 'C': self.C,
-                               'nest': self.n, 'arena': self.o})
-		self.results['F'] = 0
-		self.results.iloc[np.where([self.T == x for x in [self.food[i][0].collection_time for i in self.food]])[1],-1] = 1
-		# x = [xy[0] for xy in self.coords.values()]
-		# y = [xy[1] for xy in self.coords.values()]
-		# xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
-		# self.xyz = pd.DataFrame({'x': [i[0] for i in xy],
-		# 				  'y': [i[1] for i in xy],
-		# 				  'z': self.z})
+		self.results = pd.DataFrame({'N': self.N, 'T': self.T, 'C': self.C,
+                               'alpha': self.A, 'nest': self.n, 'arena': self.o})
+		x = [xy[0] for xy in self.coords.values()]
+		y = [xy[1] for xy in self.coords.values()]
+		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
+		self.xyz = pd.DataFrame({'x': [i[0] for i in xy],
+						  'y': [i[1] for i in xy],
+						  'z': self.z})
 		self.results.to_csv(path + 'N.csv')
-		# self.xyz.to_csv(path + 'xyz.csv')
+		self.xyz.to_csv(path + 'xyz.csv')
 
 
 	def plot_lattice(self, z = None):
