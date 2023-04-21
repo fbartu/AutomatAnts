@@ -12,10 +12,11 @@ from scipy.stats import pearsonr
 """"""""""""""""""
 N = 100 # number of automata
 alpha = 0.002 # rate of action in nest
+gamma = 10**-4
 beta = 1 # rate of action in arena
 # gamma = 10**-5
 ps = 0.05 # probability of changing state
-pa = 10**-5 # probability of spontaneous activation
+pa = 10**-2 # probability of spontaneous activation
 Theta = 10**-15 # baseline loss of activity (threshold 1)
 theta = 0 # threshold of activity (threshold 2)
 Interactions = 4 # integer, number of max interactions in a node
@@ -24,7 +25,7 @@ weight = 3 # integer >= 1, direction bias
 # Coupling coefficients
 # 0 - No info; 1 - Info
 Jij = {'0-0': 1, '0-1': 1.5,
-       '1-0': 0.5, '1-1': 0.5}
+       '1-0': 0.25, '1-1': 0.5}
 
 """"""""""""""""""""""""""
 """ SPATIAL PARAMETERS """
@@ -36,7 +37,7 @@ food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),
 	(6, 11), (6, 12), (7, 12), # patch 2
 	(7, 11), (7, 10), (6, 10)]
-foodXvertex = -1
+foodXvertex = 1
 
 food = dict.fromkeys(food_positions, foodXvertex)
 
@@ -57,7 +58,7 @@ class Ant(Agent):
 		super().__init__(unique_id, model)
 
 		self.Si = 0 # np.random.uniform(-1.0, 1.0) 
-		self.g = np.random.normal(0.75, 0.1)
+		self.g = np.random.uniform(0.5, 1.0)# np.random.normal(0.75, 0.1)
 		# self.theta = np.random.normal(10**-10, 10**-30)
 		self.history = 0
 
@@ -68,6 +69,8 @@ class Ant(Agent):
 
 		self.pos = 'nest'
 		self.movement = 'random'
+  
+		self.status = 'gamma'
 
 	# Move method
 	def move(self):
@@ -81,18 +84,19 @@ class Ant(Agent):
 
 		if self.movement == 'random':
 			
-			if self.pos == nest:
-				idx = np.random.choice([0, 'nest'], p = [2/3, 1/3])
+			# if self.pos == nest:
+			# 	idx = np.random.choice([0, 'nest'], p = [2/3, 1/3])
 
-				if idx == 'nest':
-					self.enter_nest()
-					return None
+			# 	if idx == 'nest':
+			# 		self.enter_nest()
+			# 		return None
 		
-				else:
-					idx = int(idx)
-     
-			else:
-				idx = np.random.choice(l)
+			# 	else:
+			# 		idx = int(idx)
+		
+			# else:
+			# 	idx = np.random.choice(l)
+			idx = np.random.choice(l)
       
 		else:
 			d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
@@ -104,6 +108,16 @@ class Ant(Agent):
 
 		pos = possible_steps[idx]
 		self.model.grid.move_agent(self, pos)
+  
+	def check_status(self):
+		if self.is_active:
+			self.status = 'beta'
+
+		else:
+			if self.Si > theta:
+				self.status = 'alpha'
+			else:
+				self.status = 'gamma'
 
 	def find_neighbors(self):
 
@@ -148,6 +162,7 @@ class Ant(Agent):
 			for i in neighbors:
 				s.append(i.state)
 				z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
+    
 
 			z = sum(z)
    
@@ -173,6 +188,7 @@ class Ant(Agent):
 		for i in neighbors:
 			state = i.state + "-" + self.state
 			i.Si = math.tanh(i.g * (i.Si * Jij[i.state + "-" + i.state] + (Jij[state] * self.Si - Theta)))
+			i.check_status()
    
 	def report_exit(self):
 		self.model.S[0] -= 1
@@ -259,17 +275,20 @@ class Ant(Agent):
 					self.leave_nest()
      
 				else:
-					if np.random.random() < pa:
-						self.Si = np.random.random()
+					# if np.random.random() < pa:
+						# self.Si = np.random.random()
+						# self.Si += pa
+					self.Si += 0.1 
 
 
 		self.interaction()
+		self.check_status()
 		# self.eval_status()
 
 ''' MODEL '''
 class Model(Model):
 
-	def __init__(self, alpha = alpha, beta = beta, N = N, width = width, height = height):
+	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, N = N, width = width, height = height):
 
 		super().__init__()
 
@@ -286,15 +305,19 @@ class Model(Model):
 		self.ids = list(range(N))
 		for i in range(N):
 			self.agents[i] = Ant(i, self)
-		self.agents[0].Si = 0.5
+		# self.agents[0].Si = 0.5
    
 		# states & rates
-		self.S = np.array([N, 0])
+		self.S = np.array([0, 0, N])
 		self.alpha = alpha
 		self.beta = beta
+		self.gamma = gamma
+		self.indices = {'alpha': 0, 'beta': 1, 'gamma': 2}
   
 		self.in_nest = list(range(N))
 		self.out = []
+		self.population = {'alpha': list(range(N)), 'beta': [], 'gamma': list(range(N))}
+
     
 		self.Si = [0]
 
@@ -340,13 +363,13 @@ class Model(Model):
 		self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
 		self.iters = 0
 		self.a = [self.r[0]]
-		self.alpha_counter = 0
-		self.beta_counter = 0
+		# self.alpha_counter = 0
+		# self.beta_counter = 0
 
 		self.sampled_agent = []
   
 	def update_rates(self):
-		self.r = self.S * np.array([self.alpha, self.beta]) 
+		self.r = self.S * np.array([self.alpha, self.beta, self.gamma]) 
 
 	def rate2prob(self):
 		self.R_t = np.sum(self.r)
@@ -371,23 +394,33 @@ class Model(Model):
 
 		while self.time < tmax:
       
-			process = np.random.choice(['alpha', 'beta'], p = self.r_norm)
+			process = np.random.choice(['alpha', 'beta', 'gamma'], p = self.r_norm)
+			id = np.random.choice(self.population[process])
    
-			if process == 'alpha':
-				id = np.random.choice(self.in_nest)
-				self.alpha_counter += 1
+			# if process == 'alpha':
+				
+				# id = np.random.choice(self.in_nest)
+				# self.alpha_counter += 1
     
-			else:
-				id = np.random.choice(self.out)
-				self.beta_counter += 1
-
+			# elif process == 'beta':
+			# 	id = np.random.choice(self.out)
+    
+			# else:
+			# 	id = np.random.choice(self.out)
+				# self.beta_counter += 1
+    
 			agent = self.agents[id]
 			self.sampled_agent.append(id)
 
 			# do action
+			prev_stat = agent.status
 			agent.action()
+			new_stat = agent.status
+			self.update_population(prev_stat, new_stat, agent.unique_id)
+   
 			if len(self.C) == len(self.T):
 				self.C.append(0)
+
 
 			self.A.append(self.alpha)
    
@@ -414,6 +447,33 @@ class Model(Model):
 
 			# get rng for next iteration
 			self.sample_time()
+   
+	def update_population(self, prev_stat, new_stat, id):
+ 
+		self.population = {'alpha': [], 'beta': [], 'gamma': []}
+		self.S = np.array([0, 0, 0])
+     
+		for i in self.agents:
+			s = self.agents[i].status
+			id = self.agents[i].unique_id
+			self.S[self.indices[s]] += 1
+			self.population[s].append(id)
+   
+
+   
+   
+		if prev_stat != new_stat:
+			self.S[self.indices[prev_stat]] -= 1
+			self.S[self.indices[new_stat]] += 1
+			self.S[0] = N - len(self.population['beta'])
+   
+			if prev_stat == 'gamma' and new_stat == 'alpha':
+				self.population[prev_stat].remove(id)
+			elif prev_stat == 'alpha' and new_stat == 'gamma':
+				self.population[new_stat].append(id)
+			elif prev_stat == 'alpha' and new_stat == 'beta':
+				self.population[prev_stat].remove(id)
+				self.population[new_stat].append(id)
 
 			
 	def run(self, tmax = 10800):

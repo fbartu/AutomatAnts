@@ -74,5 +74,11 @@ def moving_average(x, t, overlap = 0, tvec = None):
 		return v
 
 
+def convert_movement(last_move, curr_xy, neighbors):
+    
+    d = [np.array(neighbors[i])- np.array(curr_xy) for i in neighbors]
+    
+
+
 
 	
