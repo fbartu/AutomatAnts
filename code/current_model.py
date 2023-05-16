@@ -28,6 +28,7 @@ weight = 3 # must be an integer equal or greater than 1
 #                'down-right': -1, 'down-left':1, 'down-up':0,
 #                'right-right': 1, 'right-left': 0, 'right-up': -1}
 
+#                       1           0          -1  
 # mot_matrix = {1: [0.4377143, 0.2817919, 0.2804938],
 #               0: [0.4825561, 0.2051468, 0.3122971],
 #               -1: [0.2376265, 0.2802202, 0.4821533]}
