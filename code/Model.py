@@ -1,241 +1,37 @@
+from mesa import space, Model, Agent
+from Food import Food
 import networkx as nx
-from mesa import space, Agent, Model
-import math
-import numpy as np
+from Ant import np, Ant, math, nest
 import matplotlib.pyplot as plt
 import pandas as pd
-from functions import *
 from scipy.stats import pearsonr
-
-""""""""""""""""""
-""" PARAMETERS """
-""""""""""""""""""
+from functions import rotate, moving_average, discretize_time
 
 N = 100 # number of automata
 alpha = 4*10**-3 # rate of action in nest
 beta = 2 # rate of action in arena
 gamma = 10**-5 # spontaneous activation
-Theta = 10**-15 # baseline loss of activity (threshold 1)
-theta = 0 # threshold of activity (threshold 2)
-weight = 3 # integer >= 1, direction bias
-
-# Coupling coefficients
-# 0 - No info; 1 - Info
-Jij = {'0-0': 0.35, '0-1': 1,
-	   '1-0': 0.35, '1-1': 1} ## MATRIX WITH TWO G POPULATIONS
-
-""""""""""""""""""""""""""
-""" SPATIAL PARAMETERS """
-""""""""""""""""""""""""""
-nest = (0, 22)
-nest_influence = [nest, (1, 21), (1, 22), (1, 23)]          
 
 foodXvertex = 1
+
+# sto_1: randomly distributed food (stochastic)
+# sto_2: stochastic with clusterized food (hexagon patches)
+# det: deterministic (sto_2 but with a specific and fixed positioning, emulating deterministic experiments)
+# nf: no food (simulations without food)
+food_condition = 'sto_1' # 'det', 'sto_2', 'nf'
 
 #Lattice size
 width    = 22
 height   = 13
 
-
-""""""""""""""""""
-"""   CLASSES  """
-""""""""""""""""""
-
-''' ANT AGENT '''
-class Ant(Agent):
-
-	def __init__(self, unique_id, model):
-
-		super().__init__(unique_id, model)
-
-		self.Si = 0
-		self.g = np.random.uniform(0.0, 1.0)
-
-		self.is_active = False
-		self.state = '0'
-		self.status = 'gamma'
-
-		self.activity = {'t': [0], 'Si': [self.Si]}
-  
-		self.food = []
-
-		self.pos = 'nest'
-		self.movement = 'random'
-  
-		# self.last_move = None
-		self.path = []
-
-	# Move method
-	def move(self):
-
-		possible_steps = self.model.grid.get_neighbors(
-		self.pos,
-		include_center = False)
-  
-		l = list(range(len(possible_steps)))
-
-		if self.movement == 'random':
-			
-			idx = np.random.choice(l)
-	  
-		else:
-			d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
-			idx = np.argmin(d)
-
-			v = 1 / (len(d) + weight - 1)
-			p = [weight / (len(d) + weight - 1) if i == idx else v for i in l]
-			idx = np.random.choice(l, p = p)
-
-		pos = possible_steps[idx]
-		self.model.grid.move_agent(self, pos)
- 
-	def reset_movement(self):
-		self.movement = 'random'
-
-	def find_neighbors(self):
-
-		if self.pos == 'nest':
-   
-			alist = self.model.states['alpha']
-
-		else:
-			alist = self.model.grid.get_cell_list_contents([self.pos])
-   
-		flist = list(filter(lambda a: a.unique_id != self.unique_id, alist))
-  
-		if len(flist):
-			neighbors = np.random.choice(flist, size = 1, replace = False)
-		else:
-			neighbors = []
-
-		return neighbors
-
-	def interaction(self):
-		neighbors = self.find_neighbors()
-
-		s = [] # state
-		z = [] # activity
-  
-		l = len(neighbors)
-		if l:
-			for i in neighbors:
-				s.append(i.state)
-				z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
-
-			z = sum(z)
-   
-			if self.pos in ['nest'] + nest_influence:
-				self.model.I.append(0)
-			else:
-				self.model.I.append(+1)
-	
-		else:
-			z = -Theta
-			self.model.I.append(0)
-		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
-	
-	def update_status(self):
-		self.check_status()
-		for i in self.model.states:
-			try:
-				self.model.states[i].remove(self)
-			except:
-				continue
-	
-		if self.status == 'gamma':
-			self.model.states['alpha'].append(self)
-			self.model.states['gamma'].append(self)
-   
-		else:
-			self.model.states[self.status].append(self)
-	
-	def check_status(self):
-		if self.is_active:
-			self.status = 'beta'
-		else:
-			if self.Si > theta:
-				self.status = 'alpha'
-			else:
-				self.status = 'gamma'
- 
-	def leave_nest(self):
-		self.model.grid.place_agent(self, nest)
-		self.is_active = True
-
-	def enter_nest(self):
-		self.model.remove_agent(self)
-		self.is_active = False
-		self.pos = 'nest'
-		self.ant2explore()
-
-	def ant2nest(self):
-		self.target = self.model.coords[nest]
-		self.movement = 'homing'
-
-	def ant2explore(self):
-		if hasattr(self, 'target'):
-			del self.target
-		self.reset_movement()
-
-	def pick_food(self):
-		self.model.remove_agent(self.model.food[self.pos][0])
-		self.food.append(self.model.food[self.pos].pop(0))
-		self.model.food[self.pos].extend(self.food)
-		self.model.food[self.pos][-1].collected(self.model.time)
-		self.model.food_dict[self.pos] -= 1
-		self.food_location = self.pos
-		self.state = '1'
-
-	def drop_food(self):
-		self.food.pop()
-  
-	def action(self, rate):
-		
-		if rate == 'alpha':
-			if len(self.food):
-				self.drop_food()
-			else:
-				if self.Si > theta:
-					self.leave_nest()
-
-		elif rate == 'beta':
-	  
-			if len(self.food) or self.Si < theta:
-				self.ant2nest()
-
-			if self.pos == nest:
-				if hasattr(self, 'target') and self.target == self.model.coords[nest]:
-					self.enter_nest()
-
-				else:
-					self.move()
-
-			elif self.pos in self.model.food_positions:
-	   
-				if self.model.food_dict[self.pos] > 0 and not len(self.food):
-					self.neighbors = self.find_neighbors()
-					self.pick_food()
-
-				else:
-					self.move()
-
-			else:
-				self.move()
-   
-		else:
-			self.Si = np.random.uniform(0.0, 1.0) ## spontaneous activation
-
-		self.interaction()
-		self.update_status()
-		self.activity['Si'].append(self.Si)
-
 ''' MODEL '''
 class Model(Model):
 
-	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, N = N, width = width, height = height):
+	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, N = N, width = width, height = height,
+			  food_condition = food_condition):
 
 		super().__init__()
-
+  
 		nds = [(0, i) for i in range(1, 44, 2)]
 
 		# Lattice
@@ -252,36 +48,22 @@ class Model(Model):
 		self.agents = {}
 		for i in range((N-1), -1, -1):
 			self.agents[i] = Ant(i, self)
-
    
-		# states & rates
+  		# states & rates
 		self.states = {'alpha': list(self.agents.values()), 'beta': [], 'gamma': list(self.agents.values())}
 		self.S = np.array([N, 0, N])
 		self.rates = np.array([alpha, beta, gamma])
   
+		# Init first active agent
 		self.agents[0].Si = np.random.uniform(0.0, 1.0)
 		self.agents[0].update_status()
-  
 		self.Si = [np.mean([i.Si for i in list(self.agents.values())])]
+   
 
+  
   		# Food
-		self.food_id = -1
-		self.food_in_nest = 0
-		if foodXvertex > 0:
-			nodes = np.array(list(self.xy.keys()))
-			food_indices = np.random.choice(len(self.xy), size = 12, replace = False)
-			self.food_positions = [tuple(x) for x in nodes[food_indices]]
-			self.food_dict = dict.fromkeys(self.food_positions, foodXvertex)
-			self.food = {}
-			for i in self.food_dict:
-				self.food[i] = [Food(i)] * foodXvertex
-				for x in range(foodXvertex):
-					self.grid.place_agent(self.food[i][x], i)
-					self.food[i][x].unique_id = self.food_id
-					self.food_id -= 1
-
-		else:
-			self.food = dict.fromkeys((), [np.nan])
+		self.food_condition = food_condition
+		self.init_food()
    
 		self.init_state = {'Si': [self.agents[i].Si for i in self.agents],
 					 'g': [self.agents[i].g for i in self.agents],
@@ -358,24 +140,13 @@ class Model(Model):
 
 			# do action
 			agent.action(process)
-   
-			self.N.append(len(self.states['beta']))
-
 			if agent.pos != 'nest':
 				self.XY[agent.pos] += 1
-			self.n.append(np.mean([i.Si for i in self.states['alpha']]))
-			self.o.append(np.mean([i.Si for i in self.states['beta']]))
-			self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
-			self.gOut.append(np.mean([i.g for i in self.states['beta']]))
-			self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
+			self.collect_data()
    
 			self.update_rates()
 			self.rate2prob()
-   
-			self.a.append(self.r[0])
-
-			self.iters += 1
-
+			
 			# get time for next iteration
 			self.time += self.rng_t
 			self.T.append(self.time)
@@ -383,7 +154,70 @@ class Model(Model):
 
 			# get rng for next iteration
 			self.sample_time()
+			self.iters += 1
+   
+	def collect_data(self):
+		self.N.append(len(self.states['beta']))
+		self.n.append(np.mean([i.Si for i in self.states['alpha']]))
+		self.o.append(np.mean([i.Si for i in self.states['beta']]))
+		self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
+		self.gOut.append(np.mean([i.g for i in self.states['beta']]))
+		self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
+		self.a.append(self.r[0])
+   
+	def init_food(self):
+     
+		self.food_in_nest = 0
+		if food_condition == 'det':
+			self.init_det()
+		elif food_condition == 'sto_1':
+			self.init_sto()
+		elif food_condition == 'sto_2':
+			self.init_stoC()
+		elif food_condition == 'nf':
+			self.init_nf()
+		else:
+			Warning('No valid food conditions, initing non-clustered stochastic by default')
+			self.init_sto()
+			
+	def init_det(self):
+		food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
+	(7, 33), (7, 32), (6, 32),
+	(6, 11), (6, 12), (7, 12), # patch 2
+	(7, 11), (7, 10), (6, 10)]
+  
+		food_id = -1
+  
+		self.food = {}
+		for i in food_positions:
+			self.food[i] = [Food(i)] * foodXvertex
+			for x in range(foodXvertex):
+				self.grid.place_agent(self.food[i][x], i)
+				self.food[i][x].unique_id = food_id
+				food_id -= 1
+     
+	def init_sto(self):
+		food_id = -1
+		self.food_in_nest = 0
+  
+		nodes = np.array(list(self.xy.keys()))
+		food_indices = np.random.choice(len(self.xy), size = 12, replace = False)
+		self.food_positions = [tuple(x) for x in nodes[food_indices]]
+		self.food_dict = dict.fromkeys(self.food_positions, foodXvertex)
+		self.food = {}
+		for i in self.food_dict:
+			self.food[i] = [Food(i)] * foodXvertex
+			for x in range(foodXvertex):
+				self.grid.place_agent(self.food[i][x], i)
+				self.food[i][x].unique_id = food_id
+				food_id -= 1
+    
+	def init_stoC(self):
+		## WORK IN PROGRESS ##
+		self.init_sto()
 
+	def init_nf(self):
+		self.food = dict.fromkeys((), [np.nan])
 			
 	def run(self, tmax = 10800, plots = False):
 
@@ -409,14 +243,17 @@ class Model(Model):
 		self.results.to_csv(path + 'N.csv')
 
 	def plot_lattice(self, z = None, labels = False):
-	 
-		if foodXvertex > 0:
+		
+		coordsfood = [self.xy[i] for i in self.food]
 
-			coordsfood = [self.xy[i] for i in self.food]
+		if self.food_condition == 'det' or self.food_condition == 'sto_2':
 
 			xyfood = [coordsfood[:6],coordsfood[6:]]
 			plt.fill([x[0] for x in xyfood[0]], [x[1] for x in xyfood[0]], c = 'grey')
 			plt.fill([x[0] for x in xyfood[1]], [x[1] for x in xyfood[1]], c = 'grey')
+   
+		elif self.food_condition == 'sto_1':
+			plt.scatter([x[0] for x in coordsfood], [x[1] for x in coordsfood], c = 'grey', s = 200, alpha = 0.5)
 
 		if z is None:
 
@@ -429,7 +266,7 @@ class Model(Model):
 			v = list(self.xy.values())
 			for i, txt in enumerate(self.coords.keys()):
 				plt.annotate(txt, v[i])
-		plt.scatter(self.xy[nest][0], self.xy[nest][1], marker = '^', s = 50, c = 'black')
+		plt.scatter(self.xy[nest][0], self.xy[nest][1], marker = '^', s = 125, c = 'black')
 		plt.show()
   
 	def plot_trajectory(self, id):
@@ -527,25 +364,3 @@ class Model(Model):
 		plt.xlabel('Nest departures')
 		plt.ylabel('Nest entries')
 		plt.show()
-  
-class Food:
-	
-	def __init__(self, pos):
-		self.state = '1'
-		self.Si = 1 # Interactions
-		self.initial_pos = pos
-		self.is_collected = False
-
-	def __repr__(self):
-		if self.is_collected:
-			t = self.collection_time /60
-			t = (int(t), round((t - int(t)) * 60))
-			msg = 'Food collected at %s minutes and %s seconds' % t
-		else:
-			msg = 'Food not collected yet!!'
-
-		return msg
-
-	def collected(self, time):
-		self.collection_time = time
-		self.is_collected = True
