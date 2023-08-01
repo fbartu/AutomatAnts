@@ -47,7 +47,7 @@ class Model(Model):
 		# Agents
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self)
+			self.agents[i] = Ant(i, self, **kwargs)
    
   		# states & rates
 		self.states = {'alpha': list(self.agents.values()), 'beta': [], 'gamma': list(self.agents.values())}
@@ -82,6 +82,7 @@ class Model(Model):
 		self.T = [0] # time
 		self.N = [0] # population
 		self.I = [0] # interactions
+		self.position_history = ['nest']
 		self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
 		self.n = [np.mean([self.agents[i].Si for i in self.agents])]
 		self.o = [0]
@@ -140,6 +141,7 @@ class Model(Model):
 
 			# do action
 			agent.action(process)
+			self.position_history.append(agent.pos)
 			if agent.pos != 'nest':
 				self.XY[agent.pos] += 1
 			self.collect_data()

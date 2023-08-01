@@ -5,7 +5,7 @@ import sys, getopt
 
 argv = sys.argv[1:]
 
-opts, args = getopt.getopt(argv, 'n:d:f:m:j:', ['nruns=', 'directory=', 'food=', 'movement=', 'memory='])
+opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:', ['nruns=', 'directory=', 'filename=', 'food=', 'movement=', 'memory='])
 
 parameters = {}
 
@@ -15,6 +15,9 @@ for opt, arg in opts:
         
     elif opt in ('-d', '--directory'):
         results_path = arg
+        
+    elif opt in ('-x', '--filename'):
+        filename = arg
         
     elif opt in ('-f', '--food'):
         parameters['food_condition'] = arg
@@ -27,7 +30,8 @@ for opt, arg in opts:
 
 ''' PARAMETERS '''
 
-
+if not 'filename' in globals():
+    filename = 'food'
 if not 'runs' in globals():
     runs = 100  
 if not 'results_path' in globals():
@@ -42,8 +46,9 @@ m = Model.Model(parameters)
 for i in range(runs):
     m.run()
     # result = {'T': m.T, 'N': m.N, 'I': m.I, 'gIn': m.gIn, 'gOut': m.gOut}
-    result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'SiOut': m.o}
-    path = '%sfood_%s.json' % (results_path, i)
+    # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'SiOut': m.o, 'pos': m.position_history}
+    result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'pos': m.position_history}
+    path = '%s%s_%s.json' % (results_path, filename, i)
     with open (path, 'w') as f:
         json.dump(result, f)
     del m
