@@ -11,7 +11,6 @@ N = 100 # number of automata
 alpha = 4*10**-3 # rate of action in nest
 beta = 2 # rate of action in arena
 gamma = 10**-5 # spontaneous activation
-
 foodXvertex = 1
 
 # sto_1: randomly distributed food (stochastic)
@@ -185,15 +184,15 @@ class Model(Model):
 			self.init_sto()
 			
 	def init_det(self):
-		food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
+		self.food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
 	(7, 33), (7, 32), (6, 32),
 	(6, 11), (6, 12), (7, 12), # patch 2
 	(7, 11), (7, 10), (6, 10)]
-  
+		self.food_dict = dict.fromkeys(self.food_positions, foodXvertex)  
 		food_id = -1
   
 		self.food = {}
-		for i in food_positions:
+		for i in self.food_positions:
 			self.food[i] = [Food(i)] * foodXvertex
 			for x in range(foodXvertex):
 				self.grid.place_agent(self.food[i][x], i)
@@ -243,6 +242,8 @@ class Model(Model):
     
 	def init_nf(self):
 		self.food = dict.fromkeys((), [np.nan])
+		self.food_positions = []
+		self.food_dict = {}
 			
 	def run(self, tmax = 10800, plots = False):
 
