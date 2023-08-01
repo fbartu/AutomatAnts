@@ -41,7 +41,7 @@ if not 'food_condition' in parameters:
 else:
     food_condition = parameters.pop('food_condition')
     
-m = Model.Model(parameters)
+m = Model.Model(food_condition = food_condition, **parameters)
 
 for i in range(runs):
     m.run()
