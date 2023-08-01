@@ -1,11 +1,11 @@
 from mesa import space, Model, Agent
 from Food import Food
 import networkx as nx
-from Ant import np, Ant, math, nest
+from Ant import np, Ant, math, nest, dist
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from functions import rotate, moving_average, discretize_time
+from functions import rotate, moving_average, discretize_time, fill_hexagon
 
 N = 100 # number of automata
 alpha = 4*10**-3 # rate of action in nest
@@ -28,7 +28,7 @@ height   = 13
 class Model(Model):
 
 	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, N = N, width = width, height = height,
-			  food_condition = food_condition):
+			  food_condition = food_condition, **kwargs):
 
 		super().__init__()
   
@@ -168,16 +168,17 @@ class Model(Model):
 	def init_food(self):
      
 		self.food_in_nest = 0
-		if food_condition == 'det':
+		if self.food_condition == 'det':
 			self.init_det()
-		elif food_condition == 'sto_1':
+		elif self.food_condition == 'sto_1':
 			self.init_sto()
-		elif food_condition == 'sto_2':
+		elif self.food_condition == 'sto_2':
+			print('holy')
 			self.init_stoC()
-		elif food_condition == 'nf':
+		elif self.food_condition == 'nf':
 			self.init_nf()
 		else:
-			Warning('No valid food conditions, initing non-clustered stochastic by default')
+			print('No valid food conditions, initing non-clustered stochastic by default')
 			self.init_sto()
 			
 	def init_det(self):
@@ -198,7 +199,6 @@ class Model(Model):
      
 	def init_sto(self):
 		food_id = -1
-		self.food_in_nest = 0
   
 		nodes = np.array(list(self.xy.keys()))
 		food_indices = np.random.choice(len(self.xy), size = 12, replace = False)
@@ -213,9 +213,31 @@ class Model(Model):
 				food_id -= 1
     
 	def init_stoC(self):
-		## WORK IN PROGRESS ##
-		self.init_sto()
-
+		food_id = -1
+  
+		nodes = np.array(list(filter(lambda a: self.xy[a][1] > 0.5, self.xy)))
+		food_indices = np.random.choice(len(nodes), size = 2, replace = False)
+		self.food_positions = [tuple(x) for x in nodes[food_indices]]
+		bl = [(i, j) for j in range(45, 2, -2) for i in range(1, 12, 2)] + [(i, j) for j in range(44, 1, -2) for i in range(2, 13, 2)]
+		clusters = []
+		for i in self.food_positions:
+			if i in bl:
+				clusters.extend(fill_hexagon(i))
+			else:
+				l = [dist(self.xy[i], self.xy[target]) for target in bl]
+				idx = np.argmin(l)
+				clusters.extend(fill_hexagon(bl[idx]))
+    
+		self.food_positions = clusters
+		self.food_dict = dict.fromkeys(self.food_positions, foodXvertex)
+		self.food = {}
+		for i in self.food_dict:
+			self.food[i] = [Food(i)] * foodXvertex
+			for x in range(foodXvertex):
+				self.grid.place_agent(self.food[i][x], i)
+				self.food[i][x].unique_id = food_id
+				food_id -= 1
+    
 	def init_nf(self):
 		self.food = dict.fromkeys((), [np.nan])
 			

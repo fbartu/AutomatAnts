@@ -21,7 +21,7 @@ Jij = {'0-0': 0.35, '0-1': 1,
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model):
+	def __init__(self, unique_id, model, **kwargs):
 
 		super().__init__(unique_id, model)
 
@@ -37,10 +37,35 @@ class Ant(Agent):
 		self.food = []
 
 		self.pos = 'nest'
-		self.movement = 'random'
+		if not default_movement in kwargs:
+			default_movement = 'random'
+		self.movement = 'default'
+		self.move_default = self.check_movement(default_movement)
   
 		# self.last_move = None
 		self.path = []
+  
+	def check_movement(self, type):
+		if type == 'random':
+			return self.move_random
+		else:
+			print('Invalid default movement, defaulting to random')
+			return self.move_random
+
+	def move_random(self, pos):
+		l = list(range(len(pos)))
+		idx = np.random.choice(l)
+		return pos[idx]
+
+	def move_persistance(self, pos):
+		l = list(range(len(pos)))
+		d = [dist(self.target, self.model.coords[i]) for i in pos]
+		idx = np.argmin(d)
+		v = 1 / (len(d) + weight - 1)
+		p = [weight / (len(d) + weight - 1) if i == idx else v for i in l]
+		idx = np.random.choice(l, p = p)
+		return pos[idx]
+
 
 	# Move method
 	def move(self):
@@ -49,25 +74,16 @@ class Ant(Agent):
 		self.pos,
 		include_center = False)
   
-		l = list(range(len(possible_steps)))
-
-		if self.movement == 'random':
-			
-			idx = np.random.choice(l)
+		if self.movement == 'default':
+			pos = self.move_default(possible_steps)
 	  
 		else:
-			d = [dist(self.target, self.model.coords[i]) for i in possible_steps]
-			idx = np.argmin(d)
+			pos = self.move_persistance(possible_steps)
 
-			v = 1 / (len(d) + weight - 1)
-			p = [weight / (len(d) + weight - 1) if i == idx else v for i in l]
-			idx = np.random.choice(l, p = p)
-
-		pos = possible_steps[idx]
 		self.model.grid.move_agent(self, pos)
  
 	def reset_movement(self):
-		self.movement = 'random'
+		self.movement = 'default'
 
 	def find_neighbors(self):
 
