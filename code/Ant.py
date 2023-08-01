@@ -37,7 +37,7 @@ class Ant(Agent):
 		self.food = []
 
 		self.pos = 'nest'
-		if not default_movement in kwargs:
+		if not 'default_movement' in kwargs:
 			default_movement = 'random'
 		self.movement = 'default'
 		self.move_default = self.check_movement(default_movement)

@@ -47,8 +47,8 @@ class Model(Model):
 		# Agents
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			# self.agents[i] = Ant(i, self, **kwargs)
-			self.agents[i] = Ant(i, self)
+			self.agents[i] = Ant(i, self, **kwargs)
+			# self.agents[i] = Ant(i, self)
    
   		# states & rates
 		self.states = {'alpha': list(self.agents.values()), 'beta': [], 'gamma': list(self.agents.values())}
