@@ -23,7 +23,7 @@ then
 elif [[ $type = "parameter_space" ]]
 then
     echo "Running parameter_space experiment"
-    bash ~/research/AutomatAnts/code/sh/paramater_space.sh
+    bash ~/research/AutomatAnts/code/sh/parameter_space.sh
 
 else
     echo "Unrecognized experiment type"
