@@ -66,6 +66,7 @@ if __name__ == '__main__':
         # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'SiOut': m.o, 'pos': m.position_history}
         result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
         path = '%s%s_%s.json' % (results_path, filename, i)
+        # print(filename)
         with open (path, 'w') as f:
             json.dump(result, f)
         del m
