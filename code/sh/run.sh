@@ -1,5 +1,10 @@
 #!/bin/bash
 
+cd
+
+export PATH=/home/soft/python-3.9.5/bin:$PATH
+export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
+
 while getopts "t:" option; do
     case "${option}" in
         t)
@@ -13,10 +18,12 @@ echo "Experiment type = $type"
 if [[ $type = "food" ]]
 then 
     echo "Running food experiment"
+    bash ~/research/AutomatAnts/code/sh/food.sh
 
 elif [[ $type = "parameter_space" ]]
 then
     echo "Running parameter_space experiment"
+    bash ~/research/AutomatAnts/code/sh/paramater_space.sh
 
 else
     echo "Unrecognized experiment type"
