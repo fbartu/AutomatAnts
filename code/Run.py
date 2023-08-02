@@ -58,7 +58,7 @@ else:
 if __name__ == '__main__':
     m = Model.Model(alpha = Model.alpha, beta = Model.beta, gamma = Model.gamma,
                     food_condition = food_condition, **parameters)
-    print(m.rates)
+    # print(m.rates)
 
     for i in range(runs):
         m.run()
