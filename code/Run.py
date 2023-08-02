@@ -2,10 +2,11 @@ import Model
 import json
 import sys, getopt
 
-
 argv = sys.argv[1:]
 
-opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:', ['nruns=', 'directory=', 'filename=', 'food=', 'movement=', 'memory='])
+opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:p:',
+                           ['nruns=', 'directory=', 'filename=', 
+                            'food=', 'movement=', 'memory=', 'parameters='])
 
 parameters = {}
 
@@ -25,6 +26,19 @@ for opt, arg in opts:
     elif opt in ('-m', '--movement'):
         parameters['default_movement'] = arg
         
+    elif opt in ('-p', '--parameters'):
+        plist = arg.split(',')
+        for p in plist:
+            x = p.split('=')
+            if x[0] == 'alpha':
+                Model.alpha = float(x[1])
+            elif x[0] == 'beta':
+                Model.beta = float(x[1])
+            elif x[0] == 'gamma':
+                Model.gamma = float(x[1])
+            else:
+                print('Unknown parameter', x[0])
+        
     elif opt in ('-j', '--states'):
         parameters['memory'] = arg
 
@@ -41,15 +55,18 @@ if not 'food_condition' in parameters:
 else:
     food_condition = parameters.pop('food_condition')
     
-m = Model.Model(food_condition = food_condition, **parameters)
+if __name__ == '__main__':
+    m = Model.Model(alpha = Model.alpha, beta = Model.beta, gamma = Model.gamma,
+                    food_condition = food_condition, **parameters)
+    print(m.rates)
 
-for i in range(runs):
-    m.run()
-    # result = {'T': m.T, 'N': m.N, 'I': m.I, 'gIn': m.gIn, 'gOut': m.gOut}
-    # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'SiOut': m.o, 'pos': m.position_history}
-    result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'pos': m.position_history}
-    path = '%s%s_%s.json' % (results_path, filename, i)
-    with open (path, 'w') as f:
-        json.dump(result, f)
-    del m
-    m = Model.Model(food_condition = food_condition, **parameters)
+    for i in range(runs):
+        m.run()
+        # result = {'T': m.T, 'N': m.N, 'I': m.I, 'gIn': m.gIn, 'gOut': m.gOut}
+        # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'SiOut': m.o, 'pos': m.position_history}
+        result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
+        path = '%s%s_%s.json' % (results_path, filename, i)
+        with open (path, 'w') as f:
+            json.dump(result, f)
+        del m
+        m = Model.Model(food_condition = food_condition, **parameters)

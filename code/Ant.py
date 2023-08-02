@@ -69,14 +69,14 @@ class Ant(Agent):
 
 	# Move method
 	def move(self):
-
+     
 		possible_steps = self.model.grid.get_neighbors(
 		self.pos,
 		include_center = False)
-  
+
 		if self.movement == 'default':
 			pos = self.move_default(possible_steps)
-	  
+	
 		else:
 			pos = self.move_persistance(possible_steps)
 

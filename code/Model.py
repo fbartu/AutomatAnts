@@ -175,7 +175,6 @@ class Model(Model):
 		elif self.food_condition == 'sto_1':
 			self.init_sto()
 		elif self.food_condition == 'sto_2':
-			print('holy')
 			self.init_stoC()
 		elif self.food_condition == 'nf':
 			self.init_nf()
@@ -358,6 +357,36 @@ class Model(Model):
 		plt.xlabel('Time (min)')
 		plt.ylabel('Cumulated interactions')
 		plt.xticks(list(range(0, 185, 15)))
+  
+	def split_lattice(self, chunks_x = 3 ,chunks_y = 2):
+		if not hasattr(self, 'cnodes'):
+			xykeys = list(self.xy.keys())
+			keyarray = np.array(xykeys)
+			xyvals = list(self.xy.values())
+			xyarray = np.array(xyvals)
+			maxx = np.max([x[0] for x in xyarray])
+			minx = np.min([x[0] for x in xyarray])
+			maxy = np.max([x[1] for x in xyarray]) +0.1 # otherwise it does not catch the top vertices
+			miny = np.min([x[1] for x in xyarray])
+   
+			delta_x = (maxx - minx) / chunks_x
+			delta_y = (maxy - miny) / chunks_y
+			xcoords = [minx + delta_x * i for i in range(chunks_x)]
+			ycoords = [miny + delta_y * i for i in range(chunks_y)]
+			lims = [((j, i), (j+ delta_x, i + delta_y) ) for i in ycoords for j in xcoords]
+   
+			nodelist = [(xyarray[::, 0] >= i[0][0]) &
+                  (xyarray[::, 0] < i[1][0]) &
+                  (xyarray[::, 1] >= i[0][1] ) &
+                  (xyarray[::, 1] < i[1][1]) for i in lims]
+   
+			self.cnodes = pd.DataFrame({'Node': [], 'Coords': [], 'Sector': []})
+			for i in range(len(nodelist)):
+				nds = [tuple(x) for x in xyarray[nodelist[i]]]
+				tags = [tuple(x) for x in keyarray[nodelist[i]]]
+				self.cnodes = pd.concat([self.cnodes, 
+                             pd.DataFrame({'Node': tags, 'Coords': nds, 'Sector': [i+1] * len(nds)})])
+
 
 	def depart_entry_correlation(self):
 
