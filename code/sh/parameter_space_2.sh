@@ -10,7 +10,7 @@ export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
 
 . ~/research/automatenv/bin/activate
 # for alpha in $(seq 0.00004 0.00004 0.0012)
-for alpha in $(seq 0.00004 0.00005 0.00053)
+for alpha in $(seq 0.00054 0.00005 0.001)
 do
     # for beta in $(seq 0.05 0.1 3)
     for beta in $(seq 0.05 0.2 3)

@@ -120,9 +120,9 @@ class Ant(Agent):
 		idx = self.model.nodes['Node'] == self.pos
   
 		if self.pos in self.model.food:
-			val = 0.5
+			val = 2.5
 		else:
-			val = 0.1
+			val = 0.5
 		self.model.nodes.loc[idx, 'pheromone'] += val
 
 	def interaction(self):
