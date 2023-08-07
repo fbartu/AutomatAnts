@@ -1,6 +1,7 @@
 import Model
 import json
 import sys, getopt
+from multiprocessing import Pool, cpu_count
 
 argv = sys.argv[1:]
 
@@ -49,26 +50,31 @@ if not 'filename' in globals():
 if not 'runs' in globals():
     runs = 100  
 if not 'results_path' in globals():
-    results_path = "../results/STO_SIMS/"
+    results_path = "../results/"
 if not 'food_condition' in parameters:
     food_condition = 'sto_1'
 else:
     food_condition = parameters.pop('food_condition')
     
+    
+
+def run_model(i):
+    m = Model.Model(alpha=Model.alpha, beta=Model.beta, gamma=Model.gamma,
+                    food_condition=food_condition, **parameters)
+
+    m.run()
+    result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
+    path = '%s%s_%s.json' % (results_path, filename, i)
+    with open(path, 'w') as f:
+        json.dump(result, f)
+        
+        
 if __name__ == '__main__':
-    m = Model.Model(alpha = Model.alpha, beta = Model.beta, gamma = Model.gamma,
-                    food_condition = food_condition, **parameters)
-    # print(m.rates)
 
+    num_processes = cpu_count()
+    pool = Pool(processes=num_processes)
 
-    for i in range(runs):
-        m.run()
-        # result = {'T': m.T, 'N': m.N, 'I': m.I, 'gIn': m.gIn, 'gOut': m.gOut}
-        # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiIn': m.n, 'SiOut': m.o, 'pos': m.position_history}
-        result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
-        path = '%s%s_%s.json' % (results_path, filename, i)
-        # print(filename)
-        with open (path, 'w') as f:
-            json.dump(result, f)
-        del m
-        m = Model.Model(food_condition = food_condition, **parameters)
+    pool.map(run_model, range(runs))
+
+    pool.close()
+    pool.join()

@@ -83,14 +83,15 @@ class Model(Model):
 		self.N = [0] # population
 		self.I = [0] # interactions
 		self.position_history = ['nest']
-		self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
+		# self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
 		self.n = [np.mean([self.agents[i].Si for i in self.agents])]
 		self.o = [0]
 		self.gOut = [0]
 		self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
 		self.iters = 0
-		self.a = [self.r[0]]
+		# self.a = [self.r[0]]
 		self.gamma_counter = 0
+		self.init_nodes() ## initializes some metrics by node
 
 		self.sampled_agent = []
   
@@ -143,7 +144,8 @@ class Model(Model):
 			agent.action(process)
 			self.position_history.append(agent.pos)
 			if agent.pos != 'nest':
-				self.XY[agent.pos] += 1
+				# self.XY[agent.pos] += 1
+				self.nodes.loc[self.nodes['Node'] == agent.pos, 'Si'] += agent.Si
 			self.collect_data()
    
 			self.update_rates()
@@ -165,7 +167,7 @@ class Model(Model):
 		self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
 		self.gOut.append(np.mean([i.g for i in self.states['beta']]))
 		self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
-		self.a.append(self.r[0])
+		# self.a.append(self.r[0])
    
 	def init_food(self):
      
@@ -249,7 +251,9 @@ class Model(Model):
 		self.step(tmax = tmax)
 		if plots:
 			self.plot_N()
-			# self.plot_I()
+   
+		self.z = [self.nodes.loc[self.nodes['Node'] == i, 'N'] for i in self.xy]
+		self.zq = np.unique(self.z, return_inverse = True)[1]
   
 	def run_food(self, tmax, plots = False):
 		n = sum(self.model.food_dict.values())
@@ -358,8 +362,8 @@ class Model(Model):
 		plt.ylabel('Cumulated interactions')
 		plt.xticks(list(range(0, 185, 15)))
   
-	def split_lattice(self, chunks_x = 3 ,chunks_y = 2):
-		if not hasattr(self, 'cnodes'):
+	def init_nodes(self, chunks_x = 3 ,chunks_y = 2):
+		if not hasattr(self, 'nodes'):
 			xykeys = list(self.xy.keys())
 			keyarray = np.array(xykeys)
 			xyvals = list(self.xy.values())
@@ -380,12 +384,16 @@ class Model(Model):
                   (xyarray[::, 1] >= i[0][1] ) &
                   (xyarray[::, 1] < i[1][1]) for i in lims]
    
-			self.cnodes = pd.DataFrame({'Node': [], 'Coords': [], 'Sector': []})
+			self.nodes = pd.DataFrame({'Node': [], 'Coords': [], 'Sector': []})
 			for i in range(len(nodelist)):
 				nds = [tuple(x) for x in xyarray[nodelist[i]]]
 				tags = [tuple(x) for x in keyarray[nodelist[i]]]
-				self.cnodes = pd.concat([self.cnodes, 
+				self.nodes = pd.concat([self.nodes, 
                              pd.DataFrame({'Node': tags, 'Coords': nds, 'Sector': [i+1] * len(nds)})])
+    
+			self.nodes['pheromone'] = 0
+			self.nodes['N'] = 0
+			self.nodes['Si'] = 0
 
 
 	def depart_entry_correlation(self):

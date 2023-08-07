@@ -39,6 +39,9 @@ class Ant(Agent):
 		self.pos = 'nest'
 		if not 'default_movement' in kwargs:
 			default_movement = 'random'
+		else:
+			default_movement = kwargs['default_movement']
+   
 		self.movement = 'default'
 		self.move_default = self.check_movement(default_movement)
   
@@ -48,6 +51,8 @@ class Ant(Agent):
 	def check_movement(self, type):
 		if type == 'random':
 			return self.move_random
+		elif type == 'pheromone':
+			return self.move_pheromone
 		else:
 			print('Invalid default movement, defaulting to random')
 			return self.move_random
@@ -66,6 +71,13 @@ class Ant(Agent):
 		idx = np.random.choice(l, p = p)
 		return pos[idx]
 
+	def move_pheromone(self, pos):
+		l = list(range(len(pos)))
+		weights = [i + 1 for i in self.model.nodes.loc[self.model.nodes['Node'].isin(pos), 'pheromone']]
+		w_sum = sum(weights)
+		p = [w / w_sum for w in weights]
+		idx = np.random.choice(l, p = p)
+		return pos[idx]
 
 	# Move method
 	def move(self):
@@ -81,6 +93,7 @@ class Ant(Agent):
 			pos = self.move_persistance(possible_steps)
 
 		self.model.grid.move_agent(self, pos)
+		self.model.nodes.loc[self.model.nodes['Node'] == self.pos, 'N'] += 1
  
 	def reset_movement(self):
 		self.movement = 'default'
@@ -102,6 +115,15 @@ class Ant(Agent):
 			neighbors = []
 
 		return neighbors
+
+	def lay_pheromone(self):
+		idx = self.model.nodes['Node'] == self.pos
+  
+		if self.pos in self.model.food:
+			val = 0.5
+		else:
+			val = 0.1
+		self.model.nodes.loc[idx, 'pheromone'] += val
 
 	def interaction(self):
 		neighbors = self.find_neighbors()
@@ -193,7 +215,11 @@ class Ant(Agent):
 
 		elif rate == 'beta':
 	  
-			if len(self.food) or self.Si < theta:
+			if len(self.food):
+				self.ant2nest()
+				self.lay_pheromone()
+    
+			if self.Si < theta:
 				self.ant2nest()
 
 			if self.pos == nest:
