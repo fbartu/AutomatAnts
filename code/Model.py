@@ -6,22 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
 from functions import rotate, moving_average, discretize_time, fill_hexagon
-
-N = 100 # number of automata
-alpha = 4*10**-3 # rate of action in nest
-beta = 2 # rate of action in arena
-gamma = 10**-5 # spontaneous activation
-foodXvertex = 1
-
-# sto_1: randomly distributed food (stochastic)
-# sto_2: stochastic with clusterized food (hexagon patches)
-# det: deterministic (sto_2 but with a specific and fixed positioning, emulating deterministic experiments)
-# nf: no food (simulations without food)
-food_condition = 'sto_1' # 'det', 'sto_2', 'nf'
-
-#Lattice size
-width    = 22
-height   = 13
+from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height
 
 ''' MODEL '''
 class Model(Model):
@@ -44,9 +29,7 @@ class Model(Model):
 		self.xy = dict(zip(self.coords.keys(), xy))
   
 		# Agents
-		self.agents = {}
-		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self, **kwargs)
+		self.init_agents(**kwargs)
 			# self.agents[i] = Ant(i, self)
    
   		# states & rates
@@ -67,8 +50,8 @@ class Model(Model):
    
 		self.init_state = {'Si': [self.agents[i].Si for i in self.agents],
 					 'g': [self.agents[i].g for i in self.agents],
-					 'food': len(self.food), 'alpha': alpha, 'beta': beta,
-					 'gamma': gamma, 'N': N}
+					 'food': str(list(self.food.keys())),'alpha': [alpha], 'beta': [beta],
+					 'gamma': [gamma], 'N': [N]}
 
 		# Rates
 		self.update_rates()
@@ -168,6 +151,44 @@ class Model(Model):
 		self.gOut.append(np.mean([i.g for i in self.states['beta']]))
 		self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
 		# self.a.append(self.r[0])
+   
+	def init_agents(self, **kwargs):
+     
+		if 'default_movement' in kwargs:
+			dmove = kwargs['default_movement']
+		else:
+			dmove = 'random'
+   
+		if 'g' in kwargs:
+			# must be passed as: size, type, value 1, value 2
+			# e.g. '75,N,0.5,0.2'
+			code = kwargs['g'].split(':')
+			g = []
+			try:
+				for i in range(len(code)):
+						s, t, v1, v2 = code[i].split(',')
+						if t == 'N':
+							g += list(np.random.normal(loc = float(v1), scale = float(v2), size = int(s)))
+						else:
+							g += list(np.random.uniform(low = float(v1), high = float(v2), size = int(s)))
+				if len(g) < N:
+					g += np.random.uniform(low = 0.0, high = 1.0, size = N - len(g))
+				elif len(g) > N:
+					print('Warning: More gains than population size passed to parametrization')
+					g = g[:N]
+     
+
+			except:
+				print('Warning: Values must be passed in a 4 sized list separated by commas.',
+           '\n Switching to default behaviour in gain initialization')
+				g = np.random.uniform(low = 0.0, high = 1.0, size = N)
+     
+		else:
+			g = np.random.uniform(low = 0.0, high = 1.0, size = N)
+     
+		self.agents = {}
+		for i in range((N-1), -1, -1):
+			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i])
    
 	def init_food(self):
      

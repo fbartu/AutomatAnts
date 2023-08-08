@@ -1,19 +1,23 @@
 import numpy as np
 import math
 from scipy.spatial import distance
+import sys, getopt
+from parameters import alpha, beta, gamma
+
+
 
 """"""""""""""""""
 """ FUNCTIONS  """
 """"""""""""""""""
 
 def norm_range(x, a = 0, b = 1, as_array = True):
-    x = np.array(x)
-    min_x = np.min(x)
-    max_x = np.max(x)
-    result = (b - a) * (x - min_x) / (max_x - min_x) + a
-    if not as_array:
-        result = list(result)
-    return result
+	x = np.array(x)
+	min_x = np.min(x)
+	max_x = np.max(x)
+	result = (b - a) * (x - min_x) / (max_x - min_x) + a
+	if not as_array:
+		result = list(result)
+	return result
 
 def dist(origin, target):
 	return distance.euclidean(origin, target)
@@ -88,7 +92,7 @@ def direction(x):
 		last_move = 0
   
 	elif np.logical_and(x[2][0] < x[0][0], x[2][1] > x[0][1]):
-     
+	 
 		if x[2][1] > x[1][1]:
 			last_move = 1
 		else:
@@ -128,10 +132,58 @@ def direction(x):
 
 # assumes a bottom-left node is provided; no error handling !!
 def fill_hexagon(node):
-    mvs = [np.array([1, 0]), np.array([0, -1]), np.array([0, -1]),
+	mvs = [np.array([1, 0]), np.array([0, -1]), np.array([0, -1]),
 			np.array([-1, 0]), np.array([0, +1])]
-    result = [node]
-    for i in range(len(mvs)):
-        result.append(tuple(result[-1] + mvs[i]))
+	result = [node]
+	for i in range(len(mvs)):
+		result.append(tuple(result[-1] + mvs[i]))
 
-    return result
+	return result
+
+
+def argparser(argv = sys.argv[1:]):
+    
+	opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:p:g:',
+							['nruns=', 'directory=', 'filename=', 
+								'food=', 'movement=', 'memory=', 'parameters=',
+        					'gains='])
+
+	parameters = {'filename': 'simulation',
+               'runs': 1, 'results_path': '../results/',
+               'food_condition': 'sto_1',
+               'alpha': alpha, 'beta': beta, 'gamma': gamma}
+
+	for opt, arg in opts:
+		if opt in ('-n', '--nruns'):
+			parameters['runs'] = int(arg)
+			
+		elif opt in ('-d', '--directory'):
+			parameters['results_path'] = arg
+			
+		elif opt in ('-x', '--filename'):
+			parameters['filename'] = arg
+			
+		elif opt in ('-f', '--food'):
+			parameters['food_condition'] = arg
+			
+		elif opt in ('-m', '--movement'):
+			parameters['default_movement'] = arg
+			
+		elif opt in ('-p', '--parameters'):
+			plist = arg.split(',')
+			for p in plist:
+				x = p.split('=')
+				if x[0] == 'alpha':
+					parameters['alpha'] = float(x[1])
+				elif x[0] == 'beta':
+					parameters['beta'] = float(x[1])
+				elif x[0] == 'gamma':
+					parameters['gamma'] = float(x[1])
+				else:
+					print('Unknown parameter', x[0])
+		elif opt in ('-g', '--gains'):
+			parameters['g'] = arg
+		elif opt in ('-j', '--states'):
+			parameters['memory'] = arg
+			
+	return parameters

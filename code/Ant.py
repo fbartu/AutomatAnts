@@ -2,31 +2,17 @@ from mesa import Agent
 import numpy as np
 from functions import dist
 import math
-
-''' LATTICE PARAMETERS '''
-nest = (0, 22)
-nest_influence = [nest, (1, 21), (1, 22), (1, 23)] 
-weight = 3 # integer >= 1, direction bias
-
-''' THRESHOLDS ''' 
-theta = 0
-Theta = 10**-15
-
-
-''' Coupling coefficients matrix '''
-# 0 - No info; 1 - Info
-Jij = {'0-0': 0.35, '0-1': 1,
-	   '1-0': 0.35, '1-1': 1}
+from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij
 
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model, **kwargs):
+	def __init__(self, unique_id, model, default_movement = 'random', g = np.random.uniform(0.0, 1.0)):
 
 		super().__init__(unique_id, model)
 
 		self.Si = 0
-		self.g = np.random.uniform(0.0, 1.0)
+		self.g = g
 
 		self.is_active = False
 		self.state = '0'
@@ -37,10 +23,6 @@ class Ant(Agent):
 		self.food = []
 
 		self.pos = 'nest'
-		if not 'default_movement' in kwargs:
-			default_movement = 'random'
-		else:
-			default_movement = kwargs['default_movement']
    
 		self.movement = 'default'
 		self.move_default = self.check_movement(default_movement)
@@ -66,8 +48,8 @@ class Ant(Agent):
 		l = list(range(len(pos)))
 		d = [dist(self.target, self.model.coords[i]) for i in pos]
 		idx = np.argmin(d)
-		v = 1 / (len(d) + weight - 1)
-		p = [weight / (len(d) + weight - 1) if i == idx else v for i in l]
+		v = 1 / (len(d) + direction_bias - 1)
+		p = [direction_bias / (len(d) + direction_bias - 1) if i == idx else v for i in l]
 		idx = np.random.choice(l, p = p)
 		return pos[idx]
 
