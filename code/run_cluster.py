@@ -1,7 +1,9 @@
 import Model
 import json
 from multiprocessing import Pool, cpu_count
-from functions import argparser
+import os, time
+import numpy as np
+from functions import argparser, os
 
 parameters = argparser()   
 
@@ -12,6 +14,7 @@ runs = parameters.pop('runs')
 alpha, beta, gamma = parameters.pop('alpha'), parameters.pop('beta'), parameters.pop('gamma')
 
 def run_model(i):
+    np.random.seed(int((os.getpid() * (i/np.random.random())* time.time()) % 123456789))
     m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
                     food_condition= food_condition, **parameters)
 
