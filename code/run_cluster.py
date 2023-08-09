@@ -3,7 +3,7 @@ import json
 from multiprocessing import Pool, cpu_count
 import os, time
 import numpy as np
-from functions import argparser, os
+from functions import argparser
 
 parameters = argparser()   
 
