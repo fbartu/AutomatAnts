@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
 from functions import rotate, moving_average, discretize_time, fill_hexagon
-from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height
+from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, pheromone_quantity
 
 ''' MODEL '''
 class Model(Model):
@@ -176,7 +176,6 @@ class Model(Model):
 				elif len(g) > N:
 					print('Warning: More gains than population size passed to parametrization')
 					g = g[:N]
-     
 
 			except:
 				print('Warning: Values must be passed in a 4 sized list separated by commas.',
@@ -185,10 +184,18 @@ class Model(Model):
      
 		else:
 			g = np.random.uniform(low = 0.0, high = 1.0, size = N)
-     
+   
+		if 'q' in kwargs:
+			q = kwargs['q']
+		else:
+			q = pheromone_quantity
+   
+		# print('Move:', dmove,'\n',
+        # 'Gains:', g, '\n',
+        # 'Pheromone:', q)
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i])
+			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], q=q)
    
 	def init_food(self):
      

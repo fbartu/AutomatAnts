@@ -143,10 +143,10 @@ def fill_hexagon(node):
 
 def argparser(argv = sys.argv[1:]):
     
-	opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:p:g:',
+	opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:p:g:q:',
 							['nruns=', 'directory=', 'filename=', 
 								'food=', 'movement=', 'memory=', 'parameters=',
-        					'gains='])
+        					'gains=', 'quantity_ph'])
 
 	parameters = {'filename': 'simulation',
                'runs': 1, 'results_path': '../results/',
@@ -168,7 +168,10 @@ def argparser(argv = sys.argv[1:]):
 			
 		elif opt in ('-m', '--movement'):
 			parameters['default_movement'] = arg
-			
+   
+		elif opt in ('-q', '--quantity_ph'):
+			parameters['q'] = tuple([float(i) for i in arg.split(',')])
+       
 		elif opt in ('-p', '--parameters'):
 			plist = arg.split(',')
 			for p in plist:

@@ -2,17 +2,18 @@ from mesa import Agent
 import numpy as np
 from functions import dist
 import math
-from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij
+from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij, pheromone_quantity
 
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model, default_movement = 'random', g = np.random.uniform(0.0, 1.0)):
+	def __init__(self, unique_id, model, default_movement = 'random', g = np.random.uniform(0.0, 1.0), q = pheromone_quantity):
 
 		super().__init__(unique_id, model)
 
 		self.Si = 0
 		self.g = g
+		self.q = q
 
 		self.is_active = False
 		self.state = '0'
@@ -102,9 +103,9 @@ class Ant(Agent):
 		idx = self.model.nodes['Node'] == self.pos
   
 		if self.pos in self.model.food:
-			val = 2.5
+			val = self.q[1]
 		else:
-			val = 0.5
+			val = self.q[0]
 		self.model.nodes.loc[idx, 'pheromone'] += val
 
 	def interaction(self):
