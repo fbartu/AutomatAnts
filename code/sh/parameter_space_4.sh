@@ -13,7 +13,7 @@ export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
 for alpha in $(seq 0.001 0.0005 0.0075)
 do
     # for beta in $(seq 0.05 0.1 3)
-    for beta in $(seq 0.05 0.2 1.5)
+    for beta in $(seq 1.5 0.2 3)
     do
     python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/parameter_space/ --filename alpha=${alpha/,/.}_beta=${beta/,/.} -n 100 -p alpha=${alpha/,/.},beta=${beta/,/.}
     # python3 ~/research/2022/ANTS/AutomatAnts/code/run_cluster.py --directory ~/research/2022/ANTS/AutomatAnts/results/parameter_space/ --filename alpha=${alpha/,/.}_beta=${beta/,/.} -n 100 -p alpha=${alpha/,/.},beta=${beta/,/.}
