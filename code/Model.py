@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
 from functions import rotate, moving_average, discretize_time, fill_hexagon
-from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, pheromone_quantity
+from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, pheromone_quantity, mot_matrix, evaporation_rate
 
 ''' MODEL '''
 class Model(Model):
 
 	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, N = N, width = width, height = height,
-			  food_condition = food_condition, **kwargs):
+			  food_condition = food_condition, mot_matrix = mot_matrix, **kwargs):
 
 		super().__init__()
   
@@ -27,10 +27,20 @@ class Model(Model):
 		y = [xy[1] for xy in self.coords.values()]
 		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
 		self.xy = dict(zip(self.coords.keys(), xy))
+		if 'd' in kwargs:
+			if kwargs["d"] < 0:
+				self.distance = 3
+			elif kwargs["d"] > 26:
+				self.distance = 26
+			else:
+				self.distance = kwargs["d"]
+		else:
+			self.distance = 13
   
 		# Agents
 		self.init_agents(**kwargs)
 			# self.agents[i] = Ant(i, self)
+		self.mot_matrix = mot_matrix
    
   		# states & rates
 		self.states = {'alpha': list(self.agents.values()), 'beta': [], 'gamma': list(self.agents.values())}
@@ -41,8 +51,6 @@ class Model(Model):
 		self.agents[0].Si = np.random.uniform(0.0, 1.0)
 		self.agents[0].update_status()
 		self.Si = [np.mean([i.Si for i in list(self.agents.values())])]
-   
-
   
   		# Food
 		self.food_condition = food_condition
@@ -60,6 +68,7 @@ class Model(Model):
 		# Time & Gillespie
 		self.time = 0
 		self.sample_time()
+		self.evaporation_event = evaporation_rate
 
 		# Metrics
 		self.T = [0] # time
@@ -132,6 +141,7 @@ class Model(Model):
 			self.collect_data()
    
 			self.update_rates()
+			self.pheromone_evaporation()
 			self.rate2prob()
 			
 			# get time for next iteration
@@ -142,6 +152,11 @@ class Model(Model):
 			# get rng for next iteration
 			self.sample_time()
 			self.iters += 1
+   
+	def pheromone_evaporation(self):
+		if self.time >= self.evaporation_event:
+			self.nodes.loc[self.nodes['pheromone'] > 0, 'pheromone'] -= self.q[0]
+			self.evaporation_event += evaporation_rate
    
 	def collect_data(self):
 		self.N.append(len(self.states['beta']))
@@ -190,6 +205,7 @@ class Model(Model):
 		else:
 			q = pheromone_quantity
    
+		self.q = q
 		# print('Move:', dmove,'\n',
         # 'Gains:', g, '\n',
         # 'Pheromone:', q)
@@ -202,6 +218,8 @@ class Model(Model):
 		self.food_in_nest = 0
 		if self.food_condition == 'det':
 			self.init_det()
+		elif self.food_condition == 'dist':
+			self.init_dist()
 		elif self.food_condition == 'sto_1':
 			self.init_sto()
 		elif self.food_condition == 'sto_2':
@@ -227,7 +245,25 @@ class Model(Model):
 				self.grid.place_agent(self.food[i][x], i)
 				self.food[i][x].unique_id = food_id
 				food_id -= 1
-     
+    
+	def init_dist(self):
+		tolerance = 1.5
+		food_id = -1
+		darray = np.array([dist(self.xy[i], self.xy[nest]) for i in self.xy])
+		idx = np.where((darray > (self.distance - tolerance)) & (darray < (self.distance + tolerance)))[0]
+
+		nodes = np.array(list(self.xy.keys()))
+		food_indices = np.random.choice(idx, size = 12, replace = False)
+		self.food_positions = [tuple(x) for x in nodes[food_indices]]
+		self.food_dict = dict.fromkeys(self.food_positions, foodXvertex)
+		self.food = {}
+		for i in self.food_dict:
+			self.food[i] = [Food(i)] * foodXvertex
+			for x in range(foodXvertex):
+				self.grid.place_agent(self.food[i][x], i)
+				self.food[i][x].unique_id = food_id
+				food_id -= 1
+    
 	def init_sto(self):
 		food_id = -1
   
@@ -309,7 +345,7 @@ class Model(Model):
 			plt.fill([x[0] for x in xyfood[0]], [x[1] for x in xyfood[0]], c = 'grey')
 			plt.fill([x[0] for x in xyfood[1]], [x[1] for x in xyfood[1]], c = 'grey')
    
-		elif self.food_condition == 'sto_1':
+		elif self.food_condition == 'sto_1' or self.food_condition == 'dist':
 			plt.scatter([x[0] for x in coordsfood], [x[1] for x in coordsfood], c = 'grey', s = 200, alpha = 0.5)
 
 		if z is None:

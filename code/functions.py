@@ -164,7 +164,10 @@ def argparser(argv = sys.argv[1:]):
 			parameters['filename'] = arg
 			
 		elif opt in ('-f', '--food'):
-			parameters['food_condition'] = arg
+			splarg = arg.split(',')
+			parameters['food_condition'] = splarg[0]
+			if len(splarg) == 2:
+				parameters['d'] = splarg[1]
 			
 		elif opt in ('-m', '--movement'):
 			parameters['default_movement'] = arg

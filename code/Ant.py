@@ -1,6 +1,6 @@
 from mesa import Agent
 import numpy as np
-from functions import dist
+from functions import dist, direction
 import math
 from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij, pheromone_quantity
 
@@ -25,27 +25,51 @@ class Ant(Agent):
 
 		self.pos = 'nest'
    
-		self.movement = 'default'
+		self.reset_movement()
 		self.move_default = self.check_movement(default_movement)
-  
-		# self.last_move = None
-		self.path = []
+		
+
+	def reset_movement(self):
+		self.movement = 'default'
+		self.move_history = (None, None, None)
+ 
+	def update_movement(self):
+		self.move_history = (self.move_history[1], self.move_history[2], self.pos)
   
 	def check_movement(self, type):
 		if type == 'random':
 			return self.move_random
 		elif type == 'pheromone':
 			return self.move_pheromone
+		elif type == 'exp':
+			return self.move_exp
 		else:
 			print('Invalid default movement, defaulting to random')
 			return self.move_random
+
+	def move_exp(self, pos):
+		if None in self.move_history:
+			return self.move_random(pos)
+
+		else:
+
+			p = np.array(self.model.mot_matrix[direction([self.model.coords[i] for i in self.move_history])])
+			ords = []
+			l = len(pos)
+			for i in pos:
+				x = [self.model.coords[self.move_history[1]], self.model.coords[self.move_history[2]], self.model.coords[i]]
+				ords.append(direction(x))
+
+			pord = p[np.argsort(ords)[::-1]]
+			idx = np.random.choice(l, p = pord / np.sum(pord)) # normalize to 1 in case probabilities don't already sum 1
+			return pos[idx]
 
 	def move_random(self, pos):
 		l = list(range(len(pos)))
 		idx = np.random.choice(l)
 		return pos[idx]
 
-	def move_persistance(self, pos):
+	def move_homing(self, pos):
 		l = list(range(len(pos)))
 		d = [dist(self.target, self.model.coords[i]) for i in pos]
 		idx = np.argmin(d)
@@ -73,13 +97,11 @@ class Ant(Agent):
 			pos = self.move_default(possible_steps)
 	
 		else:
-			pos = self.move_persistance(possible_steps)
+			pos = self.move_homing(possible_steps)
 
 		self.model.grid.move_agent(self, pos)
 		self.model.nodes.loc[self.model.nodes['Node'] == self.pos, 'N'] += 1
- 
-	def reset_movement(self):
-		self.movement = 'default'
+		self.update_movement()
 
 	def find_neighbors(self):
 

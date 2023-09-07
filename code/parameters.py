@@ -8,6 +8,7 @@ alpha = 4*10**-3 # rate of action in nest
 beta = 2 # rate of action in arena
 gamma = 10**-5 # spontaneous activation
 foodXvertex = 1
+evaporation_rate = 10
 pheromone_quantity = (0.1, 0.5) # in any node, in food node
 
 # sto_1: randomly distributed food (stochastic)
@@ -33,3 +34,8 @@ Theta = 10**-15
 # 0 - No info; 1 - Info
 Jij = {'0-0': 0.35, '0-1': 1,
 	   '1-0': 0.35, '1-1': 1}
+
+''' Motility matrix '''
+mot_matrix = {1: [0.3587100, 0.1538814, 0.4874086],
+              0: [0.4170414, 0.1813527, 0.4016059],
+              -1: [0.4885684, 0.1592719, 0.3521597]}
