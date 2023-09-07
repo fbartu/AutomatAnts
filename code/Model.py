@@ -28,12 +28,13 @@ class Model(Model):
 		xy = [rotate(x[i], y[i], theta = math.pi / 2) for i in range(len(x))]
 		self.xy = dict(zip(self.coords.keys(), xy))
 		if 'd' in kwargs:
-			if kwargs["d"] < 0:
+			d = float(kwargs["d"])
+			if d < 0:
 				self.distance = 3
-			elif kwargs["d"] > 26:
+			elif d > 26:
 				self.distance = 26
 			else:
-				self.distance = kwargs["d"]
+				self.distance = d
 		else:
 			self.distance = 13
   
