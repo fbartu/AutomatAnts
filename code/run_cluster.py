@@ -3,6 +3,7 @@ import json
 from multiprocessing import Pool, cpu_count
 import os, time
 import numpy as np
+import pandas as pd
 from functions import argparser
 
 parameters = argparser()   
@@ -19,10 +20,15 @@ def run_model(i):
                     food_condition= food_condition, **parameters)
 
     m.run()
-    result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
+    # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
+    result = pd.DataFrame({'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o})
+    result['Frame'] = (result['T'] // 0.5) * 0.5
+    df = result.groupby('Frame').mean().reset_index()
+    df = df.drop(columns = ['T'])
     path = '%s%s_%s.json' % (results_path, filename, i)
-    with open(path, 'w') as f:
-        json.dump(result, f)
+    df.to_csv(path)
+    # with open(path, 'w') as f:
+    #     json.dump(result, f)
         
         
 if __name__ == '__main__':
