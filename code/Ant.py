@@ -7,7 +7,7 @@ from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij, 
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model, default_movement = 'random', g = np.random.uniform(0.0, 1.0), q = pheromone_quantity):
+	def __init__(self, unique_id, model, default_movement = 'exp', g = np.random.uniform(0.0, 1.0), q = pheromone_quantity):
 
 		super().__init__(unique_id, model)
 
@@ -60,7 +60,9 @@ class Ant(Agent):
 				x = [self.model.coords[self.move_history[1]], self.model.coords[self.move_history[2]], self.model.coords[i]]
 				ords.append(direction(x))
 
-			pord = p[np.argsort(ords)[::-1]]
+			# this looks counter-intuitive but it actually works this way
+			pord = p[np.argsort(np.argsort(ords)[::-1])] 
+   			# pord = p[np.argsort(ords)[::-1]]
 			idx = np.random.choice(l, p = pord / np.sum(pord)) # normalize to 1 in case probabilities don't already sum 1
 			return pos[idx]
 

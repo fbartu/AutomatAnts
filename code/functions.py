@@ -3,6 +3,8 @@ import math
 from scipy.spatial import distance
 import sys, getopt
 from parameters import alpha, beta, gamma
+import json
+import pandas as pd
 
 
 
@@ -140,18 +142,38 @@ def fill_hexagon(node):
 
 	return result
 
+def plot_arena(model, data = None, path = None):
+	if data is None:
+		if path is None:
+			print('WARNING: Either path or data is needed; plotting no data...')
+			model.plot_lattice()
+		else:
+			f = open(path)
+			data = json.load(f)
+   
+	df = pd.DataFrame(data)
+	a = df['pos'].value_counts().reset_index()
+	a.columns = ['pos', 'N']
+	a['pos'] = [tuple(i) for i in a['pos']]
+
+	z = [a.loc[a['pos'] == i, 'N'] for i in model.xy]
+	zq = np.unique(z, return_inverse = True)[1]
+	model.plot_lattice(zq)
+
+
+
 
 def argparser(argv = sys.argv[1:]):
-    
+	
 	opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:p:g:q:',
 							['nruns=', 'directory=', 'filename=', 
 								'food=', 'movement=', 'memory=', 'parameters=',
-        					'gains=', 'quantity_ph'])
+							'gains=', 'quantity_ph'])
 
 	parameters = {'filename': 'simulation',
-               'runs': 1, 'results_path': '../results/',
-               'food_condition': 'sto_1',
-               'alpha': alpha, 'beta': beta, 'gamma': gamma}
+			   'runs': 1, 'results_path': '../results/',
+			   'food_condition': 'sto_1',
+			   'alpha': alpha, 'beta': beta, 'gamma': gamma}
 
 	for opt, arg in opts:
 		if opt in ('-n', '--nruns'):
@@ -174,7 +196,7 @@ def argparser(argv = sys.argv[1:]):
    
 		elif opt in ('-q', '--quantity_ph'):
 			parameters['q'] = tuple([float(i) for i in arg.split(',')])
-       
+	   
 		elif opt in ('-p', '--parameters'):
 			plist = arg.split(',')
 			for p in plist:
