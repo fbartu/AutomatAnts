@@ -1,5 +1,5 @@
 import Model
-import json
+# import json
 from multiprocessing import Pool, cpu_count
 import os, time
 import numpy as np
@@ -25,7 +25,8 @@ def run_model(i):
     result['Frame'] = (result['T'] // 0.5) * 0.5
     df = result.groupby('Frame').mean().reset_index()
     df = df.drop(columns = ['T'])
-    path = '%s%s_%s.json' % (results_path, filename, i)
+    # path = '%s%s_%s.json' % (results_path, filename, i)
+    path = '%s%s_%s.csv' % (results_path, filename, i)
     df.to_csv(path)
     # with open(path, 'w') as f:
     #     json.dump(result, f)
