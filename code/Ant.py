@@ -19,7 +19,7 @@ class Ant(Agent):
 		self.state = '0'
 		self.status = 'gamma'
 
-		self.activity = {'t': [0], 'Si': [self.Si]}
+		# self.activity = {'t': [0], 'Si': [self.Si]}
   
 		self.food = []
 
@@ -80,6 +80,15 @@ class Ant(Agent):
 		idx = np.random.choice(l, p = p)
 		return pos[idx]
 
+	# def move_target(self, pos):
+	# 	l = list(range(len(pos)))
+	# 	d = [dist(self.target, self.model.coords[i]) for i in pos]
+	# 	idx = np.argmin(d)
+	# 	v = 1 / (len(d) + direction_bias - 1)
+	# 	p = [direction_bias / (len(d) + direction_bias - 1) if i == idx else v for i in l]
+	# 	idx = np.random.choice(l, p = p)
+	# 	return pos[idx]
+
 	def move_pheromone(self, pos):
 		l = list(range(len(pos)))
 		weights = [i + 1 for i in self.model.nodes.loc[self.model.nodes['Node'].isin(pos), 'pheromone']]
@@ -97,9 +106,12 @@ class Ant(Agent):
 
 		if self.movement == 'default':
 			pos = self.move_default(possible_steps)
+   
+		# elif self.movement == 'target':
+		# 	pos = self.move_target(possible_steps)
 	
 		else:
-			pos = self.move_homing(possible_steps)
+			pos = self.move_homing(possible_steps) # works also towards food
 
 		self.model.grid.move_agent(self, pos)
 		self.model.nodes.loc[self.model.nodes['Node'] == self.pos, 'N'] += 1
@@ -123,34 +135,41 @@ class Ant(Agent):
 
 		return neighbors
 
-	def lay_pheromone(self):
-		idx = self.model.nodes['Node'] == self.pos
+	# def lay_pheromone(self):
+	# 	idx = self.model.nodes['Node'] == self.pos
   
-		if self.pos in self.model.food:
-			val = self.q[1]
-		else:
-			val = self.q[0]
-		self.model.nodes.loc[idx, 'pheromone'] += val
+	# 	if self.pos in self.model.food:
+	# 		val = self.q[1]
+	# 	else:
+	# 		val = self.q[0]
+	# 	self.model.nodes.loc[idx, 'pheromone'] += val
 
 	def interaction(self):
 		neighbors = self.find_neighbors()
 
-		s = [] # state
-		z = [] # activity
+		# s = [] # state
+		# z = [] # activity
   
 		l = len(neighbors)
 		if l:
-			for i in neighbors:
-				s.append(i.state)
-				z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
+			z = Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - Theta
+			# for i in neighbors:
+			# 	s.append(i.state)
+			# 	z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
 
-			z = sum(z)
+			# z = sum(z)
    
 			if self.pos in ['nest'] + nest_influence:
 				self.model.I.append(0)
 			else:
 				self.model.I.append(+1)
-	
+
+			## Food location communication!
+			if hasattr(neighbors[0], 'food_location') and self.state == '0':
+				self.target = self.model.coords[neighbors[0].food_location]
+				self.movement = 'target'
+				self.model.comm_count += 1
+				
 		else:
 			z = -Theta
 			self.model.I.append(0)
@@ -189,6 +208,11 @@ class Ant(Agent):
 		self.is_active = False
 		self.pos = 'nest'
 		self.ant2explore()
+		
+		if len(self.food):
+			self.food[-1].in_nest(self.model.time)
+			## addition of target movement  
+			# del self.food_location
 
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
@@ -209,7 +233,13 @@ class Ant(Agent):
 		self.state = '1'
 
 	def drop_food(self):
+		self.food[-1].dropped(self.model.time)
 		self.food.pop()
+		## addition of target movement  
+		# self.target = self.model.coords[self.food_location] # the ant goes back to the food
+		# self.movement = 'target' 
+		# del self.food_location
+	
   
 	def action(self, rate):
 		
@@ -224,10 +254,17 @@ class Ant(Agent):
 	  
 			if len(self.food):
 				self.ant2nest()
-				self.lay_pheromone()
+				# self.lay_pheromone()
     
 			if self.Si < theta:
 				self.ant2nest()
+    
+			# if hasattr(self, 'target'):
+			# 	if self.pos != 'nest' and self.model.coords[self.pos] == self.target:
+			# 		if self.pos == nest:
+			# 			self.enter_nest()
+			# 		else:
+			# 			self.ant2explore()
 
 			if self.pos == nest:
 				if hasattr(self, 'target') and self.target == self.model.coords[nest]:
@@ -237,9 +274,11 @@ class Ant(Agent):
 					self.move()
 
 			elif self.pos in self.model.food_positions:
+       
+				if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
+					self.ant2explore()
 	   
 				if self.model.food_dict[self.pos] > 0 and not len(self.food):
-					self.neighbors = self.find_neighbors()
 					self.pick_food()
 
 				else:
@@ -253,4 +292,4 @@ class Ant(Agent):
 
 		self.interaction()
 		self.update_status()
-		self.activity['Si'].append(self.Si)
+		# self.activity['Si'].append(self.Si)

@@ -19,3 +19,10 @@ class Food:
 	def collected(self, time):
 		self.collection_time = time
 		self.is_collected = True
+  
+	def in_nest(self, time):
+		self.nest_time = time
+  
+	def dropped(self, time):
+		self.drop_time = time
+		self.is_dropped = True

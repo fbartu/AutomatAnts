@@ -51,7 +51,7 @@ class Model(Model):
 		# Init first active agent
 		self.agents[0].Si = np.random.uniform(0.0, 1.0)
 		self.agents[0].update_status()
-		self.Si = [np.mean([i.Si for i in list(self.agents.values())])]
+		# self.Si = [self.agents[0].Si / N]# [np.mean([i.Si for i in list(self.agents.values())])]
   
   		# Food
 		self.food_condition = food_condition
@@ -77,14 +77,16 @@ class Model(Model):
 		self.I = [0] # interactions
 		self.position_history = ['nest']
 		# self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
-		self.n = [np.mean([self.agents[i].Si for i in self.agents])]
+  
+		# self.n = [np.mean([self.agents[i].Si for i in self.agents])]
 		self.o = [0]
-		self.gOut = [0]
-		self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
+		# self.gOut = [0]
+		# self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
 		self.iters = 0
 		# self.a = [self.r[0]]
 		self.gamma_counter = 0
 		self.init_nodes() ## initializes some metrics by node
+		self.comm_count = 0 ## addition of target movement
 
 		self.sampled_agent = []
   
@@ -142,13 +144,13 @@ class Model(Model):
 			self.collect_data()
    
 			self.update_rates()
-			self.pheromone_evaporation()
+			# self.pheromone_evaporation() ## CHANGE !
 			self.rate2prob()
 			
 			# get time for next iteration
 			self.time += self.rng_t
 			self.T.append(self.time)
-			agent.activity['t'].append(self.time)
+			# agent.activity['t'].append(self.time)
 
 			# get rng for next iteration
 			self.sample_time()
@@ -161,11 +163,11 @@ class Model(Model):
    
 	def collect_data(self):
 		self.N.append(len(self.states['beta']))
-		self.n.append(np.mean([i.Si for i in self.states['alpha']]))
+		# self.n.append(np.mean([i.Si for i in self.states['alpha']]))
 		self.o.append(np.mean([i.Si for i in self.states['beta']]))
-		self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
-		self.gOut.append(np.mean([i.g for i in self.states['beta']]))
-		self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
+		# self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
+		# self.gOut.append(np.mean([i.g for i in self.states['beta']]))
+		# self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
 		# self.a.append(self.r[0])
    
 	def init_agents(self, **kwargs):

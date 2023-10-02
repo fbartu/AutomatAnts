@@ -24,11 +24,11 @@ height   = 13
 
 nest = (0, 22)
 nest_influence = [nest, (1, 21), (1, 22), (1, 23)] 
-direction_bias = 3 # integer >= 1
+direction_bias = 5 # integer >= 1 ## CHANGED -> used to be 3
 
 ''' THRESHOLDS ''' 
 theta = 0
-Theta = 10**-15
+Theta = 10**-16 ## CHANGED -> used to be 10**-15
 
 ''' Coupling coefficients matrix '''
 # 0 - No info; 1 - Info
