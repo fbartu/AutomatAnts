@@ -12,6 +12,14 @@ import pandas as pd
 """ FUNCTIONS  """
 """"""""""""""""""
 
+# for appending values in a data frame
+def concatenate_values(series):
+    return '; '.join(map(str, series))
+
+def check_pos(x):
+    xlist = x.split('; ')
+    return (lambda y: any('nest' not in element for element in y))(xlist)
+
 def norm_range(x, a = 0, b = 1, as_array = True):
 	x = np.array(x)
 	min_x = np.min(x)

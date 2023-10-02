@@ -88,7 +88,7 @@ class Model(Model):
 		self.init_nodes() ## initializes some metrics by node
 		self.comm_count = 0 ## addition of target movement
 
-		self.sampled_agent = []
+		self.sampled_agent = [np.nan]
   
 	def update_rates(self):
 		self.S = np.array([len(i) for i in list(self.states.values())])

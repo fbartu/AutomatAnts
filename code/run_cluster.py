@@ -4,7 +4,7 @@ from multiprocessing import Pool, cpu_count
 import os, time
 import numpy as np
 import pandas as pd
-from functions import argparser
+from functions import argparser, concatenate_values, check_pos
 
 parameters = argparser()   
 
@@ -22,12 +22,21 @@ def run_model(i):
     m.run()
     # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
     result = pd.DataFrame({'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o})
-    result['Frame'] = (result['T'] // 0.5) * 0.5
+    result['Frame'] = int(result['T'] // 0.5)
     df = result.groupby('Frame').mean().reset_index()
     df = df.drop(columns = ['T'])
+    result['pos'] = list(zip(m.sampled_agent, m.position_history))
+    df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
+    df = df[df['pos'].apply(check_pos)].reset_index()
+    df = df.drop(columns = ['index'])
+    food = [str(round(food.collection_time,3)) for foodlist in m.food.values() for food in foodlist if food.is_collected]
     # path = '%s%s_%s.json' % (results_path, filename, i)
     path = '%s%s_%s.csv' % (results_path, filename, i)
     df.to_csv(path)
+    path = '%s%s_%s_food.csv' % (results_path, filename, i)
+    with open(path, 'w') as tfile:
+        tfile.write(','.join(food))
+    
     # with open(path, 'w') as f:
     #     json.dump(result, f)
         
