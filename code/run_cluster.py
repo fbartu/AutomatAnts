@@ -21,11 +21,10 @@ def run_model(i):
 
     m.run()
     # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
-    result = pd.DataFrame({'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o})
+    result = pd.DataFrame({'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': list(zip(m.sampled_agent, m.position_history))})
     result['Frame'] = result['T'] // 0.5
-    df = result.groupby('Frame').mean().reset_index()
-    df = df.drop(columns = ['T'])
-    result['pos'] = list(zip(m.sampled_agent, m.position_history))
+    df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values}).reset_index()
+
     df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
     df = df[df['pos'].apply(check_pos)].reset_index()
     df = df.drop(columns = ['index'])
