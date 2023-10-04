@@ -5,6 +5,7 @@ import sys, getopt
 from parameters import alpha, beta, gamma
 import json
 import pandas as pd
+from itertools import compress
 
 
 
@@ -19,6 +20,10 @@ def concatenate_values(series):
 def check_pos(x):
     xlist = x.split('; ')
     return (lambda y: any('nest' not in element for element in y))(xlist)
+
+def parse_nodestring(nodes):
+    nodes = [eval(n)[1] for n in nodes.split('; ')]
+    return nodes
 
 def norm_range(x, a = 0, b = 1, as_array = True):
 	x = np.array(x)
@@ -139,6 +144,30 @@ def direction(x):
 			last_move = np.nan
    
 	return last_move
+
+def connectivity(grid, nodes):
+	nodes = list(filter(lambda n: n != 'nest', list(set(nodes))))
+	l = len(nodes)
+	clusters = []
+	
+	while sum(clusters) < l:
+		nodes2check = grid.get_neighbors(
+		nodes[0],
+		include_center = False)
+		current_branch = [nodes.pop(0)]
+		check = [n in nodes for n in nodes2check]
+		while sum(check):
+			nodes_in_branch = list(compress(nodes, check))
+			current_branch += nodes_in_branch
+			nodes = list(filter(lambda n: not n in nodes_in_branch, nodes))
+			nodes2check = []
+			for n in nodes_in_branch:
+				nodes2check += grid.get_neighbors(n, include_center = False)
+				
+			check = [n in nodes for n in nodes2check]
+		clusters += [len(current_branch)]
+
+	return clusters
 
 # assumes a bottom-left node is provided; no error handling !!
 def fill_hexagon(node):

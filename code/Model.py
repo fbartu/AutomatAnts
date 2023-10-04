@@ -5,7 +5,7 @@ from Ant import np, Ant, math, nest, dist
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from functions import rotate, moving_average, discretize_time, fill_hexagon
+from functions import rotate, moving_average, discretize_time, fill_hexagon, parse_nodestring, connectivity
 from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, pheromone_quantity, mot_matrix, evaporation_rate
 
 ''' MODEL '''
@@ -321,6 +321,10 @@ class Model(Model):
    
 		self.z = [self.nodes.loc[self.nodes['Node'] == i, 'N'] for i in self.xy]
 		self.zq = np.unique(self.z, return_inverse = True)[1]
+		self.df = pd.DataFrame({'T': self.T, 'N': self.N, 
+                          'I': self.I, 'SiOut': self.o, 
+                          'pos': list(zip(self.sampled_agent, self.position_history))})
+		self.df['k'] = [np.mean(connectivity(self.grid, parse_nodestring(self.df['pos'][i]))) for i in range(len(self.df))]
   
 	def run_food(self, tmax, plots = False):
 		n = sum(self.model.food_dict.values())
