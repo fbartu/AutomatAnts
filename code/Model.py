@@ -5,8 +5,8 @@ from Ant import np, Ant, math, nest, dist
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from functions import rotate, moving_average, discretize_time, fill_hexagon, parse_nodestring, connectivity, concatenate_values
-from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix, evaporation_rate
+from functions import rotate, moving_average, discretize_time, fill_hexagon, concatenate_values
+from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix
 
 ''' MODEL '''
 class Model(Model):
@@ -69,7 +69,7 @@ class Model(Model):
 		# Time & Gillespie
 		self.time = 0
 		self.sample_time()
-		self.evaporation_event = evaporation_rate
+
 
 		# Metrics
 		self.T = [0] # time

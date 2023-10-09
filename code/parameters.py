@@ -4,7 +4,7 @@
 
 ''' MODEL '''
 N = 100 # number of automata
-alpha = 4*10**-3 # rate of action in nest
+alpha = 5*10**-3 # rate of action in nest
 beta = 2 # rate of action in arena
 gamma = 10**-5 # spontaneous activation
 foodXvertex = 1
