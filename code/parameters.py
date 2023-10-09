@@ -8,8 +8,6 @@ alpha = 4*10**-3 # rate of action in nest
 beta = 2 # rate of action in arena
 gamma = 10**-5 # spontaneous activation
 foodXvertex = 1
-evaporation_rate = 10
-pheromone_quantity = (0.1, 0.5) # in any node, in food node
 
 # sto_1: randomly distributed food (stochastic)
 # sto_2: stochastic with clusterized food (hexagon patches)
