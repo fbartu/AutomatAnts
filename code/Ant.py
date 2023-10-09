@@ -135,9 +135,10 @@ class Ant(Agent):
 
 			## Food location communication!
 			if hasattr(neighbors[0], 'food_location') and self.state == '0':
+				if not hasattr(self, 'target'):
+					self.model.comm_count += 1
 				self.target = self.model.coords[neighbors[0].food_location]
 				self.movement = 'target'
-				self.model.comm_count += 1
 				
 		else:
 			z = -Theta

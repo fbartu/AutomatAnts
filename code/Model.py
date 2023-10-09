@@ -70,7 +70,6 @@ class Model(Model):
 		self.time = 0
 		self.sample_time()
 
-
 		# Metrics
 		self.T = [0] # time
 		self.N = [0] # population
