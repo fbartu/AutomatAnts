@@ -2,18 +2,17 @@ from mesa import Agent
 import numpy as np
 from functions import dist, direction
 import math
-from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij, pheromone_quantity
+from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij
 
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model, default_movement = 'exp', g = np.random.uniform(0.0, 1.0), q = pheromone_quantity):
+	def __init__(self, unique_id, model, default_movement = 'exp', g = np.random.uniform(0.0, 1.0)):
 
 		super().__init__(unique_id, model)
 
 		self.Si = 0
 		self.g = g
-		self.q = q
 
 		self.is_active = False
 		self.state = '0'
@@ -39,8 +38,6 @@ class Ant(Agent):
 	def check_movement(self, type):
 		if type == 'random':
 			return self.move_random
-		elif type == 'pheromone':
-			return self.move_pheromone
 		elif type == 'exp':
 			return self.move_exp
 		else:
@@ -80,23 +77,6 @@ class Ant(Agent):
 		idx = np.random.choice(l, p = p)
 		return pos[idx]
 
-	# def move_target(self, pos):
-	# 	l = list(range(len(pos)))
-	# 	d = [dist(self.target, self.model.coords[i]) for i in pos]
-	# 	idx = np.argmin(d)
-	# 	v = 1 / (len(d) + direction_bias - 1)
-	# 	p = [direction_bias / (len(d) + direction_bias - 1) if i == idx else v for i in l]
-	# 	idx = np.random.choice(l, p = p)
-	# 	return pos[idx]
-
-	def move_pheromone(self, pos):
-		l = list(range(len(pos)))
-		weights = [i + 1 for i in self.model.nodes.loc[self.model.nodes['Node'].isin(pos), 'pheromone']]
-		w_sum = sum(weights)
-		p = [w / w_sum for w in weights]
-		idx = np.random.choice(l, p = p)
-		return pos[idx]
-
 	# Move method
 	def move(self):
      
@@ -106,9 +86,6 @@ class Ant(Agent):
 
 		if self.movement == 'default':
 			pos = self.move_default(possible_steps)
-   
-		# elif self.movement == 'target':
-		# 	pos = self.move_target(possible_steps)
 	
 		else:
 			pos = self.move_homing(possible_steps) # works also towards food
@@ -135,15 +112,6 @@ class Ant(Agent):
 
 		return neighbors
 
-	# def lay_pheromone(self):
-	# 	idx = self.model.nodes['Node'] == self.pos
-  
-	# 	if self.pos in self.model.food:
-	# 		val = self.q[1]
-	# 	else:
-	# 		val = self.q[0]
-	# 	self.model.nodes.loc[idx, 'pheromone'] += val
-
 	def interaction(self):
 		neighbors = self.find_neighbors()
 
@@ -153,6 +121,7 @@ class Ant(Agent):
 		l = len(neighbors)
 		if l:
 			z = Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - Theta
+			# for more than one neighbor...
 			# for i in neighbors:
 			# 	s.append(i.state)
 			# 	z.append(Jij[self.state + "-" + i.state]* i.Si - Theta)
@@ -211,8 +180,6 @@ class Ant(Agent):
 		
 		if len(self.food):
 			self.food[-1].in_nest(self.model.time)
-			## addition of target movement  
-			# del self.food_location
 
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
@@ -235,10 +202,6 @@ class Ant(Agent):
 	def drop_food(self):
 		self.food[-1].dropped(self.model.time)
 		self.food.pop()
-		## addition of target movement  
-		# self.target = self.model.coords[self.food_location] # the ant goes back to the food
-		# self.movement = 'target' 
-		# del self.food_location
 	
   
 	def action(self, rate):
@@ -254,17 +217,9 @@ class Ant(Agent):
 	  
 			if len(self.food):
 				self.ant2nest()
-				# self.lay_pheromone()
     
 			if self.Si < theta:
 				self.ant2nest()
-    
-			# if hasattr(self, 'target'):
-			# 	if self.pos != 'nest' and self.model.coords[self.pos] == self.target:
-			# 		if self.pos == nest:
-			# 			self.enter_nest()
-			# 		else:
-			# 			self.ant2explore()
 
 			if self.pos == nest:
 				if hasattr(self, 'target') and self.target == self.model.coords[nest]:

@@ -5,8 +5,8 @@ from Ant import np, Ant, math, nest, dist
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from functions import rotate, moving_average, discretize_time, fill_hexagon, parse_nodestring, connectivity
-from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, pheromone_quantity, mot_matrix, evaporation_rate
+from functions import rotate, moving_average, discretize_time, fill_hexagon, parse_nodestring, connectivity, concatenate_values
+from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix, evaporation_rate
 
 ''' MODEL '''
 class Model(Model):
@@ -144,7 +144,6 @@ class Model(Model):
 			self.collect_data()
    
 			self.update_rates()
-			# self.pheromone_evaporation() ## CHANGE !
 			self.rate2prob()
 			
 			# get time for next iteration
@@ -155,11 +154,6 @@ class Model(Model):
 			# get rng for next iteration
 			self.sample_time()
 			self.iters += 1
-   
-	def pheromone_evaporation(self):
-		if self.time >= self.evaporation_event:
-			self.nodes.loc[self.nodes['pheromone'] > 0, 'pheromone'] -= self.q[0]
-			self.evaporation_event += evaporation_rate
    
 	def collect_data(self):
 		self.N.append(len(self.states['beta']))
@@ -202,19 +196,10 @@ class Model(Model):
      
 		else:
 			g = np.random.uniform(low = 0.0, high = 1.0, size = N)
-   
-		if 'q' in kwargs:
-			q = kwargs['q']
-		else:
-			q = pheromone_quantity
-   
-		self.q = q
-		# print('Move:', dmove,'\n',
-        # 'Gains:', g, '\n',
-        # 'Pheromone:', q)
+
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], q=q)
+			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i])
    
 	def init_food(self):
      
@@ -321,10 +306,19 @@ class Model(Model):
    
 		self.z = [self.nodes.loc[self.nodes['Node'] == i, 'N'] for i in self.xy]
 		self.zq = np.unique(self.z, return_inverse = True)[1]
-		self.df = pd.DataFrame({'T': self.T, 'N': self.N, 
-                          'I': self.I, 'SiOut': self.o, 
-                          'pos': list(zip(self.sampled_agent, self.position_history))})
-		self.df['k'] = [np.mean(connectivity(self.grid, parse_nodestring(self.df['pos'][i]))) for i in range(len(self.df))]
+		self.collect_results()
+  
+	def collect_results(self, fps = 2):
+		result = pd.DataFrame({'T': self.T, 'N': self.N, 'I': self.I, 'SiOut': self.o, 'pos': list(zip(self.sampled_agent, self.position_history))})
+		result['Frame'] = result['T'] // (1 / fps)
+		df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values}).reset_index()
+
+		df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
+		food = pd.DataFrame({'node': list(self.food.keys()),
+				't': [round(food.collection_time,3) for foodlist in self.food.values() for food in foodlist if food.is_collected]})
+  
+		self.df = df
+		self.food_df = food
   
 	def run_food(self, tmax, plots = False):
 		n = sum(self.model.food_dict.values())
@@ -337,10 +331,10 @@ class Model(Model):
 			self.plot_N()
 			# self.plot_I()
 
-	def save_results(self, path):
+	def save_results(self, path, filename):
 
-		self.results = pd.DataFrame({'N': self.N, 'T': self.T, 'I':self.I})
-		self.results.to_csv(path + 'N.csv')
+		self.df.to_csv(path + filename + '.csv', index=False)
+		self.food_df.to_csv(path + filename + '_food.csv', index=False)
 
 	def plot_lattice(self, z = None, labels = False):
 		
@@ -462,7 +456,6 @@ class Model(Model):
 				self.nodes = pd.concat([self.nodes, 
                              pd.DataFrame({'Node': tags, 'Coords': nds, 'Sector': [i+1] * len(nds)})])
     
-			self.nodes['pheromone'] = 0
 			self.nodes['N'] = 0
 			self.nodes['Si'] = 0
 
