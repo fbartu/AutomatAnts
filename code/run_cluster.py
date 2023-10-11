@@ -31,8 +31,8 @@ def run_model(i):
     # food = pd.DataFrame({'node': list(m.food.keys()),
     #         't': [round(food.collection_time,3) for foodlist in m.food.values() for food in foodlist if food.is_collected]})
     # path = '%s%s_%s.json' % (results_path, filename, i)
-    path = '%s%s_%s.csv' % (results_path, filename, i)
-    m.save_results(path, filename)
+    # path = '%s%s_%s.csv' % (results_path, filename, i)
+    m.save_results(results_path, filename + '_' + str(i))
     # df.to_csv(path)
     # path = '%s%s_%s_food.csv' % (results_path, filename, i)
     # food.to_csv(path)
