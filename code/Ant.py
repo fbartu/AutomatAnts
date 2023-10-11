@@ -57,15 +57,19 @@ class Ant(Agent):
 
 			p = np.array(self.model.mot_matrix[direction([self.model.coords[i] for i in self.move_history])])
 			ords = []
-			l = len(pos)
-			for i in pos:
-				x = [self.model.coords[self.move_history[1]], self.model.coords[self.move_history[2]], self.model.coords[i]]
-				ords.append(direction(x))
+			pord = []
+			for i in range(len(pos)):
+				x = [self.model.coords[self.move_history[1]], self.model.coords[self.move_history[2]], self.model.coords[pos[i]]]
+				ords.append(i)
+				dirx = direction(x)
+				if dirx == 1:
+					pord.append(p[0])
+				elif dirx == 0:
+					pord.append(p[1])
+				elif dirx == -1:
+					pord.append(p[2])
 
-			# this looks counter-intuitive but it actually works this way
-			pord = p[np.argsort(np.argsort(ords)[::-1])] 
-   			# pord = p[np.argsort(ords)[::-1]]
-			idx = np.random.choice(l, p = pord / np.sum(pord)) # normalize to 1 in case probabilities don't already sum 1
+			idx = np.random.choice(ords, p = pord / np.sum(pord)) # normalize to 1 in case probabilities don't already sum 1
 			return pos[idx]
 
 	def move_random(self, pos):
