@@ -334,6 +334,7 @@ class Model(Model):
 
 		self.df.to_csv(path + filename + '.csv', index=False)
 		self.food_df.to_csv(path + filename + '_food.csv', index=False)
+		self.nodes.to_csv(path + filename + '_positions.csv', index=False)
 
 	def plot_lattice(self, z = None, labels = False):
 		
