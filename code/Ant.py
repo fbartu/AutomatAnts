@@ -46,8 +46,8 @@ class Ant(Agent):
 		elif type == 'exp':
 			return self.move_exp
 		else:
-			print('Invalid default movement, defaulting to random')
-			return self.move_random
+			print('Invalid default movement, defaulting to experiment movement')
+			return self.move_exp
 
 	def move_exp(self, pos):
 		if None in self.move_history:

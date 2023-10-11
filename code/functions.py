@@ -232,6 +232,9 @@ def argparser(argv = sys.argv[1:]):
 			
 		elif opt in ('-m', '--movement'):
 			parameters['default_movement'] = arg
+   
+		elif opt in ('-r', '--recruitment'):
+			parameters['recruitment'] = eval(arg)
 	   
 		elif opt in ('-p', '--parameters'):
 			plist = arg.split(',')
