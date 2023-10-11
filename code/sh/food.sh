@@ -2,7 +2,7 @@
 
 #how to run
 #qsub ~/research/AutomatAnts/code/run_model.sh 
-#qsub -pe make 20 -l h_vmem=8G ~/research/AutomatAnts/code/run_model.sh
+#qsub -pe make 20 -l h_vmem=8G ~/research/AutomatAnts/code/sh/food.sh
 
 cd
 

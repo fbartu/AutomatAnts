@@ -2,7 +2,7 @@ import numpy as np
 import math
 from scipy.spatial import distance
 import sys, getopt
-from parameters import alpha, beta, gamma
+from parameters import alpha, beta, gamma, Jij, Theta
 import json
 import pandas as pd
 from itertools import compress
@@ -202,15 +202,17 @@ def plot_arena(model, data = None, path = None):
 
 def argparser(argv = sys.argv[1:]):
 	
-	opts, args = getopt.getopt(argv, 'n:d:x:f:m:j:p:g:q:',
+	opts, args = getopt.getopt(argv, 'n:d:x:f:m:p:g:r:',
 							['nruns=', 'directory=', 'filename=', 
-								'food=', 'movement=', 'memory=', 'parameters=',
-							'gains=', 'quantity_ph'])
+								'food=', 'movement=', 'parameters=',
+							'gains=', 'recruitment='])
 
 	parameters = {'filename': 'simulation',
 			   'runs': 1, 'results_path': '../results/',
 			   'food_condition': 'sto_1',
-			   'alpha': alpha, 'beta': beta, 'gamma': gamma}
+			   'alpha': alpha, 'beta': beta, 
+      			'gamma': gamma, 'Jij': Jij,
+         		'Theta': Theta}
 
 	for opt, arg in opts:
 		if opt in ('-n', '--nruns'):
@@ -230,25 +232,27 @@ def argparser(argv = sys.argv[1:]):
 			
 		elif opt in ('-m', '--movement'):
 			parameters['default_movement'] = arg
-   
-		elif opt in ('-q', '--quantity_ph'):
-			parameters['q'] = tuple([float(i) for i in arg.split(',')])
 	   
 		elif opt in ('-p', '--parameters'):
 			plist = arg.split(',')
 			for p in plist:
 				x = p.split('=')
 				if x[0] == 'alpha':
-					parameters['alpha'] = float(x[1])
+					parameters['alpha'] = eval(x[1])
 				elif x[0] == 'beta':
-					parameters['beta'] = float(x[1])
+					parameters['beta'] = eval(x[1])
 				elif x[0] == 'gamma':
-					parameters['gamma'] = float(x[1])
+					parameters['gamma'] = eval(x[1])
+				elif x[0] == 'Jij':
+					j = eval(x[1])
+					if type(j) == dict:
+						if j.keys() == Jij.keys():
+							parameters['Jij'] = j
+				elif x[0] == 'Theta':
+					parameters['Theta'] = eval(x[1])
 				else:
 					print('Unknown parameter', x[0])
 		elif opt in ('-g', '--gains'):
 			parameters['g'] = arg
-		elif opt in ('-j', '--states'):
-			parameters['memory'] = arg
 			
 	return parameters

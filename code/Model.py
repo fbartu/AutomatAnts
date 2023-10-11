@@ -195,10 +195,15 @@ class Model(Model):
      
 		else:
 			g = np.random.uniform(low = 0.0, high = 1.0, size = N)
+   
+		if 'recruitment' in kwargs:
+			r = kwargs['recruitment']
+		else:
+			r = False
 
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i])
+			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], recruitment=r)
    
 	def init_food(self):
      

@@ -7,7 +7,7 @@ from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model, default_movement = 'exp', g = np.random.uniform(0.0, 1.0)):
+	def __init__(self, unique_id, model, default_movement = 'exp', g = np.random.uniform(0.0, 1.0), recruitment = True):
 
 		super().__init__(unique_id, model)
 
@@ -26,6 +26,11 @@ class Ant(Agent):
    
 		self.reset_movement()
 		self.move_default = self.check_movement(default_movement)
+  
+		if recruitment:
+			self.interaction = self.interaction_with_recruitment
+		else:
+			self.interaction = self.interaction_without_recruitment
 		
 
 	def reset_movement(self):
@@ -112,7 +117,7 @@ class Ant(Agent):
 
 		return neighbors
 
-	def interaction(self):
+	def interaction_with_recruitment(self):
 		neighbors = self.find_neighbors()
 
 		# s = [] # state
@@ -139,6 +144,18 @@ class Ant(Agent):
 					self.model.comm_count += 1
 				self.target = self.model.coords[neighbors[0].food_location]
 				self.movement = 'target'
+    
+	def interaction_without_recruitment(self):
+		neighbors = self.find_neighbors()
+  
+		l = len(neighbors)
+		if l:
+			z = Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - Theta
+
+			if self.pos in ['nest'] + nest_influence:
+				self.model.I.append(0)
+			else:
+				self.model.I.append(+1)
 				
 		else:
 			z = -Theta
