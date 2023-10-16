@@ -47,6 +47,6 @@ if __name__ == '__main__':
     pool = Pool(processes=num_processes)
 
     pool.map(run_model, range(runs))
-
-    pool.close()
+    
     pool.join()
+    pool.close()
