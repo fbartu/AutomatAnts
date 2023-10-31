@@ -26,7 +26,7 @@ direction_bias = 3 # integer >= 1
 
 ''' THRESHOLDS ''' 
 theta = 0
-Theta = 10**-16 ## CHANGED -> used to be 10**-15
+Theta = 10**-15 ## with 10**-16 works as well (maybe a little better even)
 
 ''' Coupling coefficients matrix '''
 # 0 - No info; 1 - Info

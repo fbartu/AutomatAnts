@@ -3,8 +3,8 @@ import Model
 from multiprocessing import Pool, cpu_count
 import os, time
 import numpy as np
-import pandas as pd
-from functions import argparser, concatenate_values, check_pos
+# import pandas as pd
+from functions import argparser #, concatenate_values, check_pos
 
 parameters = argparser()   
 
@@ -15,7 +15,7 @@ runs = parameters.pop('runs')
 alpha, beta, gamma = parameters.pop('alpha'), parameters.pop('beta'), parameters.pop('gamma')
 
 def run_model(i):
-    np.random.seed(int((os.getpid() * (i/np.random.random())* time.time()) % 123456789))
+    np.random.seed(int((os.getpid() * ((i+1)/np.random.random())* time.time()) % 123456789))
     m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
                     food_condition= food_condition, **parameters)
 

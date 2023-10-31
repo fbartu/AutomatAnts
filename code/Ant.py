@@ -19,6 +19,7 @@ class Ant(Agent):
 		self.status = 'gamma'
 
 		# self.activity = {'t': [0], 'Si': [self.Si]}
+		# self.activity = []
   
 		self.food = []
 
@@ -149,6 +150,11 @@ class Ant(Agent):
 				self.target = self.model.coords[neighbors[0].food_location]
 				self.movement = 'target'
     
+		else:
+			z = -Theta
+			self.model.I.append(0)
+		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
+    
 	def interaction_without_recruitment(self):
 		neighbors = self.find_neighbors()
   
@@ -189,10 +195,22 @@ class Ant(Agent):
 				self.status = 'alpha'
 			else:
 				self.status = 'gamma'
+    
+	def get_state(self):
+		if not self.is_active:
+			return 'Inactive'
+		else:
+			if not hasattr(self, 'target'):
+				return 'Active'
+			elif self.target is not self.model.coords[nest]:
+				return 'Food'
+			else:
+				return 'Nest'
  
 	def leave_nest(self):
 		self.model.grid.place_agent(self, nest)
 		self.is_active = True
+		# self.activity.append(self.model.time)
 
 	def enter_nest(self):
 		self.model.remove_agent(self)
@@ -202,6 +220,7 @@ class Ant(Agent):
 		
 		if len(self.food):
 			self.food[-1].in_nest(self.model.time)
+		# self.activity.append(self.model.time)
 
 	def ant2nest(self):
 		self.target = self.model.coords[nest]
@@ -254,6 +273,8 @@ class Ant(Agent):
        
 				if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
 					self.ant2explore()
+					self.model.expl_count += 1
+					
 	   
 				if self.model.food_dict[self.pos] > 0 and not len(self.food):
 					self.pick_food()

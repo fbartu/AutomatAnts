@@ -197,7 +197,19 @@ def plot_arena(model, data = None, path = None):
 	zq = np.unique(z, return_inverse = True)[1]
 	model.plot_lattice(zq)
 
+# def parse_states(model):
 
+# 	v = []
+# 	maxt = model.time
+# 	for i in model.agents:
+     
+# 		k = model.agents[i].activity
+# 		if len(k) % 2 != 0:
+# 			k.append(maxt)
+   
+# 		v.append(np.sum([k[i] - k[i-1] for i in range(len(k)-1, 0, -2)]) / maxt)
+
+# 	return v
 
 
 def argparser(argv = sys.argv[1:]):

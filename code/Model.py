@@ -5,7 +5,7 @@ from Ant import np, Ant, math, nest, dist
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from functions import rotate, moving_average, discretize_time, fill_hexagon, concatenate_values
+from functions import rotate, moving_average, discretize_time, fill_hexagon, concatenate_values#, parse_states
 from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix
 
 ''' MODEL '''
@@ -22,6 +22,8 @@ class Model(Model):
 		self.g = nx.hexagonal_lattice_graph(width, height, periodic = False)
 		[self.g.remove_node(i) for i in nds]
 		self.coords = nx.get_node_attributes(self.g, 'pos')
+		for i in self.coords:
+			self.coords[i] = tuple(np.round(self.coords[i], 5))
 		self.grid = space.NetworkGrid(self.g)
 		x = [xy[0] for xy in self.coords.values()]
 		y = [xy[1] for xy in self.coords.values()]
@@ -74,7 +76,10 @@ class Model(Model):
 		self.T = [0] # time
 		self.N = [0] # population
 		self.I = [0] # interactions
+		self.H = ['Inactive'] # ant states
 		self.position_history = ['nest']
+		self.ids = [-1]
+		self.SI = [0]
 		# self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
   
 		# self.n = [np.mean([self.agents[i].Si for i in self.agents])]
@@ -86,6 +91,10 @@ class Model(Model):
 		self.gamma_counter = 0
 		self.init_nodes() ## initializes some metrics by node
 		self.comm_count = 0 ## addition of target movement
+		self.expl_count = 0
+  
+		self.report = pd.DataFrame({'T': [0], 'Si': [self.agents[0].Si], 'nest_active': [1], 
+                              'N': [0], 'Si_pc' : [self.agents[0].Si], 'p_active': [1/N]})
 
 		self.sampled_agent = [np.nan]
   
@@ -137,9 +146,12 @@ class Model(Model):
 			# do action
 			agent.action(process)
 			self.position_history.append(agent.pos)
+			self.SI.append(agent.Si)
+			self.ids.append(agent.unique_id)
 			if agent.pos != 'nest':
 				# self.XY[agent.pos] += 1
 				self.nodes.loc[self.nodes['Node'] == agent.pos, 'Si'] += agent.Si
+			self.H.append(agent.get_state())
 			self.collect_data()
    
 			self.update_rates()
@@ -153,6 +165,15 @@ class Model(Model):
 			# get rng for next iteration
 			self.sample_time()
 			self.iters += 1
+   
+   
+			# WORKING ON MACROSCOPIC MEASURES AND ORDER PARAMETERS 
+			# Si_nest = np.sum([i.Si for i in self.states['alpha']])
+			# N_nest = len(self.states['alpha'])
+			# self.report.loc[len(self.report)] = [self.T[-1], Si_nest,
+            #                             N_nest, self.N[-1], Si_nest / N_nest,
+            #                             np.sum([1 if i.Si > 0 else 0 for i in self.states['alpha']])/ N_nest]
+
    
 	def collect_data(self):
 		self.N.append(len(self.states['beta']))
@@ -171,8 +192,10 @@ class Model(Model):
 			dmove = 'random'
    
 		if 'g' in kwargs:
+			
 			# must be passed as: size, type, value 1, value 2
-			# e.g. '75,N,0.5,0.2'
+			# e.g. '75,N,0.5,0.2' -> 75 % of gaussian with mu = 0.5 and sigma = 0.2
+			# e.g. '25,B,0.5,0.5' -> 25 % of beta with shapes a = b = 0.5
 			code = kwargs['g'].split(':')
 			g = []
 			try:
@@ -180,9 +203,12 @@ class Model(Model):
 						s, t, v1, v2 = code[i].split(',')
 						if t == 'N':
 							g += list(np.random.normal(loc = float(v1), scale = float(v2), size = int(s)))
+						elif t == 'B':
+							g += list(np.random.beta(a = float(v1), b = float(v2), size = int(s)))
 						else:
 							g += list(np.random.uniform(low = float(v1), high = float(v2), size = int(s)))
 				if len(g) < N:
+					print('Warning: Less gains than population size passed to parametrization')
 					g += np.random.uniform(low = 0.0, high = 1.0, size = N - len(g))
 				elif len(g) > N:
 					print('Warning: More gains than population size passed to parametrization')
@@ -313,16 +339,19 @@ class Model(Model):
 		self.collect_results()
   
 	def collect_results(self, fps = 2):
-		result = pd.DataFrame({'T': self.T, 'N': self.N, 'I': self.I, 'SiOut': self.o, 'pos': list(zip(self.sampled_agent, self.position_history))})
+		result = pd.DataFrame({'T': self.T, 'N': self.N, 'I': self.I, 'SiOut': self.o, 
+                         'pos': list(zip(self.sampled_agent, self.position_history)), 'S': self.H})
 		result['Frame'] = result['T'] // (1 / fps)
-		df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values}).reset_index()
+		df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values, 'S': concatenate_values}).reset_index()
 
-		df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
+		# df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
 		food = pd.DataFrame({'node': list(self.food.keys()),
 				't': [round(food.collection_time,3) for foodlist in self.food.values() for food in foodlist if food.is_collected]})
   
 		self.df = df
 		self.food_df = food
+		# e = parse_states(self)
+		# self.entropy = -np.sum([i * np.log(i) for i in e])
   
 	def run_food(self, tmax, plots = False):
 		n = sum(self.model.food_dict.values())
