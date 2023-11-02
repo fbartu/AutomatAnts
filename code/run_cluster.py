@@ -1,10 +1,8 @@
 import Model
-# import json
 from multiprocessing import Pool, cpu_count
-import os, time
+import os, time, uuid
 import numpy as np
-# import pandas as pd
-from functions import argparser #, concatenate_values, check_pos
+from functions import argparser
 
 parameters = argparser()   
 
@@ -15,30 +13,24 @@ runs = parameters.pop('runs')
 alpha, beta, gamma = parameters.pop('alpha'), parameters.pop('beta'), parameters.pop('gamma')
 
 def run_model(i):
-    np.random.seed(int((os.getpid() * ((i+1)/np.random.random())* time.time()) % 123456789))
-    m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
+    pid = os.getpid()
+    t = int(time.time())
+    uid = uuid.uuid4().int
+    seed = hash((pid, t, uid, i)) % (2**32 - 1)
+    np.random.seed(seed)
+
+    try:
+        m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
                     food_condition= food_condition, **parameters)
-
-    m.run()
-    # result = {'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': m.position_history}
-    # result = pd.DataFrame({'T': m.T, 'N': m.N, 'I': m.I, 'SiOut': m.o, 'pos': list(zip(m.sampled_agent, m.position_history))})
-    # result['Frame'] = result['T'] // 0.5
-    # df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values}).reset_index()
-
-    # df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
-    # df = df[df['pos'].apply(check_pos)].reset_index()
-    # df = df.drop(columns = ['index'])
-    # food = pd.DataFrame({'node': list(m.food.keys()),
-    #         't': [round(food.collection_time,3) for foodlist in m.food.values() for food in foodlist if food.is_collected]})
-    # path = '%s%s_%s.json' % (results_path, filename, i)
-    # path = '%s%s_%s.csv' % (results_path, filename, i)
-    m.save_results(results_path, filename + '_' + str(i))
-    # df.to_csv(path)
-    # path = '%s%s_%s_food.csv' % (results_path, filename, i)
-    # food.to_csv(path)
-    
-    # with open(path, 'w') as f:
-    #     json.dump(result, f)
+        m.run()
+        if os.path.exists(results_path, filename + '_' + str(i) + '.csv'):
+            m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
+        else:
+            m.save_results(results_path, filename + '_' + str(i))
+    except:
+        print('Something went wrong in simulation "' + filename + ' ' + str(i) + '"')
+        with open(os.path.expanduser(results_path) + '_VOID_' + filename + str(i) + '.txt', 'w') as f:
+            f.write('')
         
         
 if __name__ == '__main__':
