@@ -346,7 +346,7 @@ class Model(Model):
 
 		# df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
 		food = pd.DataFrame({'node': list(self.food.keys()),
-				't': [round(food.collection_time,3) for foodlist in self.food.values() for food in foodlist if food.is_collected]})
+				't': [round(food.collection_time,3) if food.is_collected else np.nan for foodlist in self.food.values() for food in foodlist ]})
   
 		self.df = df
 		self.food_df = food
