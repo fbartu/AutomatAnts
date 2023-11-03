@@ -40,5 +40,5 @@ if __name__ == '__main__':
 
     pool.map(run_model, range(runs))
     
-    pool.join()
     pool.close()
+    pool.join()
