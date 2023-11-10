@@ -7,7 +7,7 @@ from functions import argparser
 parameters = argparser()   
 
 food_condition = parameters.pop('food_condition')
-results_path = parameters.pop('results_path')
+results_path = os.path.expanduser(parameters.pop('results_path'))
 filename = parameters.pop('filename')
 runs = parameters.pop('runs')
 alpha, beta, gamma = parameters.pop('alpha'), parameters.pop('beta'), parameters.pop('gamma')
@@ -23,13 +23,14 @@ def run_model(i):
         m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
                     food_condition= food_condition, **parameters)
         m.run()
-        if os.path.exists(results_path, filename + '_' + str(i) + '.csv'):
+        if os.path.exists(results_path + filename + '_' + str(i) + '.csv'):
             m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
+            
         else:
+            print(results_path + filename + '_' + str(i))
             m.save_results(results_path, filename + '_' + str(i))
     except:
-        print('Something went wrong in simulation "' + filename + ' ' + str(i) + '"')
-        with open(os.path.expanduser(results_path) + '_VOID_' + filename + str(i) + '.txt', 'w') as f:
+        with open(results_path + '_VOID_' + filename + str(i) + '.txt', 'w') as f:
             f.write('')
         
         
@@ -39,6 +40,5 @@ if __name__ == '__main__':
     pool = Pool(processes=num_processes)
 
     pool.map(run_model, range(runs))
-    
     pool.close()
     pool.join()
