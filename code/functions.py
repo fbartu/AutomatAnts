@@ -249,7 +249,7 @@ def argparser(argv = sys.argv[1:]):
 			parameters['recruitment'] = eval(arg)
 	   
 		elif opt in ('-p', '--parameters'):
-			plist = arg.split(',')
+			plist = arg.split(';')
 			for p in plist:
 				x = p.split('=')
 				if x[0] == 'alpha':
