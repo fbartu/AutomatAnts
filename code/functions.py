@@ -6,6 +6,7 @@ from parameters import alpha, beta, gamma, Jij, Theta
 import json
 import pandas as pd
 from itertools import compress
+import ast
 
 
 
@@ -259,7 +260,7 @@ def argparser(argv = sys.argv[1:]):
 				elif x[0] == 'gamma':
 					parameters['gamma'] = eval(x[1])
 				elif x[0] == 'Jij':
-					j = eval(x[1])
+					j = ast.literal_eval(x[1])
 					if type(j) == dict:
 						if j.keys() == Jij.keys():
 							parameters['Jij'] = j
