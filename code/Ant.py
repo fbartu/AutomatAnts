@@ -2,7 +2,7 @@ from mesa import Agent
 import numpy as np
 from functions import dist, direction
 import math
-from parameters import nest, nest_influence, direction_bias, theta, Theta, Jij
+from parameters import nest, nest_influence, direction_bias, theta
 
 ''' ANT AGENT '''
 class Ant(Agent):
@@ -130,7 +130,7 @@ class Ant(Agent):
   
 		l = len(neighbors)
 		if l:
-			z = Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - Theta
+			z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
 			# for more than one neighbor...
 			# for i in neighbors:
 			# 	s.append(i.state)
@@ -151,7 +151,7 @@ class Ant(Agent):
 				self.movement = 'target'
     
 		else:
-			z = -Theta
+			z = -self.model.Theta
 			self.model.I.append(0)
 		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
     
@@ -160,7 +160,7 @@ class Ant(Agent):
   
 		l = len(neighbors)
 		if l:
-			z = Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - Theta
+			z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
 
 			if self.pos in ['nest'] + nest_influence:
 				self.model.I.append(0)
@@ -168,7 +168,7 @@ class Ant(Agent):
 				self.model.I.append(+1)
 				
 		else:
-			z = -Theta
+			z = -self.model.Theta
 			self.model.I.append(0)
 		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
 	

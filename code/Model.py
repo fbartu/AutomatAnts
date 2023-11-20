@@ -6,15 +6,26 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
 from functions import rotate, moving_average, discretize_time, fill_hexagon, concatenate_values#, parse_states
-from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix
+from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix, Jij, Theta
 
 ''' MODEL '''
 class Model(Model):
 
-	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, N = N, width = width, height = height,
-			  food_condition = food_condition, mot_matrix = mot_matrix, **kwargs):
+	def __init__(self, alpha = alpha, beta = beta, gamma = gamma, Theta = Theta, Jij = Jij, N = N, 
+              width = width, height = height, food_condition = food_condition, mot_matrix = mot_matrix, **kwargs):
 
 		super().__init__()
+
+		if 'Theta' not in kwargs:
+			self.Theta = Theta
+		else:
+			self.Theta = kwargs['Theta']
+   
+		if 'Jij' not in kwargs:
+			self.Jij = Jij
+		else:
+			self.Jij = kwargs['Jij']
+
   
 		nds = [(0, i) for i in range(1, 44, 2)]
 
