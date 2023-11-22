@@ -21,13 +21,19 @@ export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
 # python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_19/ --food det --filename theta19 -n 100 -p Theta="10**-19"
 # python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_20/ --food det --filename theta20 -n 100 -p Theta="10**-20"
 
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_25/ --food det --filename theta25 -n 100 -p Theta="10**-25"
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_30/ --food det --filename theta30 -n 100 -p Theta="10**-30"
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_50/ --food det --filename theta50 -n 100 -p Theta="10**-50"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_25/ --food det --filename theta25 -n 100 -p Theta="10**-25"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_30/ --food det --filename theta30 -n 100 -p Theta="10**-30"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_50/ --food det --filename theta50 -n 100 -p Theta="10**-50"
 
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_35/ --food det --filename theta35 -n 100 -p Theta="10**-35"
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_40/ --food det --filename theta40 -n 100 -p Theta="10**-40"
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_45/ --food det --filename theta45 -n 100 -p Theta="10**-45"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_35/ --food det --filename theta35 -n 100 -p Theta="10**-35"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_40/ --food det --filename theta40 -n 100 -p Theta="10**-40"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_45/ --food det --filename theta45 -n 100 -p Theta="10**-45"
+
+
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_60/ --food det --filename theta60 -n 100 -p Theta="10**-60"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_70/ --food det --filename theta70 -n 100 -p Theta="10**-70"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_80/ --food det --filename theta80 -n 100 -p Theta="10**-80"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_90/ --food det --filename theta90 -n 100 -p Theta="10**-90"
 
 
 

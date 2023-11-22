@@ -64,7 +64,7 @@ class Model(Model):
 		# Init first active agent
 		self.agents[0].Si = np.random.uniform(0.0, 1.0)
 		self.agents[0].update_status()
-		# self.Si = [self.agents[0].Si / N]# [np.mean([i.Si for i in list(self.agents.values())])]
+		self.Si = [self.agents[0].Si / N]# [np.mean([i.Si for i in list(self.agents.values())])]
   
   		# Food
 		self.food_condition = food_condition
@@ -93,10 +93,10 @@ class Model(Model):
 		self.SI = [0]
 		# self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
   
-		# self.n = [np.mean([self.agents[i].Si for i in self.agents])]
+		self.n = [np.mean([self.agents[i].Si for i in self.agents])]
 		self.o = [0]
-		# self.gOut = [0]
-		# self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
+		self.gOut = [0]
+		self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
 		self.iters = 0
 		# self.a = [self.r[0]]
 		self.gamma_counter = 0
@@ -188,11 +188,11 @@ class Model(Model):
    
 	def collect_data(self):
 		self.N.append(len(self.states['beta']))
-		# self.n.append(np.mean([i.Si for i in self.states['alpha']]))
+		self.n.append(np.mean([i.Si for i in self.states['alpha']]))
 		self.o.append(np.mean([i.Si for i in self.states['beta']]))
-		# self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
-		# self.gOut.append(np.mean([i.g for i in self.states['beta']]))
-		# self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
+		self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
+		self.gOut.append(np.mean([i.g for i in self.states['beta']]))
+		self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
 		# self.a.append(self.r[0])
    
 	def init_agents(self, **kwargs):
@@ -361,6 +361,9 @@ class Model(Model):
   
 		self.df = df
 		self.food_df = food
+		self.data = pd.DataFrame({'Frame': [round(i*2) for i in self.T], 'id': self.ids,
+                            'gNest': self.gIn, 'gArena': self.gOut,
+                            'states': self.H, 'si_out': self.Si, 'si_nest': self.n})
 		# e = parse_states(self)
 		# self.entropy = -np.sum([i * np.log(i) for i in e])
   
@@ -378,6 +381,7 @@ class Model(Model):
 	def save_results(self, path, filename):
 
 		self.df.to_csv(path + filename + '.csv', index=False)
+		self.data.to_csv(path + filename + '_data.csv', index=False)
 		self.food_df.to_csv(path + filename + '_food.csv', index=False)
 		self.nodes.to_csv(path + filename + '_positions.csv', index=False)
 

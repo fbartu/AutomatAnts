@@ -198,14 +198,15 @@ class Ant(Agent):
     
 	def get_state(self):
 		if not self.is_active:
-			return 'Inactive'
+			if self.Si > theta:
+				return 'Nest'
+			else:
+				return 'Inactive'
 		else:
 			if not hasattr(self, 'target'):
 				return 'Active'
 			elif self.target is not self.model.coords[nest]:
 				return 'Food'
-			else:
-				return 'Nest'
  
 	def leave_nest(self):
 		self.model.grid.place_agent(self, nest)
