@@ -42,10 +42,14 @@ export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
 ### HETEROGENEOUS Jij
 
 # Jij = 0 + 1.5
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0_1.5/uniform/ --food det --filename "Jij0_1.5_uniform" -n 100 -p Jij="{'0-0':0,'0-1':1.5,'1-0':0,'1-1':1.5}"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0_1.5/uniform/ --food det --filename "Jij0_1.5_uniform" -n 100 -p Jij="{'0-0':0,'0-1':1.5,'1-0':0,'1-1':1.5}"
 # Jij = 0.4 + 1
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0.4_1/uniform/ --food det --filename "Jij0.4_1_uniform" -n 100 -p Jij="{'0-0':0.4,'0-1':1,'1-0':0.4,'1-1':1}"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0.4_1/uniform/ --food det --filename "Jij0.4_1_uniform" -n 100 -p Jij="{'0-0':0.4,'0-1':1,'1-0':0.4,'1-1':1}"
 # Jij = 0.4 + 1.5
-python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0.4_1.5/uniform/ --food det --filename "Jij0.4_1.5_uniform" -n 100 -p Jij="{'0-0':0.4,'0-1':1.5,'1-0':0.4,'1-1':1.5}"
+# python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0.4_1.5/uniform/ --food det --filename "Jij0.4_1.5_uniform" -n 100 -p Jij="{'0-0':0.4,'0-1':1.5,'1-0':0.4,'1-1':1.5}"
+# Jij = 0.4 + 3
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0.4_3/uniform/ --food det --filename "Jij0.4_3_uniform" -n 100 -p Jij="{'0-0':0.4,'0-1':3,'1-0':0.4,'1-1':3}"
+# Jij = 0.4 + 5
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/heterogeneous_Jij/Jij_0.4_5/uniform/ --food det --filename "Jij0.4_5_uniform" -n 100 -p Jij="{'0-0':0.4,'0-1':5,'1-0':0.4,'1-1':5}"
 
 deactivate
