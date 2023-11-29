@@ -10,6 +10,17 @@ export LD_LIBRARY_PATH=/home/soft/python-3.9.5/bin/$LD_LIBRARY_PATH
 
 . ~/research/automatenv/bin/activate
 
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_01/ --food det --filename theta01 -n 100 -p Theta="10**-1"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_02/ --food det --filename theta02 -n 100 -p Theta="10**-2"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_03/ --food det --filename theta03 -n 100 -p Theta="10**-3"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_04/ --food det --filename theta04 -n 100 -p Theta="10**-4"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_06/ --food det --filename theta06 -n 100 -p Theta="10**-6"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_07/ --food det --filename theta07 -n 100 -p Theta="10**-7"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_09/ --food det --filename theta09 -n 100 -p Theta="10**-9"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_11/ --food det --filename theta11 -n 100 -p Theta="10**-11"
+python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_12/ --food det --filename theta12 -n 100 -p Theta="10**-12"
+
+
 # python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_05/ --food det --filename theta05 -n 100 -p Theta="10**-5"
 # python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_08/ --food det --filename theta08 -n 100 -p Theta="10**-8"
 # python3 ~/research/AutomatAnts/code/run_cluster.py --directory ~/research/AutomatAnts/results/with_recruitment/parameters/theta/theta_10/ --food det --filename theta10 -n 100 -p Theta="10**-10"
