@@ -20,9 +20,13 @@ def run_model(i):
     np.random.seed(seed)
 
     try:
+        print('Creating model')
         m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
                     food_condition= food_condition, **parameters)
+        print('Running Model')
         m.run()
+        print('Model run successfully')
+        print(m.df)
         if os.path.exists(results_path + filename + '_' + str(i) + '.csv'):
             m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
             
