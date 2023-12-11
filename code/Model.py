@@ -403,7 +403,7 @@ class Model(Model):
 		# result['Frame'] = result['T'] // (1 / fps)
 		# df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values, 'S': concatenate_values}).reset_index()
   
-		result = pd.DataFrame({'T': self.T, 'N': self.N})
+		result = pd.DataFrame({'T': self.data['T'], 'N': self.data['N']})
 		result['Frame'] = result['T'] // (1 / fps)
 		df = result.groupby('Frame').agg({'N': 'mean'}).reset_index()
 
