@@ -220,7 +220,7 @@ class Model(Model):
 			# s.append(i.get_state())
 			s += str(i.get_state())
 			# id_out.append(i.unique_id)
-			id_out *= str(i.unique_id)
+			id_out += str(i.unique_id)
    
 		for i in self.states['alpha']:
 			# gIn.append(i.g)
