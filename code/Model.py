@@ -215,17 +215,17 @@ class Model(Model):
 			# pos.append(self.xy[i.pos])
 			# pos.append(self.xy[i.pos])
 			# Si_out.append(i.Si)
-			Si_out += str(i.Si)
+			Si_out += str(i.Si) + ','
 			# gOut.append(i.g)
 			# s.append(i.get_state())
-			s += str(i.get_state())
+			s += str(i.get_state()) +','
 			# id_out.append(i.unique_id)
-			id_out += str(i.unique_id)
+			id_out += str(i.unique_id) +','
    
 		for i in self.states['alpha']:
 			# gIn.append(i.g)
 			# Si_in.append(i.Si)
-			Si_in += str(i.Si)
+			Si_in += str(i.Si) +','
 		self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
                                    Si_out[:-1], s[:-1], id_out[:-1], Si_in[:-1]]   
 		# self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
