@@ -425,15 +425,15 @@ class Model(Model):
 
 	def save_results(self, path, filename):
      
-		# self.df.to_parquet(path + filename + '.parquet', index=False, compression = 'gzip')
-		# self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip')
-		# self.food_df.to_parquet(path + filename + '_food.parquet', index=False, compression = 'gzip')
-		# self.pos.to_parquet(path + filename + '_positions.parquet', index=False, compression = 'gzip')
+		self.df.to_parquet(path + filename + '.parquet', index=False, compression = 'gzip')
+		self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip')
+		self.food_df.to_parquet(path + filename + '_food.parquet', index=False, compression = 'gzip')
+		self.pos.to_parquet(path + filename + '_positions.parquet', index=False, compression = 'gzip')
 
-		self.df.to_csv(path + filename + '.csv', index=False)
+		# self.df.to_csv(path + filename + '.csv', index=False)
 		# self.data.to_csv(path + filename + '_data.csv', index=False)
-		self.food_df.to_csv(path + filename + '_food.csv', index=False)
-		self.pos.to_csv(path + filename + '_positions.csv', index=False)
+		# self.food_df.to_csv(path + filename + '_food.csv', index=False)
+		# self.pos.to_csv(path + filename + '_positions.csv', index=False)
   
   
 		# self.nodes.to_csv(path + filename + '_positions.csv', index=False)
