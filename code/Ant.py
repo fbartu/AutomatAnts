@@ -138,21 +138,21 @@ class Ant(Agent):
 
 			# z = sum(z)
    
-			if self.pos in ['nest'] + nest_influence:
-				self.model.I.append(0)
-			else:
-				self.model.I.append(+1)
+			# if self.pos in ['nest'] + nest_influence:
+			# 	self.model.I.append(0)
+			# else:
+			# 	self.model.I.append(+1)
 
 			## Food location communication!
 			if hasattr(neighbors[0], 'food_location') and self.state == '0':
-				if not hasattr(self, 'target'):
-					self.model.comm_count += 1
+				# if not hasattr(self, 'target'):
+				# 	self.model.comm_count += 1
 				self.target = self.model.coords[neighbors[0].food_location]
 				self.movement = 'target'
     
 		else:
 			z = -self.model.Theta
-			self.model.I.append(0)
+			# self.model.I.append(0)
 		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
     
 	def interaction_without_recruitment(self):
@@ -162,14 +162,14 @@ class Ant(Agent):
 		if l:
 			z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
 
-			if self.pos in ['nest'] + nest_influence:
-				self.model.I.append(0)
-			else:
-				self.model.I.append(+1)
+			# if self.pos in ['nest'] + nest_influence:
+			# 	self.model.I.append(0)
+			# else:
+			# 	self.model.I.append(+1)
 				
 		else:
 			z = -self.model.Theta
-			self.model.I.append(0)
+			# self.model.I.append(0)
 		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
 	
 	def update_status(self):
@@ -274,7 +274,7 @@ class Ant(Agent):
        
 				if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
 					self.ant2explore()
-					self.model.expl_count += 1
+					# self.model.expl_count += 1
 					
 	   
 				if self.model.food_dict[self.pos] > 0 and not len(self.food):
