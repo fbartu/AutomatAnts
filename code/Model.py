@@ -559,7 +559,7 @@ class Model(Model):
                              pd.DataFrame({'Node': tags, 'Coords': nds, 'Sector': [i+1] * len(nds)})])
     
 			self.nodes['N'] = 0
-			self.nodes['Si'] = 0
+			self.nodes['Si'] = float(0)
 
 
 	def depart_entry_correlation(self):
