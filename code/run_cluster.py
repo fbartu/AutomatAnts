@@ -26,6 +26,7 @@ def run_model(i):
         m.run()
         print('Model successfully run')
         m.save_results(results_path, filename + '_' + str(i))
+        del m
         # if os.path.exists(results_path + filename + '_' + str(i) + '.csv'):
         #     m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
             
