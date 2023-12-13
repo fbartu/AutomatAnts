@@ -74,8 +74,8 @@ class Model(Model):
 		# 			 'g': [self.agents[i].g for i in self.agents],
 		# 			 'food': str(list(self.food.keys())),'alpha': [alpha], 'beta': [beta],
 		# 			 'gamma': [gamma], 'N': [N]}
-		self.keys = {'id': [self.agents[i].unique_id for i in self.agents],
-               'g': [self.agents[i].g for i in self.agents]}
+		self.keys = pd.DataFrame({'id': [self.agents[i].unique_id for i in self.agents],
+               'g': [self.agents[i].g for i in self.agents]})
   
 # 		self.data = pd.DataFrame({'T': [], 'Frame': [],
 #    'N': [], 'pos': [], 'Si_out': [],
@@ -388,6 +388,8 @@ class Model(Model):
 	def run(self, tmax = 10800, plots = False):
 
 		self.step(tmax = tmax)
+  
+		print('+++ Model successfully run... Collecting results... +++')
 		if plots:
 			self.plot_N()
    
@@ -395,9 +397,16 @@ class Model(Model):
 		self.zq = np.unique(self.z, return_inverse = True)[1]
 		self.pos = pd.DataFrame({'node': list(self.xy.keys()), 'x': [x[0] for x in self.xy.values()],
                           'y': [x[1] for x in self.xy.values()], 'z': self.zq})
-		self.collect_results()
+		try:
+			self.collect_results()
+			print('+++ Results collected successfully! +++')
+		except:
+			Exception('Could not collect results')
+			print('Could not collect results')
+
   
 	def collect_results(self, fps = 2):
+     
 		# result = pd.DataFrame({'T': self.T, 'N': self.N, 'I': self.I, 'SiOut': self.o, 
         #                  'pos': list(zip(self.sampled_agent, self.position_history)), 'S': self.H})
 		# result['Frame'] = result['T'] // (1 / fps)
@@ -434,15 +443,46 @@ class Model(Model):
 
 	def save_results(self, path, filename):
      
-		self.df.to_parquet(path + filename + '.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-		self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-		self.food_df.to_parquet(path + filename + '_food.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-		self.pos.to_parquet(path + filename + '_positions.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+		try:
+			self.df.to_parquet(path + filename + '.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			print('Saved N')
+		except:
+			Exception('Not saved!')
+			print('Not saved!')
+   
+		try:
+			self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			print('Saved data')
+		except:
+			Exception('Not saved!')
+			print('Not saved!')
+   
+		try:
+			self.food_df.to_parquet(path + filename + '_food.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			print('Saved food')
+		except:
+			Exception('Not saved!')
+			print('Not saved!')
+
+		try:
+			self.pos.to_parquet(path + filename + '_positions.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			print('Saved positions')
+		except:
+			Exception('Not saved!')
+			print('Not saved!')
+
+		try:
+			self.keys.to_parquet(path + filename + '_keys.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			print('Saved keys')
+		except:
+			Exception('Not saved!')
+			print('Not saved!')
 
 		# self.df.to_csv(path + filename + '.csv', index=False)
 		# self.data.to_csv(path + filename + '_data.csv', index=False)
 		# self.food_df.to_csv(path + filename + '_food.csv', index=False)
 		# self.pos.to_csv(path + filename + '_positions.csv', index=False)
+		# self.keys.to_csv(path + filename + '_keys.csv', index=False)		
   
   
 		# self.nodes.to_csv(path + filename + '_positions.csv', index=False)

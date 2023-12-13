@@ -22,13 +22,16 @@ def run_model(i):
     try:
         m = Model.Model(alpha=alpha, beta=beta, gamma=gamma,
                     food_condition= food_condition, **parameters)
+        print('Model loaded')
         m.run()
-        if os.path.exists(results_path + filename + '_' + str(i) + '.csv'):
-            m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
+        print('Model successfully run')
+        m.save_results(results_path, filename + '_' + str(i))
+        # if os.path.exists(results_path + filename + '_' + str(i) + '.csv'):
+        #     m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
             
-        else:
-            print(results_path + filename + '_' + str(i))
-            m.save_results(results_path, filename + '_' + str(i))
+        # else:
+        #     print(results_path + filename + '_' + str(i))
+        #     m.save_results(results_path, filename + '_' + str(i))
     except:
         with open(results_path + '_VOID_' + filename + str(i) + '.txt', 'w') as f:
             f.write('')
