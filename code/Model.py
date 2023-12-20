@@ -389,7 +389,7 @@ class Model(Model):
 
 		self.step(tmax = tmax)
   
-		print('+++ Model successfully run... Collecting results... +++')
+		print('+++ Model successfully run... Collecting results... +++', flush = True)
 		if plots:
 			self.plot_N()
    
@@ -399,10 +399,10 @@ class Model(Model):
                           'y': [x[1] for x in self.xy.values()], 'z': self.zq})
 		try:
 			self.collect_results()
-			print('+++ Results collected successfully! +++')
+			print('+++ Results collected successfully! +++', flush = True)
 		except:
 			Exception('Could not collect results')
-			print('Could not collect results')
+			print('Could not collect results', flush = True)
 
   
 	def collect_results(self, fps = 2):
@@ -445,38 +445,38 @@ class Model(Model):
      
 		try:
 			self.df.to_parquet(path + filename + '.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-			print('Saved N')
+			print('Saved N', flush = True)
 		except:
 			Exception('Not saved!')
-			print('Not saved!')
+			print('N not saved!', flush = True)
    
 		try:
 			self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-			print('Saved data')
+			print('Saved data', flush = True)
 		except:
 			Exception('Not saved!')
-			print('Not saved!')
+			print('Data not saved!', flush = True)
    
 		try:
 			self.food_df.to_parquet(path + filename + '_food.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-			print('Saved food')
+			print('Saved food', flush = True)
 		except:
 			Exception('Not saved!')
-			print('Not saved!')
+			print('Food not saved!', flush = True)
 
 		try:
 			self.pos.to_parquet(path + filename + '_positions.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-			print('Saved positions')
+			print('Saved positions', flush = True)
 		except:
 			Exception('Not saved!')
-			print('Not saved!')
+			print('Positions not saved!', flush = True)
 
 		try:
 			self.keys.to_parquet(path + filename + '_keys.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
-			print('Saved keys')
+			print('Saved keys', flush = True)
 		except:
 			Exception('Not saved!')
-			print('Not saved!')
+			print('Keys not saved!', flush = True)
 
 		# self.df.to_csv(path + filename + '.csv', index=False)
 		# self.data.to_csv(path + filename + '_data.csv', index=False)
