@@ -81,7 +81,7 @@ class Model(Model):
 #    'N': [], 'pos': [], 'Si_out': [],
 #    'state_out': [], 'id_out': [], 'Si_in': []})
 		self.data = pd.DataFrame({'T': [], 'Frame': [],
-   'N': [], 'Si_out': [],
+   'N': [], 'Si_out': [], 'pos': [],
    'state_out': [], 'id_out': [], 'Si_in': []})
 
 		# Rates
@@ -204,7 +204,7 @@ class Model(Model):
 #    'g_in': [], 'id_in': []})
 
   
-		# pos = ''
+		pos = ''
 		Si_out = ''
 		Si_in = ''
 		# gIn = []
@@ -212,7 +212,7 @@ class Model(Model):
 		s = ''
 		id_out = ''
 		for i in self.states['beta']:
-			# pos.append(self.xy[i.pos])
+			pos += str(i.pos) + ';'
 			# pos.append(self.xy[i.pos])
 			# Si_out.append(i.Si)
 			Si_out += str(i.Si) + ','
@@ -227,7 +227,7 @@ class Model(Model):
 			# Si_in.append(i.Si)
 			Si_in += str(i.Si) +','
 		self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
-                                   Si_out[:-1], s[:-1], id_out[:-1], Si_in[:-1]]   
+                                   Si_out[:-1], pos[:-1], s[:-1], id_out[:-1], Si_in[:-1]]   
 		# self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
         #                            pos[:-1], Si_out[:-1], s[:-1], id_out[:-1], Si_in[:-1]]
    
