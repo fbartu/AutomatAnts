@@ -64,17 +64,25 @@ class Model(Model):
 		# Init first active agent
 		self.agents[0].Si = np.random.uniform(0.0, 1.0)
 		self.agents[0].update_status()
+		# self.Si = [self.agents[0].Si / N]# [np.mean([i.Si for i in list(self.agents.values())])]
   
   		# Food
 		self.food_condition = food_condition
 		self.init_food()
-
+   
+		# self.init_state = {'Si': [self.agents[i].Si for i in self.agents],
+		# 			 'g': [self.agents[i].g for i in self.agents],
+		# 			 'food': str(list(self.food.keys())),'alpha': [alpha], 'beta': [beta],
+		# 			 'gamma': [gamma], 'N': [N]}
 		self.keys = pd.DataFrame({'id': [self.agents[i].unique_id for i in self.agents],
                'g': [self.agents[i].g for i in self.agents]})
-
+  
+# 		self.data = pd.DataFrame({'T': [], 'Frame': [],
+#    'N': [], 'pos': [], 'Si_out': [],
+#    'state_out': [], 'id_out': [], 'Si_in': []})
 		self.data = pd.DataFrame({'T': [], 'Frame': [],
    'N': [], 'Si_out': [], 'pos': [],
-   'id_out': [], 'Si_in': []})
+   'state_out': [], 'id_out': [], 'Si_in': []})
 
 		# Rates
 		self.update_rates()
@@ -84,9 +92,30 @@ class Model(Model):
 		self.time = 0
 		self.sample_time()
 
-		# self.iters = 0
-		# self.gamma_counter = 0
+		# Metrics
+		# self.T = [0] # time
+		# self.N = [0] # population
+		# self.I = [0] # interactions
+		# self.H = ['Inactive'] # ant states
+		# self.position_history = ['nest']
+		# self.ids = [-1]
+
+		# self.SI = [0]
+		# self.XY = dict(zip(list(self.coords.keys()), [0] *len(self.coords.keys())))
+  
+		# self.n = [np.mean([self.agents[i].Si for i in self.agents])]
+		# self.o = [0]
+		# self.gOut = [0]
+		# self.gIn = [np.mean([self.agents[i].g for i in self.agents])]
+		self.iters = 0
+		# self.a = [self.r[0]]
+		self.gamma_counter = 0
 		self.init_nodes() ## initializes some metrics by node
+		# self.comm_count = 0 ## addition of target movement
+		# self.expl_count = 0
+  
+		self.report = pd.DataFrame({'T': [0], 'Si': [self.agents[0].Si], 'nest_active': [1], 
+                              'N': [0], 'Si_pc' : [self.agents[0].Si], 'p_active': [1/N]})
 
 		self.sampled_agent = [np.nan]
   
@@ -131,13 +160,19 @@ class Model(Model):
 
 				agent = np.random.choice(self.states['gamma'])
 
-				# self.gamma_counter += 1
+				self.gamma_counter += 1
 
 			self.sampled_agent.append(agent.unique_id)
 
 			# do action
 			agent.action(process)
-
+			# self.position_history.append(agent.pos)
+			# self.SI.append(agent.Si)
+			# self.ids.append(agent.unique_id)
+			if agent.pos != 'nest':
+				# self.XY[agent.pos] += 1
+				self.nodes.loc[self.nodes['Node'] == agent.pos, 'Si'] += agent.Si
+			# self.H.append(agent.get_state())
 			self.collect_data()
    
 			self.update_rates()
@@ -145,27 +180,66 @@ class Model(Model):
 			
 			# get time for next iteration
 			self.time += self.rng_t
+			# self.T.append(self.time)
+			# agent.activity['t'].append(self.time)
 
 			# get rng for next iteration
 			self.sample_time()
-			# self.iters += 1
+			self.iters += 1
+   
+   
+			# WORKING ON MACROSCOPIC MEASURES AND ORDER PARAMETERS 
+			# Si_nest = np.sum([i.Si for i in self.states['alpha']])
+			# N_nest = len(self.states['alpha'])
+			# self.report.loc[len(self.report)] = [self.T[-1], Si_nest,
+            #                             N_nest, self.N[-1], Si_nest / N_nest,
+            #                             np.sum([1 if i.Si > 0 else 0 for i in self.states['alpha']])/ N_nest]
 
    
 	def collect_data(self):
      
+# 		self.data = pd.DataFrame({'T': self.time, 'Frame': round(self.time * 2),
+#    'N': len(self.states['beta']), 'pos': [], 'Si_out': [],
+#    'g_out': [], 'state_out': [], 'id_out': [], 'Si_in': [],
+#    'g_in': [], 'id_in': []})
+
+  
 		pos = ''
 		Si_out = ''
 		Si_in = ''
+		# gIn = []
+		# gOut = []
+		s = ''
 		id_out = ''
 		for i in self.states['beta']:
 			pos += str(i.pos) + ';'
+			# pos.append(self.xy[i.pos])
+			# Si_out.append(i.Si)
 			Si_out += str(i.Si) + ','
+			# gOut.append(i.g)
+			# s.append(i.get_state())
+			s += str(i.get_state()) +','
+			# id_out.append(i.unique_id)
 			id_out += str(i.unique_id) +','
    
 		for i in self.states['alpha']:
+			# gIn.append(i.g)
+			# Si_in.append(i.Si)
 			Si_in += str(i.Si) +','
 		self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
-                                   Si_out[:-1], pos[:-1], id_out[:-1], Si_in[:-1]]   
+                                   Si_out[:-1], pos[:-1], s[:-1], id_out[:-1], Si_in[:-1]]   
+		# self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
+        #                            pos[:-1], Si_out[:-1], s[:-1], id_out[:-1], Si_in[:-1]]
+   
+   
+		# self.n.append(np.mean([i.Si for i in self.states['alpha']]))
+		# self.o.append(np.mean([i.Si for i in self.states['beta']]))
+		# self.gIn.append(np.mean([i.g for i in self.states['alpha']]))
+		# self.gOut.append(np.mean([i.g for i in self.states['beta']]))
+		# self.Si.append(np.mean([i.Si for i in list(self.agents.values())]))
+		
+  
+  		# self.a.append(self.r[0])
    
 	def init_agents(self, **kwargs):
      
@@ -333,16 +407,28 @@ class Model(Model):
   
 	def collect_results(self, fps = 2):
      
- 
+		# result = pd.DataFrame({'T': self.T, 'N': self.N, 'I': self.I, 'SiOut': self.o, 
+        #                  'pos': list(zip(self.sampled_agent, self.position_history)), 'S': self.H})
+		# result['Frame'] = result['T'] // (1 / fps)
+		# df = result.groupby('Frame').agg({'N': 'mean', 'I': 'sum', 'SiOut': 'mean', 'pos': concatenate_values, 'S': concatenate_values}).reset_index()
+  
 		result = pd.DataFrame({'T': self.data['T'], 'N': self.data['N']})
 		result['Frame'] = result['T'] // (1 / fps)
 		df = result.groupby('Frame').agg({'N': 'mean'}).reset_index()
 
+		# df['pos'] = result.groupby('Frame').agg({'pos': concatenate_values}).reset_index()['pos']
 		food = pd.DataFrame({'node': list(self.food.keys()),
 				't': [round(food.collection_time,3) if food.is_collected else np.nan for foodlist in self.food.values() for food in foodlist ]})
   
 		self.df = df
 		self.food_df = food
+		# self.data = pd.DataFrame({'Frame': [round(i*2) for i in self.T], 'id': self.ids,
+        #                     'gNest': self.gIn, 'gArena': self.gOut,
+        #                     'states': self.H, 'si_out': self.Si, 'si_nest': self.n})
+        
+        
+		# e = parse_states(self)
+		# self.entropy = -np.sum([i * np.log(i) for i in e])
   
 	def run_food(self, tmax, plots = False):
 		n = sum(self.model.food_dict.values())
@@ -391,6 +477,15 @@ class Model(Model):
 		except:
 			Exception('Not saved!')
 			print('Keys not saved!', flush = True)
+
+		# self.df.to_csv(path + filename + '.csv', index=False)
+		# self.data.to_csv(path + filename + '_data.csv', index=False)
+		# self.food_df.to_csv(path + filename + '_food.csv', index=False)
+		# self.pos.to_csv(path + filename + '_positions.csv', index=False)
+		# self.keys.to_csv(path + filename + '_keys.csv', index=False)		
+  
+  
+		# self.nodes.to_csv(path + filename + '_positions.csv', index=False)
 
 	def plot_lattice(self, z = None, labels = False):
 		

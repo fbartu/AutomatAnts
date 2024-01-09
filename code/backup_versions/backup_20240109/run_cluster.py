@@ -29,6 +29,12 @@ def run_model(i):
         m.save_results(results_path, filename + '_' + str(i))
         del m
         gc.collect()
+        # if os.path.exists(results_path + filename + '_' + str(i) + '.csv'):
+        #     m.save_results(results_path, filename + '_' + str(i + round(np.random.random(), 5)))
+            
+        # else:
+        #     print(results_path + filename + '_' + str(i))
+        #     m.save_results(results_path, filename + '_' + str(i))
     except:
         with open(results_path + '_VOID_' + filename + str(i) + '.txt', 'w') as f:
             f.write('')
