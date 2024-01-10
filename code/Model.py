@@ -72,9 +72,12 @@ class Model(Model):
 		self.keys = pd.DataFrame({'id': [self.agents[i].unique_id for i in self.agents],
                'g': [self.agents[i].g for i in self.agents]})
 
-		self.data = pd.DataFrame({'T': [], 'Frame': [],
+# 		self.data = pd.DataFrame({'T': [], 'Frame': [],
+#    'N': [], 'Si_out': [], 'pos': [],
+#    'id_out': [], 'Si_in': []})
+		self.data = {'T': [], 'Frame': [],
    'N': [], 'Si_out': [], 'pos': [],
-   'id_out': [], 'Si_in': []})
+   'id_out': [], 'Si_in': []}
 
 		# Rates
 		self.update_rates()
@@ -84,7 +87,7 @@ class Model(Model):
 		self.time = 0
 		self.sample_time()
 
-		# self.iters = 0
+		self.iters = 0
 		# self.gamma_counter = 0
 		self.init_nodes() ## initializes some metrics by node
 
@@ -134,11 +137,15 @@ class Model(Model):
 				# self.gamma_counter += 1
 
 			self.sampled_agent.append(agent.unique_id)
+   
+			prev_state = agent in self.states['alpha']
 
 			# do action
 			agent.action(process)
+   
 
 			self.collect_data()
+			# self.collect_data(agent = agent, prev_state = prev_state)
    
 			self.update_rates()
 			self.rate2prob()
@@ -148,11 +155,10 @@ class Model(Model):
 
 			# get rng for next iteration
 			self.sample_time()
-			# self.iters += 1
+			self.iters += 1
 
-   
 	def collect_data(self):
-     
+
 		pos = ''
 		Si_out = ''
 		Si_in = ''
@@ -164,8 +170,14 @@ class Model(Model):
    
 		for i in self.states['alpha']:
 			Si_in += str(i.Si) +','
-		self.data.loc[len(self.data)] = [self.time, round(self.time * 2), len(self.states['beta']),
-                                   Si_out[:-1], pos[:-1], id_out[:-1], Si_in[:-1]]   
+   
+		self.data['T'].append(self.time)
+		self.data['Frame'].append(round(self.time * 2))
+		self.data['N'].append(len(self.states['beta']))
+		self.data['Si_out'].append(Si_out[:-1])
+		self.data['pos'].append(pos[:-1])
+		self.data['id_out'].append(id_out[:-1])
+		self.data['Si_in'].append(Si_in[:-1])
    
 	def init_agents(self, **kwargs):
      
@@ -319,10 +331,13 @@ class Model(Model):
 		if plots:
 			self.plot_N()
    
-		self.z = [self.nodes.loc[self.nodes['Node'] == i, 'N'] for i in self.xy]
+		# self.z = [self.nodes.loc[self.nodes['Node'] == i, 'N'] for i in self.xy]
+		self.z = self.nodes['N']
 		self.zq = np.unique(self.z, return_inverse = True)[1]
-		self.pos = pd.DataFrame({'node': list(self.xy.keys()), 'x': [x[0] for x in self.xy.values()],
-                          'y': [x[1] for x in self.xy.values()], 'z': self.zq})
+		self.pos = pd.DataFrame({'node': self.nodes['Node'], 'x': [x[0] for x in self.nodes['Coords']],
+                          'y': [x[1] for x in self.nodes['Coords']], 'z': self.zq})
+		# self.pos = pd.DataFrame({'node': list(self.xy.keys()), 'x': [x[0] for x in self.xy.values()],
+        #                   'y': [x[1] for x in self.xy.values()], 'z': self.zq})
 		try:
 			self.collect_results()
 			print('+++ Results collected successfully! +++', flush = True)
@@ -365,6 +380,7 @@ class Model(Model):
 			print('N not saved!', flush = True)
    
 		try:
+			self.data = pd.DataFrame(self.data)
 			self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
 			print('Saved data', flush = True)
 		except:
@@ -483,37 +499,42 @@ class Model(Model):
 		plt.ylabel('Cumulated interactions')
 		plt.xticks(list(range(0, 185, 15)))
   
-	def init_nodes(self, chunks_x = 3 ,chunks_y = 2):
+	def init_nodes(self):
 		if not hasattr(self, 'nodes'):
-			xykeys = list(self.xy.keys())
-			keyarray = np.array(xykeys)
-			xyvals = list(self.xy.values())
-			xyarray = np.array(xyvals)
-			maxx = np.max([x[0] for x in xyarray])
-			minx = np.min([x[0] for x in xyarray])
-			maxy = np.max([x[1] for x in xyarray]) +0.1 # otherwise it does not catch the top vertices
-			miny = np.min([x[1] for x in xyarray])
    
-			delta_x = (maxx - minx) / chunks_x
-			delta_y = (maxy - miny) / chunks_y
-			xcoords = [minx + delta_x * i for i in range(chunks_x)]
-			ycoords = [miny + delta_y * i for i in range(chunks_y)]
-			lims = [((j, i), (j+ delta_x, i + delta_y) ) for i in ycoords for j in xcoords]
+			self.nodes = {'Node': list(self.xy.keys()), 'Coords': list(self.xy.values()), 'N': [0]*len(self.xy), 'Si': [0.0] * len(self.xy)}
+
+	# def init_nodes(self, chunks_x = 3 ,chunks_y = 2):
+	# 	if not hasattr(self, 'nodes'):
+	# 		xykeys = list(self.xy.keys())
+	# 		keyarray = np.array(xykeys)
+	# 		xyvals = list(self.xy.values())
+	# 		xyarray = np.array(xyvals)
+	# 		maxx = np.max([x[0] for x in xyarray])
+	# 		minx = np.min([x[0] for x in xyarray])
+	# 		maxy = np.max([x[1] for x in xyarray]) +0.1 # otherwise it does not catch the top vertices
+	# 		miny = np.min([x[1] for x in xyarray])
    
-			nodelist = [(xyarray[::, 0] >= i[0][0]) &
-                  (xyarray[::, 0] < i[1][0]) &
-                  (xyarray[::, 1] >= i[0][1] ) &
-                  (xyarray[::, 1] < i[1][1]) for i in lims]
+	# 		delta_x = (maxx - minx) / chunks_x
+	# 		delta_y = (maxy - miny) / chunks_y
+	# 		xcoords = [minx + delta_x * i for i in range(chunks_x)]
+	# 		ycoords = [miny + delta_y * i for i in range(chunks_y)]
+	# 		lims = [((j, i), (j+ delta_x, i + delta_y) ) for i in ycoords for j in xcoords]
    
-			self.nodes = pd.DataFrame({'Node': [], 'Coords': [], 'Sector': []})
-			for i in range(len(nodelist)):
-				nds = [tuple(x) for x in xyarray[nodelist[i]]]
-				tags = [tuple(x) for x in keyarray[nodelist[i]]]
-				self.nodes = pd.concat([self.nodes, 
-                             pd.DataFrame({'Node': tags, 'Coords': nds, 'Sector': [i+1] * len(nds)})])
+	# 		nodelist = [(xyarray[::, 0] >= i[0][0]) &
+    #               (xyarray[::, 0] < i[1][0]) &
+    #               (xyarray[::, 1] >= i[0][1] ) &
+    #               (xyarray[::, 1] < i[1][1]) for i in lims]
+   
+	# 		self.nodes = pd.DataFrame({'Node': [], 'Coords': [], 'Sector': []})
+	# 		for i in range(len(nodelist)):
+	# 			nds = [tuple(x) for x in xyarray[nodelist[i]]]
+	# 			tags = [tuple(x) for x in keyarray[nodelist[i]]]
+	# 			self.nodes = pd.concat([self.nodes, 
+    #                          pd.DataFrame({'Node': tags, 'Coords': nds, 'Sector': [i+1] * len(nds)})])
     
-			self.nodes['N'] = 0
-			self.nodes['Si'] = float(0)
+	# 		self.nodes['N'] = 0
+	# 		self.nodes['Si'] = float(0)
 
 
 	def depart_entry_correlation(self):

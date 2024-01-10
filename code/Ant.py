@@ -98,7 +98,8 @@ class Ant(Agent):
 			pos = self.move_homing(possible_steps) # works also towards food
 
 		self.model.grid.move_agent(self, pos)
-		self.model.nodes.loc[self.model.nodes['Node'] == self.pos, 'N'] += 1
+		self.model.nodes['N'][self.model.nodes['Node'].index(self.pos)] += 1
+		# self.model.nodes.loc[self.model.nodes['Node'] == self.pos, 'N'] += 1
 		self.update_movement()
 
 	def find_neighbors(self):
