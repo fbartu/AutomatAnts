@@ -5,8 +5,11 @@ from Ant import np, Ant, math, nest, dist
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.stats import pearsonr
-from functions import rotate, moving_average, discretize_time, fill_hexagon, concatenate_values#, parse_states
+from functions import rotate, moving_average, discretize_time, fill_hexagon
 from parameters import N, alpha, beta, gamma, foodXvertex, food_condition, width, height, mot_matrix, Jij, Theta
+import pyarrow as pa
+import pyarrow.parquet as pq
+
 
 ''' MODEL '''
 class Model(Model):
@@ -69,8 +72,8 @@ class Model(Model):
 		self.food_condition = food_condition
 		self.init_food()
 
-		self.keys = pd.DataFrame({'id': [self.agents[i].unique_id for i in self.agents],
-               'g': [self.agents[i].g for i in self.agents]})
+		self.keys = {'id': [self.agents[i].unique_id for i in self.agents],
+               'g': [self.agents[i].g for i in self.agents]}
 
 # 		self.data = pd.DataFrame({'T': [], 'Frame': [],
 #    'N': [], 'Si_out': [], 'pos': [],
@@ -240,8 +243,8 @@ class Model(Model):
 		elif self.food_condition == 'nf':
 			self.init_nf()
 		else:
-			print('No valid food conditions, initing non-clustered stochastic by default')
-			self.init_sto()
+			print('No valid food conditions, initing determinist condition by default')
+			self.init_det()
 			
 	def init_det(self):
 		self.food_positions = [(6, 33), (6, 34), (7, 34), # patch 1
@@ -334,8 +337,8 @@ class Model(Model):
 		# self.z = [self.nodes.loc[self.nodes['Node'] == i, 'N'] for i in self.xy]
 		self.z = self.nodes['N']
 		self.zq = np.unique(self.z, return_inverse = True)[1]
-		self.pos = pd.DataFrame({'node': self.nodes['Node'], 'x': [x[0] for x in self.nodes['Coords']],
-                          'y': [x[1] for x in self.nodes['Coords']], 'z': self.zq})
+		self.pos = {'node': self.nodes['Node'], 'x': [x[0] for x in self.nodes['Coords']],
+                          'y': [x[1] for x in self.nodes['Coords']], 'z': self.zq}
 		# self.pos = pd.DataFrame({'node': list(self.xy.keys()), 'x': [x[0] for x in self.xy.values()],
         #                   'y': [x[1] for x in self.xy.values()], 'z': self.zq})
 		try:
@@ -353,8 +356,8 @@ class Model(Model):
 		result['Frame'] = result['T'] // (1 / fps)
 		df = result.groupby('Frame').agg({'N': 'mean'}).reset_index()
 
-		food = pd.DataFrame({'node': list(self.food.keys()),
-				't': [round(food.collection_time,3) if food.is_collected else np.nan for foodlist in self.food.values() for food in foodlist ]})
+		food = {'node': list(self.food.keys()),
+				't': [round(food.collection_time,3) if food.is_collected else np.nan for foodlist in self.food.values() for food in foodlist ]}
   
 		self.df = df
 		self.food_df = food
@@ -380,29 +383,32 @@ class Model(Model):
 			print('N not saved!', flush = True)
    
 		try:
-			self.data = pd.DataFrame(self.data)
-			self.data.to_parquet(path + filename + '_data.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			data = pa.Table.from_pydict(self.data)
+			pq.write_table(data, path + filename + '_data.parquet', compression = 'gzip')
 			print('Saved data', flush = True)
 		except:
 			Exception('Not saved!')
 			print('Data not saved!', flush = True)
    
 		try:
-			self.food_df.to_parquet(path + filename + '_food.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			food = pa.Table.from_pydict(self.food_df)
+			pq.write_table(food, path + filename + '_food.parquet', compression = 'gzip')
 			print('Saved food', flush = True)
 		except:
 			Exception('Not saved!')
 			print('Food not saved!', flush = True)
 
 		try:
-			self.pos.to_parquet(path + filename + '_positions.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			pos = pa.Table.from_pydict(self.pos)
+			pq.write_table(pos, path + filename + '_positions.parquet',compression = 'gzip')
 			print('Saved positions', flush = True)
 		except:
 			Exception('Not saved!')
 			print('Positions not saved!', flush = True)
 
 		try:
-			self.keys.to_parquet(path + filename + '_keys.parquet', index=False, compression = 'gzip', engine = 'pyarrow')
+			keys = pa.Table.from_pydict(self.keys)
+			pq.write_table(keys, path + filename + '_keys.parquet',compression = 'gzip')
 			print('Saved keys', flush = True)
 		except:
 			Exception('Not saved!')
@@ -457,13 +463,45 @@ class Model(Model):
 		plt.scatter(self.xy[nest][0], self.xy[nest][1], marker = '^', s = 50, c = 'black')
 		plt.show()
   
+	def plot_S(self):
+		if not hasattr(self, 'Si_in'):
+			self.Si_in = [np.sum([float(j) for j in self.data['Si_in'][i].split(',')]) if len(self.data['Si_in'][i]) else 0 for i in range(len(self.data['Si_in']))]
+			self.Si_out = [np.sum([float(j) for j in self.data['Si_out'][i].split(',')]) if len(self.data['Si_out'][i]) else 0 for i in range(len(self.data['Si_out']))]
+
+		Si_in = np.log(self.Si_in)
+		Si_out = np.log(self.Si_out)
+		t2min = 60
+		# t2min = 120
+		v = self.data['N']
+		t = np.array(self.data['T']) / t2min
+		plt.plot(t, v)
+		plt.plot(t, Si_in)
+		plt.plot(t, Si_out)
+
+		if 0 in list(self.food_dict.values()):
+
+			times = list(filter(lambda i: i[0].is_collected, self.food.values()))
+
+			minv = np.min([i[0].collection_time for i in times]) / t2min
+			maxv = np.max([i[0].collection_time for i in times]) / t2min
+
+		else:
+			minv = np.nan
+			maxv = np.nan
+
+		plt.axvline(x = minv, ymin = 0, ymax = np.max(self.data['N']), color = 'midnightblue', ls = '--')
+		plt.axvline(x = maxv, ymin = 0, ymax = np.max(self.data['N']), color = 'midnightblue', ls = '--')
+		plt.xlabel('Time (min)')
+		plt.legend(['Ocupancy (N)', 'Activity nest (log(S))', 'Activity arena (log(S))'])
+		plt.xticks(list(range(0, 185, 15)))
+		plt.show()
   
 	def plot_N(self):
 
 		t2min = 60
 		# t2min = 120
-		v = self.N
-		t = np.array(self.T) / t2min
+		v = self.data['N']
+		t = np.array(self.data['T']) / t2min
 		plt.plot(t, v)
 
 		if 0 in list(self.food_dict.values()):
@@ -477,8 +515,8 @@ class Model(Model):
 			minv = np.nan
 			maxv = np.nan
 
-		plt.axvline(x = minv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
-		plt.axvline(x = maxv, ymin = 0, ymax = np.max(self.N), color = 'midnightblue', ls = '--')
+		plt.axvline(x = minv, ymin = 0, ymax = np.max(self.data['N']), color = 'midnightblue', ls = '--')
+		plt.axvline(x = maxv, ymin = 0, ymax = np.max(self.data['N']), color = 'midnightblue', ls = '--')
 		plt.xlabel('Time (min)')
 		plt.ylabel('Number of active ants')
 		plt.xticks(list(range(0, 185, 15)))

@@ -36,6 +36,10 @@ def norm_range(x, a = 0, b = 1, as_array = True):
 def dist(origin, target):
 	return distance.euclidean(origin, target)
 
+def get_cos(a, b):
+	cosA = (a[0]*b[0] + a[1]*b[1]) / (math.sqrt((a[0]**2 + a[1]**2))*math.sqrt((b[0]**2 + b[1]**2)))
+	return cosA
+
 def rotate(x, y, theta = math.pi / 2):
 	x1 = round(x * math.cos(theta) - y * math.sin(theta), 2)
 	y1 = round(x * math.sin(theta) + y * math.cos(theta), 2)

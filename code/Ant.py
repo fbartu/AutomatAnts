@@ -1,8 +1,8 @@
 from mesa import Agent
 import numpy as np
-from functions import dist, direction
+from functions import direction, get_cos , dist 
 import math
-from parameters import nest, nest_influence, direction_bias, theta
+from parameters import nest, theta # , nest_influence, direction_bias
 
 ''' ANT AGENT '''
 class Ant(Agent):
@@ -75,13 +75,41 @@ class Ant(Agent):
 		idx = np.random.choice(l)
 		return pos[idx]
 
+	# def move_homing(self, pos):
+	# 	l = list(range(len(pos)))
+	# 	d = [dist(self.target, self.model.coords[i]) for i in pos]
+	# 	idx = np.argmin(d)
+	# 	v = 1 / (len(d) + direction_bias - 1)
+	# 	p = [direction_bias / (len(d) + direction_bias - 1) if i == idx else v for i in l]
+	# 	idx = np.random.choice(l, p = p)
+	# 	return pos[idx]
+
+
 	def move_homing(self, pos):
-		l = list(range(len(pos)))
-		d = [dist(self.target, self.model.coords[i]) for i in pos]
-		idx = np.argmin(d)
-		v = 1 / (len(d) + direction_bias - 1)
-		p = [direction_bias / (len(d) + direction_bias - 1) if i == idx else v for i in l]
-		idx = np.random.choice(l, p = p)
+		
+		x0 = np.array(self.model.coords[self.pos])
+		x1 = np.array([self.model.coords[i] for i in pos])
+	
+		tpos = x1 - x0
+		d = self.target - x0
+
+		l = len(pos)
+		if l == 2:
+			A = 1+get_cos(d, tpos[0])
+			p1 = (A) / (A + (1+get_cos(d, tpos[1])))
+			p2 = 1-p1
+			p = [p1, p2]
+			idx = np.random.choice(l, p = p / np.sum(p))
+
+		elif l == 3:
+			p = []
+			for i in range(l):
+				pi = (1/3) * (1 + get_cos(d, tpos[i]))
+				p.append(pi)
+			idx = np.random.choice(l, p = p/np.sum(p))
+		else:
+			idx = 0
+
 		return pos[idx]
 
 	# Move method
@@ -102,8 +130,27 @@ class Ant(Agent):
 		# self.model.nodes.loc[self.model.nodes['Node'] == self.pos, 'N'] += 1
 		self.update_movement()
 
-	def find_neighbors(self):
+	# def find_neighbors(self):
 
+	# 	if self.pos == 'nest':
+   
+	# 		alist = self.model.states['alpha']
+
+	# 	else:
+	# 		alist = self.model.grid.get_cell_list_contents([self.pos])
+   
+	# 	flist = list(filter(lambda a: a.unique_id != self.unique_id, alist))
+  
+	# 	if len(flist):
+	# 		neighbors = np.random.choice(flist, size = 1, replace = False)
+	# 	else:
+	# 		neighbors = []
+
+	# 	return neighbors
+ 
+
+	def find_neighbors(self):
+    
 		if self.pos == 'nest':
    
 			alist = self.model.states['alpha']
@@ -113,39 +160,87 @@ class Ant(Agent):
    
 		flist = list(filter(lambda a: a.unique_id != self.unique_id, alist))
   
-		if len(flist):
-			neighbors = np.random.choice(flist, size = 1, replace = False)
+		if len(flist) <= 4 and len(flist) > 0:
+			neighbors = np.random.choice(flist, size = len(flist), replace = False)
+		elif len(flist) > 4:
+			neighbors = np.random.choice(flist, size = 4, replace = False)
 		else:
 			neighbors = []
 
 		return neighbors
 
+
 	def interaction_with_recruitment(self):
 		neighbors = self.find_neighbors()
+
+		s = [] # state
+		z = [] # activity
+		t = [] # target
   
 		l = len(neighbors)
 		if l:
-			z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
+			# for more than one neighbor...
+			for i in neighbors:
+				s.append(i.state)
+				z.append(self.model.Jij[self.state + "-" + i.state]* i.Si - self.model.Theta)
+				if hasattr(i, 'food_location'): t.append(self.model.coords[i.food_location])
 
-			## Food location communication!
-			if hasattr(neighbors[0], 'food_location') and self.state == '0':
-				self.target = self.model.coords[neighbors[0].food_location]
-				self.movement = 'target'
-    
+			z = sum(z)
+
+
 		else:
-			z = -self.model.Theta
-		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
+			z = 0
+		self.Si = math.tanh(self.g * (z + self.Si -self.model.Theta) ) # update activity
+		if len(t):
+			self.target = t[0]
+			self.movement = 'target'
+
+
+	# def interaction_with_recruitment(self):
+	# 	neighbors = self.find_neighbors()
+  
+	# 	l = len(neighbors)
+	# 	if l:
+	# 		z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
+
+	# 		## Food location communication!
+	# 		if hasattr(neighbors[0], 'food_location') and self.state == '0':
+	# 			self.target = self.model.coords[neighbors[0].food_location]
+	# 			self.movement = 'target'
     
+	# 	else:
+	# 		z = -self.model.Theta
+	# 	self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
+    
+	# def interaction_without_recruitment(self):
+	# 	neighbors = self.find_neighbors()
+  
+	# 	l = len(neighbors)
+	# 	if l:
+	# 		z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
+				
+	# 	else:
+	# 		z = -self.model.Theta
+	# 	self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
+ 
 	def interaction_without_recruitment(self):
 		neighbors = self.find_neighbors()
+
+		s = [] # state
+		z = [] # activity
   
 		l = len(neighbors)
 		if l:
-			z = self.model.Jij[self.state + "-" + neighbors[0].state]* neighbors[0].Si - self.model.Theta
-				
+			# for more than one neighbor...
+			for i in neighbors:
+				s.append(i.state)
+				z.append(self.model.Jij[self.state + "-" + i.state]* i.Si - self.model.Theta)
+
+			z = sum(z)
+   
 		else:
-			z = -self.model.Theta
-		self.Si = math.tanh(self.g * (z + self.Si) ) # update activity
+			z = 0
+		self.Si = math.tanh(self.g * (z + self.Si -self.model.Theta) ) # update activity
 	
 	def update_status(self):
 		self.check_status()

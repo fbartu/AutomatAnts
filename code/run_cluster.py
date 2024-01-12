@@ -29,9 +29,11 @@ def run_model(i):
         m.save_results(results_path, filename + '_' + str(i))
         del m
         gc.collect()
+        return True
     except:
         with open(results_path + '_VOID_' + filename + str(i) + '.txt', 'w') as f:
             f.write('')
+        return False
         
         
 if __name__ == '__main__':
