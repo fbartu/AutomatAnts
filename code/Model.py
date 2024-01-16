@@ -223,7 +223,7 @@ class Model(Model):
 		if 'recruitment' in kwargs:
 			r = kwargs['recruitment']
 		else:
-			r = False
+			r = True
 
 		self.agents = {}
 		for i in range((N-1), -1, -1):
