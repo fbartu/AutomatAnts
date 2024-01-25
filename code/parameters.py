@@ -26,7 +26,7 @@ nest_influence = [nest, (1, 21), (1, 22), (1, 23)]
 
 ''' THRESHOLDS ''' 
 theta = 0
-Theta = 10**-15 # 10**-10 
+Theta = 10**-10 # 10**-15
 
 ''' Coupling coefficients matrix '''
 # 0 - No info; 1 - Info
