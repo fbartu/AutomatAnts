@@ -256,7 +256,7 @@ def argparser(argv = sys.argv[1:]):
 				elif x[0] == 'g':
 					parameters['g'] = arg
 				else:
-					print('Unknown parameter', x[0])
+					print('Unknown parameter', x[0], flush= True)
 		elif opt in ('-g', '--gains'):
 			parameters['g'] = arg
 			
