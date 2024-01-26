@@ -253,6 +253,8 @@ def argparser(argv = sys.argv[1:]):
 							parameters['Jij'] = j
 				elif x[0] == 'Theta':
 					parameters['Theta'] = eval(x[1])
+				elif x[0] == 'g':
+					parameters['g'] = arg
 				else:
 					print('Unknown parameter', x[0])
 		elif opt in ('-g', '--gains'):
