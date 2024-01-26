@@ -28,6 +28,11 @@ class Model(Model):
 			self.Jij = Jij
 		else:
 			self.Jij = kwargs['Jij']
+   
+		if 'tmax' not in kwargs:
+			self.tmax = 10800
+		else:
+			self.tmax = kwargs['tmax']
 
   
 		nds = [(0, i) for i in range(1, 44, 2)]
@@ -326,9 +331,9 @@ class Model(Model):
 		self.food_positions = []
 		self.food_dict = {}
 			
-	def run(self, tmax = 10800, plots = False):
+	def run(self, plots = False):
 
-		self.step(tmax = tmax)
+		self.step(tmax = self.tmax)
   
 		print('+++ Model successfully run... Collecting results... +++', flush = True)
 		if plots:
