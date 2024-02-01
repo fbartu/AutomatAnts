@@ -43,6 +43,8 @@ class Ant(Agent):
 			return self.move_random
 		elif type == 'exp':
 			return self.move_exp
+		elif type == 'bal':
+			return self.move_ballistic
 		else:
 			print('Invalid default movement, defaulting to experiment movement')
 			return self.move_exp
