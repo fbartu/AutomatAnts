@@ -114,7 +114,7 @@ class Ant(Agent):
 
 		return pos[idx]
 
-	def move_ballistic(self, pos):
+	def move_ballistic(self, pos, bias = 1.5):
     		
 		x0 = np.array(self.model.coords[self.pos])
 		x1 = np.array([self.model.coords[i] for i in pos])
@@ -124,8 +124,8 @@ class Ant(Agent):
 
 		l = len(pos)
 		if l == 2:
-			A = 1+get_cos_180(d, tpos[0])
-			p1 = (A) / (A + (1+get_cos_180(d, tpos[1])))
+			A = bias + get_cos_180(d, tpos[0])
+			p1 = (A) / (A + (bias + get_cos_180(d, tpos[1])))
 			p2 = 1-p1
 			p = [p1, p2]
 			idx = np.random.choice(l, p = p / np.sum(p))
@@ -133,7 +133,7 @@ class Ant(Agent):
 		elif l == 3:
 			p = []
 			for i in range(l):
-				pi = (1/3) * (1 + get_cos_180(d, tpos[i]))
+				pi = ((bias)/3) * (bias + get_cos_180(d, tpos[i]))
 				p.append(pi)
 			idx = np.random.choice(l, p = p/np.sum(p))
 		else:
