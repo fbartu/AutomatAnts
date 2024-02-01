@@ -120,7 +120,7 @@ class Ant(Agent):
 		x1 = np.array([self.model.coords[i] for i in pos])
 	
 		tpos = x1 - x0
-		d = self.target - x0
+		d = self.model.coords[nest] - x0
 
 		l = len(pos)
 		if l == 2:
