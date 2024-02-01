@@ -1,6 +1,6 @@
 from mesa import Agent
 import numpy as np
-from functions import direction, get_cos , dist 
+from functions import direction, get_cos , get_cos_180, dist 
 import math
 from parameters import nest, theta # , nest_influence, direction_bias
 
@@ -105,6 +105,33 @@ class Ant(Agent):
 			p = []
 			for i in range(l):
 				pi = (1/3) * (1 + get_cos(d, tpos[i]))
+				p.append(pi)
+			idx = np.random.choice(l, p = p/np.sum(p))
+		else:
+			idx = 0
+
+		return pos[idx]
+
+	def move_ballistic(self, pos):
+    		
+		x0 = np.array(self.model.coords[self.pos])
+		x1 = np.array([self.model.coords[i] for i in pos])
+	
+		tpos = x1 - x0
+		d = self.target - x0
+
+		l = len(pos)
+		if l == 2:
+			A = 1+get_cos_180(d, tpos[0])
+			p1 = (A) / (A + (1+get_cos_180(d, tpos[1])))
+			p2 = 1-p1
+			p = [p1, p2]
+			idx = np.random.choice(l, p = p / np.sum(p))
+
+		elif l == 3:
+			p = []
+			for i in range(l):
+				pi = (1/3) * (1 + get_cos_180(d, tpos[i]))
 				p.append(pi)
 			idx = np.random.choice(l, p = p/np.sum(p))
 		else:
