@@ -114,7 +114,7 @@ class Ant(Agent):
 
 		return pos[idx]
 
-	def move_ballistic(self, pos, bias = 1.5):
+	def move_ballistic(self, pos, bias = 3): # 10/7 ~ 1.43 = 10% d'error
     		
 		x0 = np.array(self.model.coords[self.pos])
 		x1 = np.array([self.model.coords[i] for i in pos])
@@ -133,7 +133,7 @@ class Ant(Agent):
 		elif l == 3:
 			p = []
 			for i in range(l):
-				pi = ((bias)/3) * (bias + get_cos_180(d, tpos[i]))
+				pi = (1/(3*bias)) * (bias + get_cos_180(d, tpos[i]))
 				p.append(pi)
 			idx = np.random.choice(l, p = p/np.sum(p))
 		else:
@@ -221,7 +221,7 @@ class Ant(Agent):
 			z = 0
 		self.Si = math.tanh(self.g * (z + self.Si -self.model.Theta) ) # update activity
 		if len(t):
-			self.target = t[0]
+			self.target = t[-1]
 			self.movement = 'target'
 
 
@@ -325,6 +325,9 @@ class Ant(Agent):
 		self.model.food_dict[self.pos] -= 1
 		self.food_location = self.pos
 		self.state = '1'
+		### MODIFICATION OF DEFAULT MOVEMENT !!
+		self.model.set_default_movement('exp')
+
 
 	def drop_food(self):
 		self.food[-1].dropped(self.model.time)

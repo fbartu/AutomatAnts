@@ -42,8 +42,7 @@ def get_cos(a, b):
 
 def get_cos_180(a, b):
 	cosA = (a[0]*b[0] + a[1]*b[1]) / (math.sqrt((a[0]**2 + a[1]**2))*math.sqrt((b[0]**2 + b[1]**2)))
-	degree = np.arccos(cosA)
-	return math.cos(degree + math.pi)
+	return -cosA
 
 def rotate(x, y, theta = math.pi / 2):
 	x1 = round(x * math.cos(theta) - y * math.sin(theta), 2)

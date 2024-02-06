@@ -233,6 +233,10 @@ class Model(Model):
 		self.agents = {}
 		for i in range((N-1), -1, -1):
 			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], recruitment=r)
+
+	def set_default_movement(self, type = 'exp'):
+		for i in range(len(self.agents)):
+			self.agents[i].move_default = self.agents[i].check_movement(type)
    
 	def init_food(self):
      
