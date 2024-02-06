@@ -114,7 +114,7 @@ class Ant(Agent):
 
 		return pos[idx]
 
-	def move_ballistic(self, pos, bias = 3): # 10/7 ~ 1.43 = 10% d'error
+	def move_ballistic(self, pos, bias = 1): # 10/7 ~ 1.43 = 10% d'error
     		
 		x0 = np.array(self.model.coords[self.pos])
 		x1 = np.array([self.model.coords[i] for i in pos])
@@ -326,7 +326,7 @@ class Ant(Agent):
 		self.food_location = self.pos
 		self.state = '1'
 		### MODIFICATION OF DEFAULT MOVEMENT !!
-		# self.model.set_default_movement('exp')
+		self.model.set_default_movement('exp')
 
 
 	def drop_food(self):
