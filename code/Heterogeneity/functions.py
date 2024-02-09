@@ -205,18 +205,13 @@ def plot_arena(model, data = None, path = None):
 	model.plot_lattice(zq)
 
 def argparser(argv = sys.argv[1:]):
-	
+    	
 	opts, args = getopt.getopt(argv, 'n:d:x:f:m:p:g:r:',
 							['nruns=', 'directory=', 'filename=', 
 								'food=', 'movement=', 'parameters=',
 							'gains=', 'recruitment='])
 
-	parameters = {'filename': 'simulation',
-			   'runs': 1, 'results_path': '../results/',
-			   'food_condition': 'det',
-			   'alpha': alpha, 'beta': beta, 
-      			'gamma': gamma, 'Jij': Jij,
-         		'Theta': Theta}
+	parameters = {}
 
 	for opt, arg in opts:
 		if opt in ('-n', '--nruns'):
@@ -260,7 +255,7 @@ def argparser(argv = sys.argv[1:]):
 				elif x[0] == 'g':
 					parameters['g'] = arg
 				elif x[0] == 'rho':
-					parameters['rho'] = eval(arg(x[1]))
+					parameters['rho'] = eval(x[1])
 				else:
 					print('Unknown parameter', x[0], flush= True)
 		elif opt in ('-g', '--gains'):
