@@ -211,7 +211,12 @@ def argparser(argv = sys.argv[1:]):
 								'food=', 'movement=', 'parameters=',
 							'gains=', 'recruitment='])
 
-	parameters = {}
+	parameters = {'filename': 'simulation',
+			   'runs': 1, 'results_path': '../results/',
+			   'food_condition': 'det',
+			   'alpha': alpha, 'beta': beta, 
+      			'gamma': gamma, 'Jij': Jij,
+         		'Theta': Theta}
 
 	for opt, arg in opts:
 		if opt in ('-n', '--nruns'):
