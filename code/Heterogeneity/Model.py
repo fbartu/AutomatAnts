@@ -37,6 +37,8 @@ class Model(Model):
 			self.rho = 0
 		else:
 			self.rho = kwargs['rho']
+   
+		self.matrices = {'global': mot_matrix, 'LR': mot_matrix_LR, 'SR': mot_matrix_SR}
 
   
 		nds = [(0, i) for i in range(1, 44, 2)]
@@ -233,21 +235,21 @@ class Model(Model):
    
 
 		if self.rho > 0:
-			indices = [0] * round(N * self.rho) + [1] * round((N * (1 - self.rho)))
-			matrices = [mot_matrix_LR, mot_matrix_SR] 
+			indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
 		else:
 			if self.rho < 0:
 				print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
-			indices = [0] * N
-			matrices = [mot_matrix]
+			indices = ['global'] * N
 
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], recruitment=r, mot_matrix=matrices[indices[i]])
+			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], recruitment=r, mot_matrix=self.matrices[indices[i]])
 
-	def set_default_movement(self, type = 'exp'):
+	def set_default_movement(self, type = 'exp', matrix = None):
+		if matrix is None: matrix = self.matrices['SR']
 		for i in range(len(self.agents)):
 			self.agents[i].move_default = self.agents[i].check_movement(type)
+			self.agents[i].mot_matrix = matrix
    
 	def init_food(self):
      
