@@ -18,6 +18,8 @@ class Ant(Agent):
 		self.state = '0'
 		self.status = 'gamma'
 
+		self.origin = 'nest'
+
 		self.food = []
 
 		self.pos = 'nest'
@@ -307,6 +309,7 @@ class Ant(Agent):
 		self.is_active = False
 		self.pos = 'nest'
 		self.ant2explore()
+		self.origin = 'nest'
 		
 		if len(self.food):
 			self.food[-1].in_nest(self.model.time)
@@ -324,7 +327,7 @@ class Ant(Agent):
 		self.model.remove_agent(self.model.food[self.pos][0])
 		self.food.append(self.model.food[self.pos].pop(0))
 		self.model.food[self.pos].extend(self.food)
-		self.model.food[self.pos][-1].collected(self.model.time)
+		self.model.food[self.pos][-1].collected(self.model.time, self.origin)
 		self.model.food_dict[self.pos] -= 1
 		self.food_location = self.pos
 		self.state = '1'
@@ -365,6 +368,7 @@ class Ant(Agent):
        
 				if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
 					self.ant2explore()
+					self.origin = 'food'
 	   
 				if self.model.food_dict[self.pos] > 0 and not len(self.food):
 					self.pick_food()

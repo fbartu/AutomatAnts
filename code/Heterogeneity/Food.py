@@ -16,8 +16,9 @@ class Food:
 
 		return msg
 
-	def collected(self, time):
+	def collected(self, time, origin):
 		self.collection_time = time
+		self.collection_origin = origin
 		self.is_collected = True
   
 	def in_nest(self, time):
