@@ -222,7 +222,7 @@ class Ant(Agent):
 		else:
 			z = 0
 		self.Si = math.tanh(self.g * (z + self.Si -self.model.Theta) ) # update activity
-		if len(t):
+		if len(t) and not hasattr(self, 'target'):
 			self.target = t[-1]
 			self.movement = 'target'
 
@@ -328,7 +328,7 @@ class Ant(Agent):
 		self.food_location = self.pos
 		self.state = '1'
 		### MODIFICATION OF DEFAULT MOVEMENT !!
-		self.model.set_default_movement('exp')
+		# self.model.set_default_movement('exp')
 
 
 	def drop_food(self):
