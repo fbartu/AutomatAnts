@@ -332,7 +332,7 @@ class Ant(Agent):
 		self.food_location = self.pos
 		self.state = '1'
 		### MODIFICATION OF DEFAULT MOVEMENT !!
-		# self.model.set_default_movement('exp')
+		self.model.set_default_movement('exp')
 
 
 	def drop_food(self):
