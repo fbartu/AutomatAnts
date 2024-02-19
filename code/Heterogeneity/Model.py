@@ -229,13 +229,14 @@ class Model(Model):
 			g = np.random.uniform(low = 0.0, high = 1.0, size = N)
    
 		if 'recruitment' in kwargs:
-			r = kwargs['recruitment']
+			rec = [kwargs['recruitment']] * N
 		else:
-			r = True
+			rec = [True]*N
    
 
 		if self.rho > 0:
 			indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
+			rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho)))
 		else:
 			if self.rho < 0:
 				print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
@@ -243,7 +244,7 @@ class Model(Model):
 
 		self.agents = {}
 		for i in range((N-1), -1, -1):
-			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], recruitment=r, mot_matrix=self.matrices[indices[i]])
+			self.agents[i] = Ant(i, self, default_movement=dmove, g=g[i], recruitment=rec[i], mot_matrix=self.matrices[indices[i]])
 
 	def set_default_movement(self, type = 'exp', matrix = None):
 		if matrix is None: matrix = self.matrices['SR']

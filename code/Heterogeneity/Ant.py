@@ -332,7 +332,7 @@ class Ant(Agent):
 		self.food_location = self.pos
 		self.state = '1'
 		### MODIFICATION OF DEFAULT MOVEMENT !!
-		self.model.set_default_movement('exp')
+		# self.model.set_default_movement('exp')
 
 
 	def drop_food(self):
@@ -368,13 +368,14 @@ class Ant(Agent):
        
 				if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
 					self.ant2explore()
-					self.origin = 'food'
+
 	   
 				if self.model.food_dict[self.pos] > 0 and not len(self.food):
 					self.pick_food()
 
 				else:
 					self.move()
+				self.origin = 'food'
 
 			else:
 				self.move()
