@@ -236,7 +236,7 @@ class Model(Model):
 
 		if self.rho > 0:
 			indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
-			rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho)))
+			# rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks
 		else:
 			if self.rho < 0:
 				print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
