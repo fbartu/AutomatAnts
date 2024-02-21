@@ -36,7 +36,7 @@ class Model(Model):
 		if 'rho' not in kwargs:
 			self.rho = 0
 		else:
-			self.rho = kwargs['rho']
+			self.rho = round(kwargs['rho'], 2)
    
 		self.matrices = {'global': mot_matrix, 'LR': mot_matrix_LR, 'SR': mot_matrix_SR}
 
@@ -235,12 +235,12 @@ class Model(Model):
    
 
 		if self.rho > 0:
-			indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
+			# indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
 			rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks
 		else:
 			if self.rho < 0:
 				print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
-			indices = ['global'] * N
+		indices = ['global'] * N
 
 		self.agents = {}
 		for i in range((N-1), -1, -1):
