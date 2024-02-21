@@ -371,6 +371,9 @@ class Ant(Agent):
 
 			else:
 				self.move()
+    
+			if self.pos in self.model.food_positions and self.model.food_dict[self.pos] > 0 and not self.model.food[self.pos][-1].is_detected:
+				self.model.food[self.pos][-1].detected(self.model.time)
    
 		else:
 			self.Si = np.random.uniform(0.0, 1.0) ## spontaneous activation
