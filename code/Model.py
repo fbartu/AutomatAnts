@@ -365,8 +365,10 @@ class Model(Model):
 		result['Frame'] = result['T'] // (1 / fps)
 		df = result.groupby('Frame').agg({'N': 'mean'}).reset_index()
 
+		# food = {'node': list(self.food.keys()),
+		# 		't': [round(food.collection_time,3) if food.is_collected else np.nan for foodlist in self.food.values() for food in foodlist ]}
 		food = {'node': list(self.food.keys()),
-				't': [round(food.collection_time,3) if food.is_collected else np.nan for foodlist in self.food.values() for food in foodlist ]}
+			't': [round(food.detection_time,3) if food.is_detected else np.nan for foodlist in self.food.values() for food in foodlist]}
   
 		self.df = df
 		self.food_df = food
