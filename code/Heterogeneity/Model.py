@@ -242,8 +242,8 @@ class Model(Model):
 		if self.rho > 0:
 			# rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks [LR]
 			indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
-			# rec = [False] * round(N * self.epsilon) + [True] * round((N * (1 - self.epsilon))) # social feedbacks [LR]
-			rec = [True] * round(N * self.epsilon) + [False] * round((N * (1 - self.epsilon))) # social feedbacks [SR]
+			rec = [False] * round(N * self.epsilon) + [True] * round((N * (1 - self.epsilon))) # social feedbacks [LR]
+			# rec = [True] * round(N * self.epsilon) + [False] * round((N * (1 - self.epsilon))) # social feedbacks [SR]
 			# rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks [Both]
 		else:
 			if self.rho < 0:
