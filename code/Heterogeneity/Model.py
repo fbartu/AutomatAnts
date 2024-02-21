@@ -38,6 +38,11 @@ class Model(Model):
 		else:
 			self.rho = round(kwargs['rho'], 2)
    
+		if 'epsilon' not in kwargs:
+			self.epsilon = self.rho
+		else:
+			self.epsilon = round(kwargs['epsilon'], 2)
+   
 		self.matrices = {'global': mot_matrix, 'LR': mot_matrix_LR, 'SR': mot_matrix_SR}
 
   
@@ -235,12 +240,15 @@ class Model(Model):
    
 
 		if self.rho > 0:
-			# indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
-			rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks
+			# rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks [LR]
+			indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
+			rec = [False] * round(N * self.epsilon) + [True] * round((N * (1 - self.epsilon))) # social feedbacks [LR]
+			# rec = [True] * round(N * self.epsilon) + [False] * round((N * (1 - self.epsilon))) # social feedbacks [SR]
+			# rec = [False] * round(N * self.rho) + [True] * round((N * (1 - self.rho))) # social feedbacks [Both]
 		else:
 			if self.rho < 0:
 				print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
-		indices = ['global'] * N
+			indices = ['global'] * N
 
 		self.agents = {}
 		for i in range((N-1), -1, -1):
