@@ -18,7 +18,7 @@ class Ant(Agent):
 		self.state = '0'
 		self.status = 'gamma'
 
-		self.origin = 'nest'
+		self.origin = nest
 
 		self.food = []
 
@@ -309,7 +309,7 @@ class Ant(Agent):
 		self.is_active = False
 		self.pos = 'nest'
 		self.ant2explore()
-		self.origin = 'nest'
+		self.origin = nest
 		
 		if len(self.food):
 			self.food[-1].in_nest(self.model.time)
