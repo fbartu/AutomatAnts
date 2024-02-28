@@ -261,8 +261,14 @@ def argparser(argv = sys.argv[1:]):
 					parameters['g'] = arg
 				elif x[0] == 'rho':
 					parameters['rho'] = eval(x[1])
+				elif x[0] == 'epsilon':
+					parameters['epsilon'] = eval(x[1])
 				else:
 					print('Unknown parameter', x[0], flush= True)
+					try:
+						parameters[x[0]] = eval(x[1])
+					except:
+						print('Could not add parameter', x[0], flush = True)
 		elif opt in ('-g', '--gains'):
 			parameters['g'] = arg
 			
