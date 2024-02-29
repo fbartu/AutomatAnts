@@ -27,13 +27,13 @@ class Food:
 
 		return msg
 
-	def detected(self, time):
+	def detected(self, time, origin):
 		self.detection_time = time
+		self.detection_origin = origin
 		self.is_detected = True
 
-	def collected(self, time, origin):
+	def collected(self, time):
 		self.collection_time = time
-		self.collection_origin = origin
 		self.is_collected = True
   
 	def in_nest(self, time):

@@ -327,7 +327,7 @@ class Ant(Agent):
 		self.model.remove_agent(self.model.food[self.pos][0])
 		self.food.append(self.model.food[self.pos].pop(0))
 		self.model.food[self.pos].extend(self.food)
-		self.model.food[self.pos][-1].collected(self.model.time, self.origin)
+		self.model.food[self.pos][-1].collected(self.model.time)
 		self.model.food_dict[self.pos] -= 1
 		self.food_location = self.pos
 		self.state = '1'
@@ -366,22 +366,22 @@ class Ant(Agent):
 
 			elif self.pos in self.model.food_positions:
        
+				if not self.model.food[self.pos][-1].is_detected:
+					self.model.food[self.pos][-1].detected(self.model.time, self.origin)
+     
+				self.origin = self.pos
+       
 				if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
 					self.ant2explore()
-
 	   
 				if self.model.food_dict[self.pos] > 0 and not len(self.food):
 					self.pick_food()
 
 				else:
 					self.move()
-				self.origin = self.pos
-
+     
 			else:
 				self.move()
-
-			if self.pos in self.model.food_positions and self.model.food_dict[self.pos] > 0 and not self.model.food[self.pos][-1].is_detected:
-				self.model.food[self.pos][-1].detected(self.model.time)
    
 		else:
 			self.Si = np.random.uniform(0.0, 1.0) ## spontaneous activation
