@@ -206,7 +206,7 @@ class Model(Model):
         if 'default_movement' in kwargs:
             dmove = kwargs['default_movement']
         else:
-            dmove = 'random'
+            dmove = 'exp'
    
         if 'g' in kwargs:
             
@@ -281,7 +281,7 @@ class Model(Model):
         else:
             if self.rho < 0:
                 print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
-            indices = ['global'] * N
+            behav = ['global'] * N
             
         # print(pd.DataFrame({'behav': behav, 'rec': rec}).value_counts()) # check that everything works
 
