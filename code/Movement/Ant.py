@@ -10,7 +10,7 @@ class Ant(Agent):
 
 		super().__init__(unique_id, model)
 
-		self.pos = (0, 22)
+		self.pos = model.nest
 		self.model.grid.place_agent(self, self.pos)
    
 		self.reset_movement()
@@ -31,8 +31,10 @@ class Ant(Agent):
 			return self.move_random(pos)
 
 		else:
-
-			p = np.array(self.mot_matrix[direction([self.model.coords[i] for i in self.move_history])])
+			try:
+				p = np.array(self.mot_matrix[direction([self.model.coords[i] for i in self.move_history])])
+			except:
+				print(self.unique_id, self.pos)
 			ords = []
 			pord = []
 			for i in range(len(pos)):
