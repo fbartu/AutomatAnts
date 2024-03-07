@@ -10,9 +10,6 @@ rho_range = np.round(np.arange(0, 1.01, 0.1), 3)
 R_range = np.round(np.arange(2.5, 20.01, 1.25), 3)
 args = list(itertools.product(rho_range, R_range))
 
-rhos = [x[0] for x in args]
-Radiuses = [x[1] for x in args]
-
 def run_model(rho, R):
     pid = os.getpid()
     t = int(time.time())
@@ -31,6 +28,6 @@ if __name__ == '__main__':
     num_processes = cpu_count()
     pool = Pool(processes=num_processes)
 
-    pool.starmap(run_model, [rhos, Radiuses])
+    pool.starmap(run_model, [args])
     pool.close()
     pool.join()
