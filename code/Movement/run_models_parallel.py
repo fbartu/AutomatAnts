@@ -28,6 +28,6 @@ if __name__ == '__main__':
     num_processes = cpu_count()
     pool = Pool(processes=num_processes)
 
-    pool.starmap(run_model, [args])
+    pool.starmap(run_model, args)
     pool.close()
     pool.join()
