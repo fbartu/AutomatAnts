@@ -257,33 +257,36 @@ class Model(Model):
             mask = np.ones(N, dtype = bool)
             mask[indices] = False
             # indices = ['LR'] * round(N * self.rho) + ['SR'] * round((N * (1 - self.rho)))
+            rec = np.array([False] * N)
+            
             
             # social feedbacks [LR]
             if self.feedback == 'LR':
-                rec = np.array([False] * N)
                 nlisten = round(nLR * self.epsilon) 
                 idx_listen = np.random.choice(np.array(list(range(N)))[mask], size = nlisten, replace = False)
-                rec[np.concatenate([indices, idx_listen])] = True
+                # rec[np.concatenate([indices, idx_listen])] = True
+                
                 
             # social feedbacks [LR]    
             elif self.feedback == 'SR':
-                rec = np.array([False] * N) 
                 nlisten = round(nSR * self.epsilon) 
                 idx_listen = np.random.choice(indices, size = nlisten, replace = False)
-                rec[np.concatenate([np.where(mask)[0], idx_listen])] = True
+                # rec[np.concatenate([np.where(mask)[0], idx_listen])] = True
      
             # social feedbacks [Both]
             else:
-                rec = np.array([False] * N) 
                 nlisten = round(N * self.epsilon) 
                 idx_listen = np.random.choice(N, size = nlisten, replace = False)
-                rec[idx_listen] = True
+                # rec[idx_listen] = True
+                
+            rec[idx_listen] = True
         else:
             if self.rho < 0:
                 print('rho must be a parameter with value [0, 1]; setting default mot matrix for all individuals...', flush = True)
             behav = ['global'] * N
             
         # print(pd.DataFrame({'behav': behav, 'rec': rec}).value_counts()) # check that everything works
+        # print(sum(rec), nSR, nLR)
 
         self.agents = {}
         for i in range((N-1), -1, -1):
