@@ -275,9 +275,9 @@ class Model(Model):
      
             # social feedbacks [Both]
             else:
-                nlisten = round(nSR * (self.epsilon / 2))
-                idx_listen = np.random.choice(np.array(list(range(N)))[mask], size = nlisten, replace = False)
                 nlisten = round(nLR * (self.epsilon / 2))
+                idx_listen = np.random.choice(np.array(list(range(N)))[mask], size = nlisten, replace = False)
+                nlisten = round(nSR * (self.epsilon / 2))
                 idx_listen = np.append(idx_listen, np.random.choice(indices, size = nlisten, replace = False))
                 # idx_listen = np.random.choice(N, size = nlisten, replace = False)
                 # rec[idx_listen] = True
