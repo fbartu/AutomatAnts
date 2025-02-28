@@ -13,8 +13,8 @@ class Ant(Agent):
 		super().__init__(unique_id, model)
 
 		self.Si = 0
-		# self.g = g
-		self.g = 1
+		self.g = g
+		# self.g = 0.75
 
 		self.is_active = False
 		self.state = '0'
@@ -42,9 +42,12 @@ class Ant(Agent):
 	def reset_movement(self):
 		self.movement = 'default'
 		# self.move_history = (None, None, None)
-		self.move_history = (self.init_position, 
-                       random.choice(self.model.grid.get_neighbors(self.init_position)),
-                       self.init_position)
+		self.move_history = (self.pos, 
+				random.choice(self.model.grid.get_neighbors(self.pos)),
+				self.pos)
+		# self.move_history = (self.init_position, 
+        #                random.choice(self.model.grid.get_neighbors(self.init_position)),
+        #                self.init_position)
  
 	def update_movement(self):
 		self.move_history = (self.move_history[1], self.move_history[2], self.pos)
@@ -208,11 +211,12 @@ class Ant(Agent):
 		else:
 			z = 0
 		self.Si = math.tanh(self.g * (z + self.Si -self.model.Theta) ) # update activity
-  
+
 	def activate(self):
 		self.Si = np.random.random()
 		self.is_active = True
- 
+		self.ant2explore()
+
 	def leave_nest(self):
 		self.model.grid.place_agent(self, self.init_position)
 		self.is_active = True
@@ -248,50 +252,74 @@ class Ant(Agent):
 		self.food[-1].dropped(self.model.time)
 		self.food.pop()
 	
-  
+
 	def action(self):
-	
-		# if len(self.food):
-		# 	self.ant2nest()
 
-		# if self.Si < theta:
-		# 	self.ant2nest()
+		if self.Si < theta:
+		# if not self.active:
+			self.ant2nest()
    
-		# 	if self.pos == nest:
-		# 		self.enter_nest()
+			if self.pos == nest:
+				self.enter_nest()
 
-		# 		## SPONTANEOUS ACTIVATION
-		# 		if np.random.random() < 0.01:
-		# 			self.activate()
-    
-		# 	else:
-		# 		self.move()
+				## SPONTANEOUS ACTIVATION
+				if np.random.random() < 0.01: # probability of random activation
+					self.activate()
 
-		# else:
-		# 	self.move()
+			else:
+				self.move()
 
-		# -------------------------------------------------#
-		# elif self.pos in self.model.food_positions:
-	
-		# 	if not self.model.food[self.pos][-1].is_detected:
-		# 		self.model.food[self.pos][-1].detected(self.model.time, self.origin)
-	
-		# 	self.origin = self.pos
-	
-		# 	if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
-		# 		self.ant2explore()
-	
-		# 	if self.model.food_dict[self.pos] > 0 and not len(self.food):
-		# 		self.pick_food()
-
-		# 	else:
-		# 		self.move()
-	
-		# else:
-		# 	self.move()
-		# -------------------------------------------------#
-  
-		self.move()
+		else:
+			self.move()
 
 		int_type = self.interaction()
 		return int_type
+
+
+	### +++ ORIGINAL VERSION vFIXED !!! +++ ###
+	# def action(self):
+	
+	# 	# if len(self.food):
+	# 	# 	self.ant2nest()
+
+	# 	# if self.Si < theta:
+	# 	# 	self.ant2nest()
+   
+	# 	# 	if self.pos == nest:
+	# 	# 		self.enter_nest()
+
+	# 	# 		## SPONTANEOUS ACTIVATION
+	# 	# 		if np.random.random() < 0.01:
+	# 	# 			self.activate()
+    
+	# 	# 	else:
+	# 	# 		self.move()
+
+	# 	# else:
+	# 	# 	self.move()
+
+	# 	# -------------------------------------------------#
+	# 	# elif self.pos in self.model.food_positions:
+	
+	# 	# 	if not self.model.food[self.pos][-1].is_detected:
+	# 	# 		self.model.food[self.pos][-1].detected(self.model.time, self.origin)
+	
+	# 	# 	self.origin = self.pos
+	
+	# 	# 	if hasattr(self, 'target') and self.model.coords[self.pos] == self.target:
+	# 	# 		self.ant2explore()
+	
+	# 	# 	if self.model.food_dict[self.pos] > 0 and not len(self.food):
+	# 	# 		self.pick_food()
+
+	# 	# 	else:
+	# 	# 		self.move()
+	
+	# 	# else:
+	# 	# 	self.move()
+	# 	# -------------------------------------------------#
+  
+	# 	self.move()
+
+	# 	int_type = self.interaction()
+	# 	return int_type

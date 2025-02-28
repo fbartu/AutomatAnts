@@ -303,7 +303,11 @@ class Model(Model):
             # positions = random.sample(list(self.xy.keys()), self.N)
             positions = random.choices(list(self.xy.keys()), k = self.N)
         else:
+            ### ORIGINAL VERSION vFIXED ###
             positions = [nest] * self.N
+            positions[0] = random.choice(list(self.xy.keys()))
+            # positions[0] = (6, 33)
+
         for i in range((self.N-1), -1, -1):
             self.agents[i] = Ant(i, self, g=g[i], social=rec[i], mot_matrix=self.matrices[behav[i]], behavior = behav[i],
                                  init_position=positions[i])
@@ -469,6 +473,7 @@ class Model(Model):
   
         # self.df = df
         self.food_df = food
+        self.df = pd.DataFrame(self.data)
   
     # def run_food(self, tmax, plots = False):
     #     n = sum(self.model.food_dict.values())
@@ -548,8 +553,10 @@ class Model(Model):
         plt.fill([x[0] for x in xyfood[0]], [x[1] for x in xyfood[0]], c = 'grey')
         plt.fill([x[0] for x in xyfood[1]], [x[1] for x in xyfood[1]], c = 'grey')
   
-        xy = [self.xy[i] for i in self.agents[id].path]
-        plt.scatter([x[0] for x in xy], [x[1] for x in xy], alpha = 1, c = list(range(len(xy))),cmap = 'viridis', zorder = 2)
+        sbst = self.df.loc[self.df['id'] == id]
+        xy = [self.xy[eval(i)] for i in sbst['node']]
+        # plt.scatter([x[0] for x in xy], [x[1] for x in xy], alpha = 1, c = list(range(len(xy))),cmap = 'viridis', zorder = 2)
+        plt.scatter([x[0] for x in xy], [x[1] for x in xy], alpha = 1, c = list(sbst['T']),cmap = 'viridis', zorder = 2)
   
         e = list(self.g.edges)
         for i in e:
