@@ -300,7 +300,8 @@ class Model(Model):
             
         self.agents = {}
         if init_position == 'random':
-            positions = random.sample(list(self.xy.keys()), self.N)
+            # positions = random.sample(list(self.xy.keys()), self.N)
+            positions = random.choices(list(self.xy.keys()), k = self.N)
         else:
             positions = [nest] * self.N
         for i in range((self.N-1), -1, -1):
