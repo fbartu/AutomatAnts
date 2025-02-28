@@ -43,7 +43,7 @@ class Ant(Agent):
 		self.movement = 'default'
 		# self.move_history = (None, None, None)
 		self.move_history = (self.init_position, 
-                       random.choice(self.model.grid.get_neighbors(self.init_position)),
+                       random.choice(self.model.grid.get_neighborhood(self.init_position)),
                        self.init_position)
  
 	def update_movement(self):
@@ -99,7 +99,7 @@ class Ant(Agent):
 	# Move method
 	def move(self):
      
-		possible_steps = self.model.grid.get_neighbors(
+		possible_steps = self.model.grid.get_neighborhood(
 		self.pos,
 		include_center = False)
 
