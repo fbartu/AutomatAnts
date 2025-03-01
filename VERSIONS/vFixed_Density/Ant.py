@@ -21,6 +21,7 @@ class Ant(Agent):
 		self.behavior_tag = behavior
 		self.init_position = init_position
 		self.informed = False
+		self.last_interaction = 0
 
 		self.origin = nest
 
@@ -133,7 +134,11 @@ class Ant(Agent):
 
 		return neighbors
 
-
+	def memory(self):
+		t = self.model.time - self.last_interaction
+		p = 1 - math.exp(-self.model.memory_rate * t)
+		if p >= np.random.random():
+			self.informed = False
 
 	def interaction_with_recruitment(self):
 		neighbors = self.find_neighbors()
@@ -151,7 +156,10 @@ class Ant(Agent):
 				z.append(self.model.Jij[self.state + "-" + i.state]* i.Si - self.model.Theta)
 				if hasattr(i, 'food_location'): t.append(self.model.coords[i.food_location])
 				# info transmission
-				if i.informed: self.informed = True
+				if i.informed: 
+					self.informed = True
+					self.last_interaction = self.model.time
+
 
 				int_type += i.behavior_tag + '_' + i.movement + '+'
 
@@ -183,8 +191,10 @@ class Ant(Agent):
 				z.append(self.model.Jij[self.state + "-" + i.state]* i.Si - self.model.Theta)
 				int_type += i.behavior_tag + '_' + i.movement + '+'
 				# info transmission
-				if i.informed: self.informed = True
-
+				if i.informed:
+					self.informed = True
+					self.last_interaction = self.model.time
+					
 			z = sum(z)
    
 		else:
@@ -254,6 +264,8 @@ class Ant(Agent):
 	
 
 	def action(self):
+
+		self.memory()
 
 		if self.Si < theta:
 		# if not self.active:

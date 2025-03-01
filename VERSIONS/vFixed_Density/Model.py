@@ -22,6 +22,7 @@ class Model(Model):
         super().__init__()
         
         self.matrices = {'scout': scout_mov, 'recruit': recruit_mov}
+        self.N = N
 
         if 'Theta' not in kwargs:
             self.Theta = Theta
@@ -57,7 +58,7 @@ class Model(Model):
             self.epsilon = 1
         else:
             self.epsilon = round(kwargs['epsilon'], 2)
-   
+
         nds = [(0, i) for i in range(1, 44, 2)]
 
         # Lattice
@@ -83,9 +84,14 @@ class Model(Model):
         #         self.distance = d
         # else:
         #     self.distance = 13
+
+        ### RATE OF FORGETTING INFORMATION ###
+        if 'memory_rate' not in kwargs:
+            self.memory_rate = 0
+        else:
+            self.memory_rate = (self.N / len(list(self.xy.keys()))) * kwargs['memory_rate']
   
         # Agents
-        self.N = N
         self.init_agents(init_position, **kwargs)
             # self.agents[i] = Ant(i, self)
    
@@ -158,6 +164,11 @@ class Model(Model):
             # get rng for next iteration
             self.sample_time()
             self.iters += 1
+
+            if not self.info[0]:
+                self.info[0] = True
+                self.agents[0].informed = True
+                self.agents[0].last_interaction = self.time
 
     def collect_data(self, int_type):
         agent = self.agents[self.sampled_agent[-1]]
@@ -306,7 +317,8 @@ class Model(Model):
             ### ORIGINAL VERSION vFIXED ###
             positions = [nest] * self.N
             positions[0] = random.choice(list(self.xy.keys()))
-            # positions[0] = (6, 33)
+            ## fixed distances in straight line from the nest !! 
+            # positions[0] = (4, 22) # (7, 22) # (10, 22) 
 
         for i in range((self.N-1), -1, -1):
             self.agents[i] = Ant(i, self, g=g[i], social=rec[i], mot_matrix=self.matrices[behav[i]], behavior = behav[i],
