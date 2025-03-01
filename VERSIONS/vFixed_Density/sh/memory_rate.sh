@@ -18,7 +18,7 @@ do
         for r in 0.05 0.1 0.2 0.5 1 2 3
         do
             # float_r=$(echo $r | tr ',' '.')
-            python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/with_memory/ --filename "rho_${rho}_N_${N}" -n 100 -p "rho=${rho/,/.};N=${N};init_position=nest;memory_rate=${r/,/.}"
+            python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/with_memory/ --filename "rho_${rho}_N_${N}_memory_${r}" -n 100 -p "rho=${rho/,/.};N=${N};init_position=nest;memory_rate=${r/,/.}"
         done
     done
 done
