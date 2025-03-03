@@ -20,8 +20,8 @@ do
         for r in 0.002 0.004 0.008 0.012 0.016 0.020 0.030 0.040 0.060 0.081 0.161 0.250
         do
             # float_r=$(echo $r | tr ',' '.')
-            python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/with_memory/ --filename "rho_${rho}_N_${N}_memory_${r}_random" -n 100 -p "rho=${rho/,/.};N=${N};init_position=random;memory_rate=${r/,/.}"
-            python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/with_memory/ --filename "rho_${rho}_N_${N}_memory_${r}_homing" -n 100 -p "rho=${rho/,/.};N=${N};init_position=nest;memory_rate=${r/,/.}"
+            python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/with_memory/ --filename "rho_${rho}_N_${N}_memory_${r}_random" -n 100 -p "rho=${rho/,/.};N=${N};init_position=random;memory_rate=${r/,/.};homing_behavior=False"
+            python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/with_memory/ --filename "rho_${rho}_N_${N}_memory_${r}_homing" -n 100 -p "rho=${rho/,/.};N=${N};init_position=nest;memory_rate=${r/,/.};homing_behavior=True"
         done
     done
 done

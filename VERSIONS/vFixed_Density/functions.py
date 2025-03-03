@@ -270,6 +270,11 @@ def argparser(argv = sys.argv[1:]):
 
                 elif x[0] == 'tmax':
                     parameters['tmax'] = eval(x[1])
+                    
+                elif x[0] == 'memory_rate':
+                    parameters['memory_rate'] = x[1]
+                elif x[0] == 'homing_behavior':
+                    parameters['homing_behavior'] = x[1]
 
                 else:
                     print('Unknown parameter', x[0], flush= True)
