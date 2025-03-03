@@ -455,6 +455,8 @@ class Model(Model):
     def run_until(self):
         self.tmax = 0
         while sum(self.info) < self.N:
+            if self.time > 15000: # constraining simulation duration;
+                break
             self.step(tmax = self.time + 1)
   
         print('+++ Model successfully run... Collecting results... +++', flush = True)
