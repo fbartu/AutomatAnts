@@ -58,6 +58,9 @@ class Model(Model):
             self.epsilon = 1
         else:
             self.epsilon = round(kwargs['epsilon'], 2)
+            
+        if 'homing_behavior' not in kwargs:
+            kwargs['homing_behavior'] = False
 
         nds = [(0, i) for i in range(1, 44, 2)]
 
@@ -89,7 +92,8 @@ class Model(Model):
         if 'memory_rate' not in kwargs:
             self.memory_rate = 0
         else:
-            self.memory_rate = (self.N / len(list(self.xy.keys()))) * kwargs['memory_rate']
+            # self.memory_rate = (self.N / len(list(self.xy.keys()))) * kwargs['memory_rate']
+            self.memory_rate =  float(kwargs['memory_rate'])
   
         # Agents
         self.init_agents(init_position, **kwargs)
@@ -322,7 +326,7 @@ class Model(Model):
 
         for i in range((self.N-1), -1, -1):
             self.agents[i] = Ant(i, self, g=g[i], social=rec[i], mot_matrix=self.matrices[behav[i]], behavior = behav[i],
-                                 init_position=positions[i])
+                                 init_position=positions[i], homing_behavior=kwargs['homing_behavior'])
         
         # QUANTIFY INFORMATION TRANSMISSION
         self.agents[0].informed = True

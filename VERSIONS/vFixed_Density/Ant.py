@@ -8,7 +8,7 @@ import random
 ''' ANT AGENT '''
 class Ant(Agent):
 
-	def __init__(self, unique_id, model, mot_matrix, behavior, init_position, social = True, g = np.random.uniform(0.0, 1.0)):
+	def __init__(self, unique_id, model, mot_matrix, behavior, init_position, homing_behavior = False, social = True, g = np.random.uniform(0.0, 1.0)):
 
 		super().__init__(unique_id, model)
 
@@ -22,7 +22,11 @@ class Ant(Agent):
 		self.init_position = init_position
 		self.informed = False
 		self.last_interaction = 0
-
+		if homing_behavior:
+			self.action = self.action_with_homing
+		else:
+			self.action = self.action_without_homing
+   
 		self.origin = nest
 
 		self.food = []
@@ -137,8 +141,8 @@ class Ant(Agent):
 	def memory(self):
 		t = self.model.time - self.last_interaction
 		p = 1 - math.exp(-self.model.memory_rate * t)
-		if p >= np.random.random():
-			self.informed = False
+		if p >= 0.5: self.informed = False ## if the probability is larger than the exponential half life
+		# if p >= np.random.random(): self.informed = False ## stochastic version // too strict
 
 	def interaction_with_recruitment(self):
 		neighbors = self.find_neighbors()
@@ -262,8 +266,15 @@ class Ant(Agent):
 		self.food[-1].dropped(self.model.time)
 		self.food.pop()
 	
+	def action_without_homing(self):
+    
+		self.memory()
+		self.move()
+		int_type = self.interaction()
+		return int_type
 
-	def action(self):
+
+	def action_with_homing(self):
 
 		self.memory()
 
