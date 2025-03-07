@@ -242,6 +242,8 @@ class Model(Model):
     #     # self.data['id_out'].append(id_out[:-1])
     #     # self.data['Si_in'].append(Si_in[:-1])
     #     # self.data['food_target'].append(target)
+
+
    
     def init_agents(self, init_position, **kwargs):
      
@@ -314,15 +316,31 @@ class Model(Model):
         #       'Total number of recruits: ', len(set(idx_listen)), flush = True)
             
         self.agents = {}
-        if init_position == 'random':
-            # positions = random.sample(list(self.xy.keys()), self.N)
-            positions = random.choices(list(self.xy.keys()), k = self.N)
-        else:
+
+        if init_position == 'nest':
             ### ORIGINAL VERSION vFIXED ###
             positions = [nest] * self.N
             positions[0] = random.choice(list(self.xy.keys()))
             ## fixed distances in straight line from the nest !! 
             # positions[0] = (4, 22) # (7, 22) # (10, 22) 
+
+        else:
+            positions = random.choices(list(self.xy.keys()), k = self.N)
+
+            if init_position == 'targeted':
+
+                if nSR > 0:
+                    positions = np.array(positions)
+                    nodes = np.array(list(self.xy.keys()))
+                    x0 = random.choice(list(self.xy.values()))
+                    maxd = 4.0
+                    darray = np.array([dist(self.xy[i], x0) for i in self.xy])
+                    idx = np.where(darray < maxd)[0]# np.where((darray > maxd) & (darray < maxd))[0]
+                    clustered_indices = np.random.choice(idx, size = nSR, replace = True)
+                    positions[indices] = [tuple(x) for x in nodes[clustered_indices]]
+                    positions = [tuple(x) for x in positions]
+                    positions[0] = random.choice(list(self.xy.keys()))
+
 
         for i in range((self.N-1), -1, -1):
             self.agents[i] = Ant(i, self, g=g[i], social=rec[i], mot_matrix=self.matrices[behav[i]], behavior = behav[i],
