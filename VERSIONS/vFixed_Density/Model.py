@@ -324,6 +324,10 @@ class Model(Model):
             ## fixed distances in straight line from the nest !! 
             # positions[0] = (4, 22) # (7, 22) # (10, 22) 
 
+        elif init_position == 'clustered':
+            positions = [random.choice(list(self.xy.keys()))] * self.N
+            positions[0] = random.choice(list(self.xy.keys()))
+
         else:
             positions = random.choices(list(self.xy.keys()), k = self.N)
 
