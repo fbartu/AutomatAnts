@@ -23,9 +23,9 @@ do
 
         # --- MAX DISTANCE = 2 --- # 
         # with clustered recruits
-        # python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/asymmetric_positioning/ --filename "rho_${rho}_N_${N}_R2" -n 100 -p "rho=${rho/,/.};N=${N};init_position=targeted;homing_behavior=False"
+        python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/asymmetric_positioning/ --filename "rho_${rho}_N_${N}_R2" -n 100 -p "rho=${rho/,/.};N=${N};init_position=targeted;homing_behavior=False"
         # with clustered scouts --> change in code
-        python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/asymmetric_positioning/ --filename "rho_${rho}_N_${N}_R2_scouts" -n 100 -p "rho=${rho/,/.};N=${N};init_position=targeted;homing_behavior=False"
+        # python3 ~/research/AutomatAnts/VERSIONS/vFixed_Density/run_until.py --directory ~/research/AutomatAnts/results/2025/agent_density/asymmetric_positioning/ --filename "rho_${rho}_N_${N}_R2_scouts" -n 100 -p "rho=${rho/,/.};N=${N};init_position=targeted;homing_behavior=False"
 
 
     done
