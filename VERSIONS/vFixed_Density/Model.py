@@ -352,7 +352,7 @@ class Model(Model):
                     positions = np.array(positions)
                     nodes = np.array(list(self.xy.keys()))
                     x0 = random.choice(list(self.xy.values()))
-                    maxd = 4.0 # 4.0
+                    maxd = 2.0 # 4.0
                     darray = np.array([dist(self.xy[i], x0) for i in self.xy])
                     idx = np.where(darray < maxd)[0]# np.where((darray > maxd) & (darray < maxd))[0]
                     clustered_indices = np.random.choice(idx, size = nLR, replace = True)
