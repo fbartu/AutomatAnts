@@ -116,8 +116,13 @@ class Model(Model):
 #    'id_out': [], 'Si_in': []}
 #         self.data = {'T': [], 'Frame': [],
 #    'N': [], 'pos': [], 'food_target': [], 'id_out': []}
-        self.data = {'T': [], 'id': [], 'int_type': [], 
-                     'node': [], 'x': [], 'y': [], 'movement': [], 'information' : []}
+        self.data = {'T': [0] * self.N, 'id': [self.agents[i].unique_id for i in self.agents],
+                     'int_type': [self.agents[i].behavior_tag + '_' + self.agents[i].movement for i in self.agents], 
+                     'node': [str(self.agents[i].pos) for i in self.agents],
+                     'x': [self.xy[self.agents[i].pos][0] for i in self.agents], 
+                     'y': [self.xy[self.agents[i].pos][1] for i in self.agents], 
+                     'movement': [self.agents[i].movement for i in self.agents],
+                     'information' : [False] * self.N}
         self.info = [0] * self.N
 
 
@@ -125,8 +130,8 @@ class Model(Model):
         self.R_t = beta * self.N
 
         # Time & Gillespie
-        self.time = 0
         self.sample_time()
+        self.time = 0 + self.rng_t
 
         self.iters = 0
         # self.gamma_counter = 0
