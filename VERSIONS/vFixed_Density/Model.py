@@ -340,30 +340,30 @@ class Model(Model):
                 
                 
                 # CODE FOR RECRUITS // UNCOMMENT!
-                # if nSR > 0:
-                #     positions = np.array(positions)
-                #     nodes = np.array(list(self.xy.keys()))
-                #     x0 = random.choice(list(self.xy.values()))
-                #     maxd = 2.0 # 4.0
-                #     darray = np.array([dist(self.xy[i], x0) for i in self.xy])
-                #     idx = np.where(darray < maxd)[0]# np.where((darray > maxd) & (darray < maxd))[0]
-                #     clustered_indices = np.random.choice(idx, size = nSR, replace = True)
-                #     positions[indices] = [tuple(x) for x in nodes[clustered_indices]]
-                #     positions = [tuple(x) for x in positions]
-                #     positions[0] = random.choice(list(self.xy.keys()))
-                
-                # CODE FOR SCOUTS // UNCOMMENT!
-                if nLR > 0:
+                if nSR > 0:
                     positions = np.array(positions)
                     nodes = np.array(list(self.xy.keys()))
                     x0 = random.choice(list(self.xy.values()))
                     maxd = 2.0 # 4.0
                     darray = np.array([dist(self.xy[i], x0) for i in self.xy])
                     idx = np.where(darray < maxd)[0]# np.where((darray > maxd) & (darray < maxd))[0]
-                    clustered_indices = np.random.choice(idx, size = nLR, replace = True)
-                    positions[mask] = [tuple(x) for x in nodes[clustered_indices]]
+                    clustered_indices = np.random.choice(idx, size = nSR, replace = True)
+                    positions[indices] = [tuple(x) for x in nodes[clustered_indices]]
                     positions = [tuple(x) for x in positions]
                     positions[0] = random.choice(list(self.xy.keys()))
+                
+                # CODE FOR SCOUTS // UNCOMMENT!
+                # if nLR > 0:
+                #     positions = np.array(positions)
+                #     nodes = np.array(list(self.xy.keys()))
+                #     x0 = random.choice(list(self.xy.values()))
+                #     maxd = 2.0 # 4.0
+                #     darray = np.array([dist(self.xy[i], x0) for i in self.xy])
+                #     idx = np.where(darray < maxd)[0]# np.where((darray > maxd) & (darray < maxd))[0]
+                #     clustered_indices = np.random.choice(idx, size = nLR, replace = True)
+                #     positions[mask] = [tuple(x) for x in nodes[clustered_indices]]
+                #     positions = [tuple(x) for x in positions]
+                #     positions[0] = random.choice(list(self.xy.keys()))
 
         for i in range((self.N-1), -1, -1):
             self.agents[i] = Ant(i, self, g=g[i], social=rec[i], mot_matrix=self.matrices[behav[i]], behavior = behav[i],
