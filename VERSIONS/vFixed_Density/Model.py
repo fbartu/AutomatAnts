@@ -337,13 +337,17 @@ class Model(Model):
             positions = random.choices(list(self.xy.keys()), k = self.N)
 
             if init_position == 'targeted':
+                print('entered init position = targeted')
 
                 if 'R' in kwargs:
                     R = kwargs['R']
+                    print('R is in args, setting R to ', R)
                 else:
                     R = 2.0
+                    print('R is in NOT in args, setting R to ', R)
 
                 if not 'agg_scouts' in kwargs or not eval(kwargs['agg_scouts']):
+                    print('Aggregating recruits')
                     # CODE FOR RECRUITS
                     if nSR > 0:
                         positions = np.array(positions)
@@ -358,6 +362,7 @@ class Model(Model):
 
                 else:
                     # CODE FOR SCOUTS
+                    print('Aggregating scouts')
                     if nLR > 0:
                         positions = np.array(positions)
                         nodes = np.array(list(self.xy.keys()))
