@@ -341,13 +341,13 @@ class Model(Model):
 
                 if 'R' in kwargs:
                     R = kwargs['R']
-                    print('R is in args, setting R to ', R)
+                    print('R is in args, setting R to ', R, flush=True)
                 else:
                     R = 2.0
                     print('R is in NOT in args, setting R to ', R)
 
                 if not 'agg_scouts' in kwargs or not eval(kwargs['agg_scouts']):
-                    print('Aggregating recruits')
+                    print('Aggregating recruits', flush=True)
                     # CODE FOR RECRUITS
                     if nSR > 0:
                         positions = np.array(positions)
@@ -362,7 +362,7 @@ class Model(Model):
 
                 else:
                     # CODE FOR SCOUTS
-                    print('Aggregating scouts')
+                    print('Aggregating scouts', flush=True)
                     if nLR > 0:
                         positions = np.array(positions)
                         nodes = np.array(list(self.xy.keys()))
