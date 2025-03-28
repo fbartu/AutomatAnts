@@ -157,27 +157,30 @@ class Model(Model):
     def step(self, tmax):
 
         while self.time < tmax:
+            try:
 
-            agent = np.random.choice(list(self.agents.values()))
-            self.sampled_agent.append(agent.unique_id)
-   
-            # do action
-            int_type = agent.action()
+                agent = np.random.choice(list(self.agents.values()))
+                self.sampled_agent.append(agent.unique_id)
+    
+                # do action
+                int_type = agent.action()
 
-            self.collect_data(int_type=int_type)
-            # self.collect_data(agent = agent, prev_state = prev_state)
-            
-            # get time for next iteration
-            self.time += self.rng_t
+                self.collect_data(int_type=int_type)
+                # self.collect_data(agent = agent, prev_state = prev_state)
+                
+                # get time for next iteration
+                self.time += self.rng_t
 
-            # get rng for next iteration
-            self.sample_time()
-            self.iters += 1
+                # get rng for next iteration
+                self.sample_time()
+                self.iters += 1
 
-            if not self.info[0]:
-                self.info[0] = True
-                self.agents[0].informed = True
-                self.agents[0].last_interaction = self.time
+                if not self.info[0]:
+                    self.info[0] = True
+                    self.agents[0].informed = True
+                    self.agents[0].last_interaction = self.time
+            except:
+                raise Exception
 
     def collect_data(self, int_type):
         agent = self.agents[self.sampled_agent[-1]]
