@@ -157,30 +157,28 @@ class Model(Model):
     def step(self, tmax):
 
         while self.time < tmax:
-            try:
 
-                agent = np.random.choice(list(self.agents.values()))
-                self.sampled_agent.append(agent.unique_id)
-    
-                # do action
-                int_type = agent.action()
+            agent = np.random.choice(list(self.agents.values()))
+            self.sampled_agent.append(agent.unique_id)
 
-                self.collect_data(int_type=int_type)
-                # self.collect_data(agent = agent, prev_state = prev_state)
-                
-                # get time for next iteration
-                self.time += self.rng_t
+            # do action
+            int_type = agent.action()
 
-                # get rng for next iteration
-                self.sample_time()
-                self.iters += 1
+            self.collect_data(int_type=int_type)
+            # self.collect_data(agent = agent, prev_state = prev_state)
+            
+            # get time for next iteration
+            self.time += self.rng_t
 
-                if not self.info[0]:
-                    self.info[0] = True
-                    self.agents[0].informed = True
-                    self.agents[0].last_interaction = self.time
-            except:
-                raise Exception
+            # get rng for next iteration
+            self.sample_time()
+            self.iters += 1
+
+            if not self.info[0]:
+                self.info[0] = True
+                self.agents[0].informed = True
+                self.agents[0].last_interaction = self.time
+
 
     def collect_data(self, int_type):
         agent = self.agents[self.sampled_agent[-1]]
@@ -344,14 +342,12 @@ class Model(Model):
 
                 if 'R' in kwargs:
                     R = kwargs['R']
-                    print('R is in args, setting R to ', R, flush=True)
                 else:
                     R = 2.0
-                    print('R is in NOT in args, setting R to ', R)
 
                 # if not 'agg_scouts' in kwargs or not eval(kwargs['agg_scouts']):
                 if not 'agg_scouts' in kwargs or not kwargs['agg_scouts']:
-                    print('Aggregating recruits', flush=True)
+
                     # CODE FOR RECRUITS
                     if nSR > 0:
                         positions = np.array(positions)
@@ -366,7 +362,6 @@ class Model(Model):
 
                 else:
                     # CODE FOR SCOUTS
-                    print('Aggregating scouts', flush=True)
                     if nLR > 0:
                         positions = np.array(positions)
                         nodes = np.array(list(self.xy.keys()))
