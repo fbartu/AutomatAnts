@@ -346,6 +346,8 @@ class Model(Model):
                     R = 2.0
                     print('R is in NOT in args, setting R to ', R)
 
+                # if not 'agg_scouts' in kwargs or not eval(kwargs['agg_scouts']):
+                print(eval(kwargs['agg_scouts']), flush = True)
                 if not 'agg_scouts' in kwargs or not eval(kwargs['agg_scouts']):
                     print('Aggregating recruits', flush=True)
                     # CODE FOR RECRUITS
