@@ -328,7 +328,12 @@ class Model(Model):
         if init_position == 'nest':
             ### ORIGINAL VERSION vFIXED ###
             positions = [nest] * self.N
-            positions[0] = random.choice(list(self.xy.keys()))
+            darray = np.array([dist(self.xy[i], self.xy[nest]) for i in self.xy])
+            idx_0 = np.random.choice(np.where((darray > 10.25) & (darray < 11.75))[0], size = 1)
+            positions[0] = list(self.xy.keys())[idx_0[0]]
+            # positions[0] = random.choice(list(self.xy.keys()))
+            
+            
             ## fixed distances in straight line from the nest !! 
             # positions[0] = (4, 22) # (7, 22) # (10, 22) 
 
@@ -363,7 +368,7 @@ class Model(Model):
                         positions[indices] = [tuple(x) for x in nodes[clustered_indices]]
                         positions[:nLR] = [tuple(x) for x in nodes[not_clustered_indices]]
                         positions = [tuple(x) for x in positions]
-                        positions[0] = tuple(nodes[idx_0][0])
+                        positions[0] = list(self.xy.keys())[idx_0[0]]
                 else:
                     # CODE FOR SCOUTS
                     if nLR > 0:
