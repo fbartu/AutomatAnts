@@ -289,10 +289,12 @@ class Model(Model):
 
         nLR = round(self.N * self.rho)
         nSR = self.N - nLR
-        indices = np.random.choice(self.N, size = nSR,replace=False)
+        behav = np.array(['scout'] * nLR + ['recruit'] * nSR, dtype = '<U7')
+        indices = np.array(list(range(nLR, self.N)))
         
-        behav = np.array(['scout'] * self.N, dtype = '<U7')
-        behav[indices] = 'recruit'
+        # indices = np.random.choice(self.N, size = nSR,replace=False)
+        # behav = np.array(['scout'] * self.N, dtype = '<U7')
+        # behav[indices] = 'recruit'
         mask = np.ones(self.N, dtype = bool)
         mask[indices] = False
         rec = np.array([False] * self.N)
@@ -338,12 +340,11 @@ class Model(Model):
             positions = random.choices(list(self.xy.keys()), k = self.N)
 
             if init_position == 'targeted':
-                print('entered init position = targeted')
 
                 if 'R' in kwargs:
                     R = kwargs['R']
                 else:
-                    R = 2.0
+                    R = 3.0 # formerly 2.0
 
                 # if not 'agg_scouts' in kwargs or not eval(kwargs['agg_scouts']):
                 if not 'agg_scouts' in kwargs or not kwargs['agg_scouts']:
@@ -354,12 +355,15 @@ class Model(Model):
                         nodes = np.array(list(self.xy.keys()))
                         x0 = random.choice(list(self.xy.values()))
                         darray = np.array([dist(self.xy[i], x0) for i in self.xy])
-                        idx = np.where(darray < R)[0]# np.where((darray > R) & (darray < R))[0]
-                        clustered_indices = np.random.choice(idx, size = nSR, replace = True)
+                        idx_clust = np.where(darray < R)[0]# np.where((darray > R) & (darray < R))[0]
+                        idx_not_clust = np.where(darray > R)[0]
+                        idx_0 = np.random.choice(np.where((darray > 10.25) & (darray < 11.75))[0], size = 1)
+                        clustered_indices = np.random.choice(idx_clust, size = nSR, replace = True)
+                        not_clustered_indices = np.random.choice(idx_not_clust, size = nSR, replace = True)
                         positions[indices] = [tuple(x) for x in nodes[clustered_indices]]
+                        positions[:nLR] = [tuple(x) for x in nodes[not_clustered_indices]]
                         positions = [tuple(x) for x in positions]
-                        positions[0] = random.choice(list(self.xy.keys()))
-
+                        positions[0] = tuple(nodes[idx_0][0])
                 else:
                     # CODE FOR SCOUTS
                     if nLR > 0:
@@ -585,6 +589,17 @@ class Model(Model):
         except:
             Exception('Not saved!')
             print('Positions not saved!', flush = True)
+            
+    def plot_init_pos(self):
+        nLR = int(self.rho * self.N)
+        plt.scatter([x[0] for x in self.xy.values()], [x[1] for x in self.xy.values()], c = 'black')
+        # plt.scatter([self.xy[i.pos][0] for i in lself.agents[:nLR]], [self.xy[i.pos][1] for i in self.agents[:nLR]])
+        plt.scatter([self.xy[i.pos][0] for i in list(self.agents.values())[:nLR]], [self.xy[i.pos][1] for i in list(self.agents.values())[:nLR]], s = 25)
+        plt.scatter([self.xy[i.pos][0] for i in list(self.agents.values())[nLR:]], [self.xy[i.pos][1] for i in list(self.agents.values())[nLR:]], s = 25)
+        plt.scatter(self.xy[self.agents[0].pos][0], self.xy[self.agents[0].pos][1], s = 30)
+
+        plt.scatter(self.xy[nest][0], self.xy[nest][1], marker = '^', s = 125, c = 'black')
+        plt.show()
 
     def plot_lattice(self, z = None, labels = False):
         
