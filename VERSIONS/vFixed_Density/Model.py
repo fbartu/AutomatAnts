@@ -296,29 +296,31 @@ class Model(Model):
         # behav = np.array(['scout'] * self.N, dtype = '<U7')
         # behav[indices] = 'recruit'
         mask = np.ones(self.N, dtype = bool)
-        mask[indices] = False
-        rec = np.array([False] * self.N)
+        if len(indices):
+            mask[indices] = False
+        # rec = np.array([False] * self.N)
+        rec = np.array([True] * self.N)
         
         
-        # social feedbacks [LR]
-        if self.feedback == 'scout':
-            nlisten = round(nLR * self.epsilon) 
-            idx_listen = np.random.choice(np.array(list(range(self.N)))[mask], size = nlisten, replace = False)
+        # # social feedbacks [LR]
+        # if self.feedback == 'scout':
+        #     nlisten = round(nLR * self.epsilon) 
+        #     idx_listen = np.random.choice(np.array(list(range(self.N)))[mask], size = nlisten, replace = False)
             
             
-        # social feedbacks [LR]    
-        elif self.feedback == 'recruit':
-            nlisten = round(nSR * self.epsilon) 
-            idx_listen = np.random.choice(indices, size = nlisten, replace = False)
+        # # social feedbacks [LR]    
+        # elif self.feedback == 'recruit':
+        #     nlisten = round(nSR * self.epsilon) 
+        #     idx_listen = np.random.choice(indices, size = nlisten, replace = False)
     
-        # social feedbacks [Both]
-        else:
-            nlisten = round(nLR * (self.epsilon))
-            idx_listen = np.random.choice(np.array(list(range(self.N)))[mask], size = nlisten, replace = False)
-            nlisten = round(nSR * (self.epsilon))
-            idx_listen = np.append(idx_listen, np.random.choice(indices, size = nlisten, replace = False))
+        # # social feedbacks [Both]
+        # else:
+        #     nlisten = round(nLR * (self.epsilon))
+        #     idx_listen = np.random.choice(np.array(list(range(self.N)))[mask], size = nlisten, replace = False)
+        #     nlisten = round(nSR * (self.epsilon))
+        #     idx_listen = np.append(idx_listen, np.random.choice(indices, size = nlisten, replace = False))
             
-        rec[idx_listen] = True
+        # rec[idx_listen] = True
         # print('Number of LR: ', round(nLR * (self.epsilon)), '\n',
         #       'Number of SR: ', round(nSR * (self.epsilon)), '\n',
         #       'Total number of recruits: ', len(set(idx_listen)), flush = True)
