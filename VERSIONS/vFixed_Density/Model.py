@@ -101,7 +101,9 @@ class Model(Model):
    
         # Init first active agent
         # self.agents[0].Si = np.random.uniform(0.0, 1.0)
-        self.agents[0].Si = 1
+        
+        #### CHANGED !!
+        # self.agents[0].Si = 1
   
         # Food
         self.food_condition = food_condition
