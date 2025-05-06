@@ -366,9 +366,11 @@ class Model(Model):
                         idx_not_clust = np.where(darray > R)[0]
                         idx_0 = np.random.choice(np.where((darray > 10.25) & (darray < 11.75))[0], size = 1)
                         clustered_indices = np.random.choice(idx_clust, size = nSR, replace = True)
-                        not_clustered_indices = np.random.choice(idx_not_clust, size = nLR, replace = True)
                         positions[indices] = [tuple(x) for x in nodes[clustered_indices]]
-                        positions[:nLR] = [tuple(x) for x in nodes[not_clustered_indices]]
+                        
+                        if nLR > 0:
+                            not_clustered_indices = np.random.choice(idx_not_clust, size = nLR, replace = True)
+                            positions[:nLR] = [tuple(x) for x in nodes[not_clustered_indices]]
                         positions = [tuple(x) for x in positions]
                         positions[0] = list(self.xy.keys())[idx_0[0]]
                 # else:
