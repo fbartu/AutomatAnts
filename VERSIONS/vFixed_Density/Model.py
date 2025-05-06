@@ -371,18 +371,18 @@ class Model(Model):
                         positions[:nLR] = [tuple(x) for x in nodes[not_clustered_indices]]
                         positions = [tuple(x) for x in positions]
                         positions[0] = list(self.xy.keys())[idx_0[0]]
-                else:
-                    # CODE FOR SCOUTS
-                    if nLR > 0:
-                        positions = np.array(positions)
-                        nodes = np.array(list(self.xy.keys()))
-                        x0 = random.choice(list(self.xy.values()))
-                        darray = np.array([dist(self.xy[i], x0) for i in self.xy])
-                        idx = np.where(darray < R)[0]# np.where((darray > R) & (darray < R))[0]
-                        clustered_indices = np.random.choice(idx, size = nLR, replace = True)
-                        positions[mask] = [tuple(x) for x in nodes[clustered_indices]]
-                        positions = [tuple(x) for x in positions]
-                        positions[0] = random.choice(list(self.xy.keys()))
+                # else:
+                #     # CODE FOR SCOUTS
+                #     if nLR > 0:
+                #         positions = np.array(positions)
+                #         nodes = np.array(list(self.xy.keys()))
+                #         x0 = random.choice(list(self.xy.values()))
+                #         darray = np.array([dist(self.xy[i], x0) for i in self.xy])
+                #         idx = np.where(darray < R)[0]# np.where((darray > R) & (darray < R))[0]
+                #         clustered_indices = np.random.choice(idx, size = nLR, replace = True)
+                #         positions[mask] = [tuple(x) for x in nodes[clustered_indices]]
+                #         positions = [tuple(x) for x in positions]
+                #         positions[0] = random.choice(list(self.xy.keys()))
                    
         for i in range((self.N-1), -1, -1):
             self.agents[i] = Ant(i, self, g=g[i], social=rec[i], mot_matrix=self.matrices[behav[i]], behavior = behav[i],
